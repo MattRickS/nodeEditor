@@ -14,8 +14,10 @@ cd mapgen
 ```
 
 ## External packages
-- glm (submodule)
-- SFML (cmake FetchContent)
+External packages are fetched by cmake with FetchContent
+- glm
+- SFML
+- ImGui (and ImGui-SFML)
 
 ## Dependencies
 Requires the following packages to be first installed. The `build.sh` installs these.
