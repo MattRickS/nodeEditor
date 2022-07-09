@@ -4,15 +4,27 @@
 Pixels should be a real-world size so that all algorithms operate on the same scale.
 Map Generation is for generating a world overview that can be used to inform other procedural generation at a finer level, eg, settlement layout, playable terrain meshes, etc...
 
-# Installation
+# Building
 
+It should be possible to just build with the following (Ubuntu):
 ```
-git clone --recurse-submodules https://github.com/MattRickS/mapGen.git
-mkdir build
-cd build
-cmake ..
-make
+git clone https://github.com/MattRickS/mapGen.git
+cd mapgen
+./build.sh
 ```
+
+## External packages
+- glm (submodule)
+- SFML (cmake FetchContent)
+
+## Dependencies
+Requires the following packages to be first installed. The `build.sh` installs these.
+
+- libfreetype-dev
+- libopenal-dev
+- libvorbis-dev
+- libflac-dev
+
 
 # Planned Operations
 
