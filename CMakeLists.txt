@@ -17,9 +17,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(sfml)
 
-# glm
-add_subdirectory(external/glm)
-include_directories(external/glm)
+# GLM
+set(GLM_VERSION "0.9.9.8")
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG "${GLM_VERSION}"
+)
+FetchContent_MakeAvailable(glm)
 
 # mapgen
 add_subdirectory(src)
