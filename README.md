@@ -8,7 +8,7 @@ Map Generation is for generating a world overview that can be used to inform oth
 
 It should be possible to just build with the following (Ubuntu):
 ```
-git clone https://github.com/MattRickS/mapGen.git
+git clone https://github.com/MattRickS/mapgen.git
 cd mapgen
 ./build.sh
 ```
@@ -74,7 +74,7 @@ Requires the following packages to be first installed. The `build.sh` installs t
     - Lakes
     - Settlements
     - Forests
-    - Mountains
+    - Mountains (Ranges and peaks)
 
 ## Heightmap Generation
 

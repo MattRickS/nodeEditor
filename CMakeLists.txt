@@ -7,6 +7,12 @@ project(MapGenerator LANGUAGES CXX)
 set(BUILD_SHARED_LIBS OFF)
 set(CMAKE_CXX_STANDARD 11)
 
+find_program(CCACHE_FOUND ccache)
+
+if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+endif(CCACHE_FOUND)
+
 # GLM
 message("Fetching GLM...")
 set(GLM_VERSION "0.9.9.8")
@@ -28,6 +34,16 @@ FetchContent_Declare(
     GIT_TAG "${SFML_VERSION}"
 )
 FetchContent_MakeAvailable(sfml)
+
+# GLEW
+message("Fetching GLEW...")
+set(GLEW_VERSION "glew-2.2.0")
+FetchContent_Declare(
+    glew
+    GIT_REPOSITORY "https://github.com/nigels-com/glew.git"
+    GIT_TAG "${GLEW_VERSION}"
+)
+FetchContent_MakeAvailable(glew)
 
 # ImGui
 message("Fetching ImGui...")
