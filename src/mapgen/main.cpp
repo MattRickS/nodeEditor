@@ -10,6 +10,9 @@
 
 #include "quadshader.h"
 
+int width = 1280;
+int height = 720;
+
 void glfw_error_callback(int error, const char *description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -22,7 +25,7 @@ int main()
     if (!glfwInit())
         return 1;
 
-    GLFWwindow *window = glfwCreateWindow(1280, 720, "MapMaker", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(width, height, "MapMaker", NULL, NULL);
     if (window == NULL)
         return 1;
 
@@ -61,24 +64,26 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
-
-        glfwMakeContextCurrent(window);
-        glViewport(0, 0, 1280, 720);
-
-        shader.setFloat("frequency", noiseFrequency);
-        shader.draw();
+        glfwGetWindowSize(window, &width, &height);
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->Pos);
-        ImGui::SetNextWindowSize(viewport->Size);
+        static bool p_open = NULL;
+        static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
-        ImGui::Begin("Mapmaker UI");
+        // Draw shader
+        float uiWidth = width * 0.25;
+        glViewport(uiWidth, 0, width - uiWidth, height);
+        shader.setFloat("frequency", noiseFrequency);
+        shader.draw();
+
+        // Draw UI
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2(uiWidth, height));
+        ImGui::Begin("Mapmaker UI", &p_open, flags);
         if (ImGui::SliderFloat("Frequency", &noiseFrequency, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
             shader.setFloat("frequency", noiseFrequency);
         ImGui::End();
