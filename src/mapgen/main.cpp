@@ -10,19 +10,24 @@
 #include <imgui-SFML.h>
 #include <imgui.h>
 
-#include "shader.h"
+#include "quadshader.h"
 
 int main()
 {
-    glm::vec3 empty(0);
-    std::cout << "Hello, World!" << std::endl;
-
-    sf::RenderWindow window(sf::VideoMode(1280, 720), "ImGui + SFML = <3");
+    sf::RenderWindow window(sf::VideoMode(1280, 720), "MapGeneration");
     window.setFramerateLimit(60);
     ImGui::SFML::Init(window);
-    glewInit();
 
-    Shader shader("src/mapgen/shaders/quad.vs", "src/mapgen/shaders/example.fs");
+    GLenum err = glewInit();
+    if (err != GLEW_OK)
+    {
+        std::cerr << "Failed to initialise glew: " << glewGetErrorString(err) << std::endl;
+        return 1;
+    }
+
+    QuadShader shader("src/mapgen/shaders/noise/perlin.fs");
+
+    float noiseFrequency = 0.01;
 
     sf::Clock deltaClock;
     while (window.isOpen())
@@ -40,11 +45,13 @@ int main()
 
         ImGui::SFML::Update(window, deltaClock.restart());
 
-        ImGui::ShowDemoWindow();
+        ImGui::Begin("Mapmaker UI");
+        if (ImGui::SliderFloat("Frequency", &noiseFrequency, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
+            shader.setFloat("frequency", noiseFrequency);
+        ImGui::End();
 
         window.clear();
-        shader.use();
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        shader.draw();
         ImGui::SFML::Render(window);
         window.display();
     }
