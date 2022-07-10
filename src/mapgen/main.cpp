@@ -12,10 +12,28 @@
 
 int width = 1280;
 int height = 720;
+int uiWidth;
+glm::vec4 pixelValue = glm::vec4(0);
+glm::ivec2 pixelPos = glm::ivec2(0);
 
 void glfw_error_callback(int error, const char *description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
+    int imagePos = xpos - uiWidth;
+    if (imagePos >= 0)
+    {
+        glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &pixelValue);
+        pixelPos = glm::ivec2(imagePos, height - ypos);
+    }
+    else
+    {
+        pixelPos = glm::ivec2(0);
+        pixelValue = glm::vec4(0);
+    }
 }
 
 int main()
@@ -55,8 +73,9 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
+    //  Setup
+    glfwSetCursorPosCallback(window, mouse_callback);
     QuadShader shader("src/mapgen/shaders/noise/perlin.fs");
-
     float noiseFrequency = 0.01;
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -75,7 +94,7 @@ int main()
         static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
         // Draw shader
-        float uiWidth = width * 0.25;
+        uiWidth = width * 0.25;
         glViewport(uiWidth, 0, width - uiWidth, height);
         shader.setFloat("frequency", noiseFrequency);
         shader.draw();
@@ -86,6 +105,11 @@ int main()
         ImGui::Begin("Mapmaker UI", &p_open, flags);
         if (ImGui::SliderFloat("Frequency", &noiseFrequency, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
             shader.setFloat("frequency", noiseFrequency);
+
+        glm::vec4 pix(pixelValue);
+        ImGui::ColorEdit4("Pixel Value", (float *)&pix);
+        glm::ivec2 pos(pixelPos);
+        ImGui::InputInt2("Pixel Position", (int *)&pos);
         ImGui::End();
 
         ImGui::Render();
