@@ -3,21 +3,41 @@
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include <SFML/Graphics/RenderWindow.hpp>
-#include <SFML/System/Clock.hpp>
-#include <SFML/Window/Event.hpp>
-#include <SFML/OpenGL.hpp>
-#include <imgui-SFML.h>
+#include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 #include "quadshader.h"
 
+void glfw_error_callback(int error, const char *description)
+{
+    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(1280, 720), "MapGeneration");
-    window.setFramerateLimit(60);
-    ImGui::SFML::Init(window);
+    // GLFW init
+    glfwSetErrorCallback(glfw_error_callback);
+    if (!glfwInit())
+        return 1;
 
+    GLFWwindow *window = glfwCreateWindow(1280, 720, "MapMaker", NULL, NULL);
+    if (window == NULL)
+        return 1;
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 3.2+ only
+
+#if defined(__APPLE__)
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
+#endif
+
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1); // Enable vsync
+
+    // GLEW init
     GLenum err = glewInit();
     if (err != GLEW_OK)
     {
@@ -25,38 +45,51 @@ int main()
         return 1;
     }
 
+    // ImGui init
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
     QuadShader shader("src/mapgen/shaders/noise/perlin.fs");
 
     float noiseFrequency = 0.01;
 
-    sf::Clock deltaClock;
-    while (window.isOpen())
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    while (!glfwWindowShouldClose(window))
     {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            ImGui::SFML::ProcessEvent(event);
+        glfwPollEvents();
 
-            if (event.type == sf::Event::Closed)
-            {
-                window.close();
-            }
-        }
+        glfwMakeContextCurrent(window);
+        glViewport(0, 0, 1280, 720);
 
-        ImGui::SFML::Update(window, deltaClock.restart());
+        shader.setFloat("frequency", noiseFrequency);
+        shader.draw();
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->Pos);
+        ImGui::SetNextWindowSize(viewport->Size);
 
         ImGui::Begin("Mapmaker UI");
         if (ImGui::SliderFloat("Frequency", &noiseFrequency, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
             shader.setFloat("frequency", noiseFrequency);
         ImGui::End();
 
-        window.clear();
-        shader.draw();
-        ImGui::SFML::Render(window);
-        window.display();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(window);
     }
 
-    ImGui::SFML::Shutdown();
-
+    glfwDestroyWindow(window);
+    glfwTerminate();
     return 0;
 }

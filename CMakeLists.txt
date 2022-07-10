@@ -7,6 +7,8 @@ project(MapGenerator LANGUAGES CXX)
 set(BUILD_SHARED_LIBS OFF)
 set(CMAKE_CXX_STANDARD 11)
 
+find_package(OpenGL REQUIRED)
+
 find_program(CCACHE_FOUND ccache)
 
 if(CCACHE_FOUND)
@@ -23,18 +25,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# SFML
-message("Fetching SFML...")
-set(SFML_BUILD_AUDIO OFF)
-set(SFML_BUILD_NETWORK OFF)
-set(SFML_VERSION "2.5.1")
-FetchContent_Declare(
-    sfml
-    GIT_REPOSITORY "https://github.com/SFML/SFML.git"
-    GIT_TAG "${SFML_VERSION}"
-)
-FetchContent_MakeAvailable(sfml)
-
 # GLEW
 message("Fetching GLEW...")
 set(GLEW_VERSION "glew-2.2.0")
@@ -45,6 +35,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glew)
 
+# GLFW
+message("Fetching GLFW...")
+set(GLFW_VERSION "3.3.7")
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    glfw
+    GIT_REPOSITORY "https://github.com/glfw/glfw.git"
+    GIT_TAG "${GLFW_VERSION}"
+)
+FetchContent_MakeAvailable(glfw)
+
 # ImGui
 message("Fetching ImGui...")
 FetchContent_Declare(
@@ -53,17 +56,25 @@ FetchContent_Declare(
     GIT_TAG 35b1148efb839381b84de9290d9caf0b66ad7d03
 )
 FetchContent_MakeAvailable(imgui)
+add_library(imgui STATIC)
+target_sources(imgui
+    PRIVATE
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/imgui.cpp
 
-message("Fetching ImGui-SFML...")
-FetchContent_Declare(
-    imgui-sfml
-    GIT_REPOSITORY https://github.com/eliasdaler/imgui-sfml
-    GIT_TAG 82dc2033e51b8323857c3ae1cf1f458b3a933c35
+    PRIVATE
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
 )
-set(IMGUI_DIR ${imgui_SOURCE_DIR})
-set(IMGUI_SFML_FIND_SFML OFF)
-set(IMGUI_SFML_IMGUI_DEMO ON)
-FetchContent_MakeAvailable(imgui-sfml)
+target_include_directories(imgui
+    PUBLIC ${imgui_SOURCE_DIR}
+    PUBLIC ${imgui_SOURCE_DIR}/backends
+    PUBLIC ${SDL2_DIR}/include
+)
+target_link_libraries(imgui GL)
 
 # mapgen
 add_subdirectory(src)
