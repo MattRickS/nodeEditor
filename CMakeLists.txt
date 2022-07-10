@@ -27,11 +27,11 @@ FetchContent_MakeAvailable(glm)
 
 # GLEW
 message("Fetching GLEW...")
-set(GLEW_VERSION "glew-2.2.0")
+set(GLEW_VERSION "2.2.0")
 FetchContent_Declare(
     glew
     GIT_REPOSITORY "https://github.com/nigels-com/glew.git"
-    GIT_TAG "${GLEW_VERSION}"
+    GIT_TAG "glew-${GLEW_VERSION}"
 )
 FetchContent_MakeAvailable(glew)
 
@@ -50,10 +50,11 @@ FetchContent_MakeAvailable(glfw)
 
 # ImGui
 message("Fetching ImGui...")
+set(IMGUI_VERSION "1.88")
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui
-    GIT_TAG 35b1148efb839381b84de9290d9caf0b66ad7d03
+    GIT_TAG "v${IMGUI_VERSION}"
 )
 FetchContent_MakeAvailable(imgui)
 add_library(imgui STATIC)

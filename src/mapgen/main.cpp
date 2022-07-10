@@ -23,6 +23,10 @@ void glfw_error_callback(int error, const char *description)
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.WantCaptureMouse)
+        return;
+
     int imagePos = xpos - uiWidth;
     if (imagePos >= 0)
     {
@@ -66,6 +70,9 @@ int main()
         return 1;
     }
 
+    // Must set before initialising ImGui
+    glfwSetCursorPosCallback(window, mouse_callback);
+
     // ImGui init
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -74,9 +81,9 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 330");
 
     //  Setup
-    glfwSetCursorPosCallback(window, mouse_callback);
     QuadShader shader("src/mapgen/shaders/noise/perlin.fs");
     float noiseFrequency = 0.01;
+    glm::ivec2 offset = glm::ivec2(0);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -105,11 +112,13 @@ int main()
         ImGui::Begin("Mapmaker UI", &p_open, flags);
         if (ImGui::SliderFloat("Frequency", &noiseFrequency, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
             shader.setFloat("frequency", noiseFrequency);
+        if (ImGui::DragInt2("Offset", (int *)&offset))
+            shader.setInt2("offset", offset.x, offset.y);
 
-        glm::vec4 pix(pixelValue);
-        ImGui::ColorEdit4("Pixel Value", (float *)&pix);
-        glm::ivec2 pos(pixelPos);
-        ImGui::InputInt2("Pixel Position", (int *)&pos);
+        ImGui::BeginDisabled();
+        ImGui::ColorEdit4("Pixel Value", (float *)&pixelValue);
+        ImGui::InputInt2("Pixel Position", (int *)&pixelPos);
+        ImGui::EndDisabled();
         ImGui::End();
 
         ImGui::Render();

@@ -3,6 +3,7 @@
 out vec4 FragColor;
 
 uniform float frequency = 0.01;
+uniform ivec2 offset = ivec2(0);
 
 const int hashMask = 255;
 const int gradientsMask2D = 7;
@@ -95,6 +96,7 @@ float perlin2D(vec2 point, float freq)
 }
 
 void main() {
-    float noise = perlin2D(vec2(gl_FragCoord.x, gl_FragCoord.y), frequency);
+    vec2 pos = ivec2(gl_FragCoord.x, gl_FragCoord.y) + offset;
+    float noise = perlin2D(pos, frequency);
     FragColor = vec4(noise, noise, noise, 1);
 }
