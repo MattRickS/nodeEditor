@@ -114,7 +114,7 @@ public:
     }
 
     void SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
-    void Draw(PerlinNoise *noise)
+    void Draw()
     {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -126,8 +126,6 @@ public:
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowSize(ImVec2(uiWidth(), m_height));
         ImGui::Begin("Mapmaker UI", &p_open, flags);
-
-        m_perlinUI.Draw(noise);
 
         if (m_pixelPreview)
         {
@@ -155,6 +153,8 @@ protected:
     // This will eventually be a more structured series of operations to produce
     // a final image, with multiple intermediate images.
     PerlinNoise m_noise;
+    unsigned int m_width = 1280;
+    unsigned int m_height = 720;
 
     void OnMouseMoved(unsigned int xpos, unsigned int ypos)
     {
@@ -162,30 +162,68 @@ protected:
         m_pixelPreview.pos = glm::ivec2(xpos, ypos);
     }
 
+    void OnKeyChanged(int key, int scancode, int action, int mode)
+    {
+        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+            Close();
+    }
+
 public:
     MapMaker(UI *ui) : m_ui(ui)
     {
         m_ui->mapPosChanged.connect(this, &MapMaker::OnMouseMoved);
         m_ui->closeRequested.connect(this, &MapMaker::Close);
+        m_ui->keyChanged.connect(this, &MapMaker::OnKeyChanged);
         m_ui->SetPixelPreview(&m_pixelPreview);
     }
     void Exec()
     {
+        // Generating a texture as a render target. Each operator will need to
+        // do this for as many layers as it defines.
+        GLuint MapTextureBuffer = 0;
+        glGenFramebuffers(1, &MapTextureBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
+        GLuint renderTexture;
+        glGenTextures(1, &renderTexture);
+        glBindTexture(GL_TEXTURE_2D, renderTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        // Bind the texture to a buffer. Increment the COLOR_ATTACHMENT suffix
+        // for multiple textures (and set the number of DrawBuffers)
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderTexture, 0);
+        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            std::cout << "Failed to generate texture buffer" << std::endl;
+            return;
+        }
+
+        QuadShader display("src/mapgen/shaders/tex.fs");
+
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
         while (!m_ui->IsClosed())
         {
             glfwPollEvents();
 
-            // TODO: This will need to get the noise to produce a buffer which
-            //       the MapMaker then draws into the UI region. This will allow
-            //       other operations to be used on the same buffer.
-            glm::ivec4 mapRegion = m_ui->GetMapViewportRegion();
-            glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
+            // Render to texture
+            glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
+            glViewport(0, 0, m_width, m_height);
             m_noise.Draw();
 
-            m_ui->Draw(&m_noise);
+            // Render texture into window section
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glm::ivec4 mapRegion = m_ui->GetMapViewportRegion();
+            glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
+            display.setInt("renderTexture", renderTexture);
+            display.draw();
 
+            // Draw the UI around it
+            m_ui->Draw();
+
+            // Display the buffer that was drawn
             m_ui->Display();
         }
     }
