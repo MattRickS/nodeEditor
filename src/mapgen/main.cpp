@@ -3,6 +3,7 @@
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -11,9 +12,45 @@
 #include "quadshader.h"
 #include "window.h"
 
+GLuint quadVAO;
+
 void glfw_error_callback(int error, const char *description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
+void makeQuad()
+{
+    static const GLfloat vertexData[] = {
+        // positions          // texture coords
+        1.0f, 1.0f, 0.0f, 1.0f, 1.0f,   // top right
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // bottom left
+        -1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
+    };
+    unsigned int indices[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
+    };
+
+    glGenVertexArrays(1, &quadVAO);
+    glBindVertexArray(quadVAO);
+
+    GLuint quadVBO;
+    glGenBuffers(1, &quadVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
+
+    GLuint quadEBO;
+    glGenBuffers(1, &quadEBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 }
 
 class PerlinNoise
@@ -79,9 +116,16 @@ interactive widgets but not for rendering the map.
 class UI : public Window
 {
 protected:
+    Shader viewShader;
     float m_uiScreenWidthPercent = 0.25f;
     PixelPreview *m_pixelPreview;
     PerlinNoiseUI m_perlinUI;
+    bool isPanning = false;
+    glm::vec2 lastCursorPos;
+
+    glm::mat4 viewTransform = glm::mat4(1.0f);
+    glm::vec2 transformOffset = glm::vec2(0.0f);
+    float transformZoom = 1.0f;
 
     unsigned int uiWidth() { return m_width * m_uiScreenWidthPercent; }
 
@@ -99,12 +143,62 @@ protected:
             // bot-left, invert the y-axis
             mapPosChanged.emit(imagePosX, m_height - ypos);
         }
+
+        if (isPanning)
+        {
+            glm::vec2 cursorPos = CursorPos();
+            glm::vec2 offset = cursorPos - lastCursorPos;
+            // Invert y-axis as openGL is inverse
+            transformOffset += glm::vec2(offset.x / m_width, -offset.y / m_height);
+            lastCursorPos = cursorPos;
+            updateTransform();
+        }
+    }
+
+    void updateTransform()
+    {
+        viewTransform = glm::mat4(1.0f);
+        viewTransform = glm::translate(viewTransform, glm::vec3(transformOffset, 0.0f));
+        viewTransform = glm::scale(viewTransform, glm::vec3(transformZoom, transformZoom, 1.0f));
+        viewShader.use();
+        viewShader.setMat4("transform", viewTransform);
+    }
+
+    virtual void OnMouseButtonChanged(int button, int action, int mods)
+    {
+        ImGuiIO &io = ImGui::GetIO();
+        if (io.WantCaptureMouse)
+            return;
+
+        if (button == GLFW_MOUSE_BUTTON_LEFT)
+        {
+            if (action == GLFW_PRESS)
+            {
+                lastCursorPos = CursorPos();
+                isPanning = true;
+            }
+            else if (action == GLFW_RELEASE)
+            {
+                isPanning = false;
+            }
+        }
+    }
+
+    virtual void OnMouseScrolled(double xoffset, double yoffset)
+    {
+        ImGuiIO &io = ImGui::GetIO();
+        if (io.WantCaptureMouse)
+            return;
+
+        transformZoom += yoffset * 0.1f;
+        updateTransform();
     }
 
 public:
     Signal<unsigned int, unsigned int> mapPosChanged;
 
-    UI(unsigned int width, unsigned int height, const char *name) : Window(width, height, name)
+    UI(unsigned int width, unsigned int height, const char *name) : Window(width, height, name),
+                                                                    viewShader("src/mapgen/shaders/vertex.glsl", "src/mapgen/shaders/tex.fs")
     {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -114,8 +208,22 @@ public:
     }
 
     void SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
-    void Draw()
+    void Draw(GLuint renderTexture)
     {
+        // Draws the texture into the window slot
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glm::ivec4 mapRegion = GetMapViewportRegion();
+        glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, renderTexture);
+        glClearColor(1.0, 1.0, 0.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        viewShader.use();
+        viewShader.setMat4("transform", viewTransform);
+        viewShader.setInt("renderTexture", 0); // Why 0 and not renderTexture?
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        // Draws the UI around it
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -180,7 +288,7 @@ public:
     {
         // Generating a texture as a render target. Each operator will need to
         // do this for as many layers as it defines.
-        GLuint MapTextureBuffer = 0;
+        GLuint MapTextureBuffer;
         glGenFramebuffers(1, &MapTextureBuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
         GLuint renderTexture;
@@ -189,8 +297,10 @@ public:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
         // Bind the texture to a buffer. Increment the COLOR_ATTACHMENT suffix
         // for multiple textures (and set the number of DrawBuffers)
+        glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderTexture, 0);
         GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
         glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
@@ -200,30 +310,25 @@ public:
             return;
         }
 
-        QuadShader display("src/mapgen/shaders/tex.fs");
+        Shader noise("src/mapgen/shaders/vertex.glsl", "src/mapgen/shaders/noise/perlin.fs");
+        Shader viewShader("src/mapgen/shaders/vertex.glsl", "src/mapgen/shaders/tex.fs");
+        glm::mat4 identity(1.0f);
+
+        noise.use();
+        noise.setMat4("transform", identity);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
+
+        glViewport(0, 0, m_width, m_height);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
         while (!m_ui->IsClosed())
         {
             glfwPollEvents();
 
-            // Render to texture
-            glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
-            glViewport(0, 0, m_width, m_height);
-            m_noise.Draw();
-
-            // Render texture into window section
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glm::ivec4 mapRegion = m_ui->GetMapViewportRegion();
-            glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
-            display.setInt("renderTexture", renderTexture);
-            display.draw();
-
-            // Draw the UI around it
-            m_ui->Draw();
-
-            // Display the buffer that was drawn
+            // Draw and display the buffer
+            m_ui->Draw(renderTexture);
             m_ui->Display();
         }
     }
@@ -244,6 +349,7 @@ int main()
     if (!ui.IsInitialised())
         return 1;
 
+    makeQuad();
     MapMaker app = MapMaker(&ui);
     app.Exec();
 
