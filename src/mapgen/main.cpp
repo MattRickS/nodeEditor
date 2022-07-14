@@ -9,7 +9,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include "quadshader.h"
+#include "shader.h"
 #include "window.h"
 
 GLuint quadVAO;
@@ -56,12 +56,12 @@ void makeQuad()
 class PerlinNoise
 {
 protected:
-    QuadShader m_shader;
+    Shader m_shader;
     float m_frequency = 0.01f;
     glm::ivec2 m_offset = glm::ivec2(0);
 
 public:
-    PerlinNoise() : m_shader("src/mapgen/shaders/noise/perlin.fs") {}
+    PerlinNoise() : m_shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/noise/perlin.fs") {}
 
     float Frequency() { return m_frequency; }
     void SetFrequency(float frequency)
@@ -77,11 +77,6 @@ public:
         m_shader.use();
         m_offset = offset;
         m_shader.setInt2("offset", m_offset.x, m_offset.y);
-    }
-
-    void Draw()
-    {
-        m_shader.draw();
     }
 };
 
@@ -198,7 +193,7 @@ public:
     Signal<unsigned int, unsigned int> mapPosChanged;
 
     UI(unsigned int width, unsigned int height, const char *name) : Window(width, height, name),
-                                                                    viewShader("src/mapgen/shaders/vertex.glsl", "src/mapgen/shaders/tex.fs")
+                                                                    viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs")
     {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -253,6 +248,39 @@ public:
     }
 };
 
+GLuint makeTexture(unsigned int width, unsigned int height)
+{
+    GLuint renderTexture;
+    glGenTextures(1, &renderTexture);
+    glBindTexture(GL_TEXTURE_2D, renderTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    return renderTexture;
+}
+
+GLuint makeBuffer(GLuint textureID)
+{
+    // Generating a texture as a render target. Each operator will need to
+    // do this for as many layers as it defines.
+    GLuint MapTextureBuffer;
+    glGenFramebuffers(1, &MapTextureBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
+
+    // Bind the texture to a buffer. Increment the COLOR_ATTACHMENT suffix
+    // for multiple textures (and set the number of DrawBuffers)
+    glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, textureID, 0);
+    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "Failed to generate texture buffer" << std::endl;
+        return 0;
+    }
+    return MapTextureBuffer;
+}
+
 class MapMaker
 {
 protected:
@@ -286,40 +314,18 @@ public:
     }
     void Exec()
     {
-        // Generating a texture as a render target. Each operator will need to
-        // do this for as many layers as it defines.
-        GLuint MapTextureBuffer;
-        glGenFramebuffers(1, &MapTextureBuffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
-        GLuint renderTexture;
-        glGenTextures(1, &renderTexture);
-        glBindTexture(GL_TEXTURE_2D, renderTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        // Bind the texture to a buffer. Increment the COLOR_ATTACHMENT suffix
-        // for multiple textures (and set the number of DrawBuffers)
-        glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderTexture, 0);
-        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-        glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            std::cout << "Failed to generate texture buffer" << std::endl;
-            return;
-        }
-
-        Shader noise("src/mapgen/shaders/vertex.glsl", "src/mapgen/shaders/noise/perlin.fs");
-        Shader viewShader("src/mapgen/shaders/vertex.glsl", "src/mapgen/shaders/tex.fs");
-        glm::mat4 identity(1.0f);
-
-        noise.use();
-        noise.setMat4("transform", identity);
+        GLuint renderTexture = makeTexture(m_width, m_height);
+        GLuint bufferID = makeBuffer(renderTexture);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
 
+        Shader noise("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/noise/perlin.fs");
+        Shader viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs");
+        glm::mat4 identity(1.0f);
+
+        noise.use();
+        noise.setMat4("transform", identity);
         glViewport(0, 0, m_width, m_height);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
