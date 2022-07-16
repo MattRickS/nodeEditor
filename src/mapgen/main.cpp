@@ -193,7 +193,7 @@ public:
 
     virtual std::vector<Layer> inLayers() const = 0;
     virtual std::vector<Layer> outLayers() const = 0;
-    virtual void process(RenderSet *inRenders) = 0;
+    virtual void process(RenderSet *renders) = 0;
 
     /*
     Convenience method for populating the renderset that assumes texture outputs
@@ -250,15 +250,47 @@ public:
     {
         return {LAYER_HEIGHTMAP};
     }
-    virtual void process(RenderSet *inRenders)
+    virtual void process(RenderSet *renders)
     {
         shader.use();
-        glm::mat4 identity(1.0f);
-        shader.setMat4("transform", identity);
         glBindFramebuffer(GL_DRAW_BUFFER, FBO);
         glViewport(0, 0, m_width, m_height);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        PopulateRenderSet(inRenders);
+        PopulateRenderSet(renders);
+    }
+};
+
+class InvertOperator : public Operator
+{
+public:
+    Shader shader;
+
+    InvertOperator() : shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/invert.fs")
+    {
+    }
+    virtual std::vector<Layer> inLayers() const
+    {
+        return {LAYER_HEIGHTMAP};
+    }
+    virtual std::vector<Layer> outLayers() const
+    {
+        return {LAYER_HEIGHTMAP};
+    }
+    virtual void process(RenderSet *renders)
+    {
+        // Setup shader
+        shader.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, renders->GetLayer(LAYER_HEIGHTMAP)->ID);
+        shader.setInt("inImage", 0);
+
+        // Render
+        glBindFramebuffer(GL_DRAW_BUFFER, FBO);
+        glViewport(0, 0, m_width, m_height);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        // Put outputs into render set
+        PopulateRenderSet(renders);
     }
 };
 
@@ -441,6 +473,7 @@ protected:
 
     void OnMouseMoved(unsigned int xpos, unsigned int ypos)
     {
+        // TODO: Which framebuffer? Might be simpler once threaded
         glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
         m_pixelPreview.pos = glm::ivec2(xpos, ypos);
     }
@@ -476,6 +509,10 @@ public:
         PerlinNoiseOperator m_noiseOp;
         m_noiseOp.init(m_width, m_height);
         m_noiseOp.process(&renderSet);
+
+        InvertOperator m_invertOp;
+        m_invertOp.init(m_width, m_height);
+        m_invertOp.process(&renderSet);
 
         while (!m_ui->IsClosed())
         {
