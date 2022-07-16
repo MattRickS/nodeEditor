@@ -1,5 +1,7 @@
 #define GLEW_STATIC
 #include <iostream>
+#include <map>
+#include <vector>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -53,37 +55,217 @@ void makeQuad()
     glEnableVertexAttribArray(1);
 }
 
-class PerlinNoise
+enum Layer
+{
+    LAYER_HEIGHTMAP
+};
+
+class Texture
 {
 protected:
-    Shader m_shader;
+    void LoadOnGPU()
+    {
+        glBindTexture(GL_TEXTURE_2D, ID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_FLOAT, data);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        // If the data's on the GPU it's likely being modified so do not keep a local
+        // copy of the old data. Retrieve the data from the GPU if requested.
+        DeleteLocalData();
+    }
+    void DeleteLocalData()
+    {
+        if (data)
+        {
+            delete[] data;
+        }
+    }
+
+public:
+    unsigned int width, height;
+    GLenum format = GL_RGBA;
+    float *data = 0;
+    GLuint ID = 0;
+
+    Texture(unsigned int width, unsigned int height, GLenum format = GL_RGBA, float *data = 0) : width(width), height(height), format(format), data(data) {}
+    ~Texture()
+    {
+        if (ID)
+        {
+            glDeleteTextures(1, &ID);
+        }
+    }
+    // TODO: Texture(const char* path) {} stbi load
+
+    void Resize(unsigned int width, unsigned int height)
+    {
+        this->width = width;
+        this->height = height;
+        glBindTexture(GL_TEXTURE_2D, ID);
+        // TODO: Should probably just restructure the data so it's in the same pixel
+        // positions, but either truncate or pad with black. For purposes of this tool,
+        // deleting it should be fine.
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_FLOAT, 0);
+        DeleteLocalData();
+    }
+    bool IsOnGPU() { return ID != 0; }
+    void EnsureOnGPU()
+    {
+        if (!IsOnGPU())
+        {
+            glGenTextures(1, &ID);
+            LoadOnGPU();
+        }
+    }
+
+    // TODO: Read/Write pixel methods, unload from GPU. This is to support CPU operators.
+};
+
+class RenderSet
+{
+protected:
+    std::map<Layer, Texture *> layers;
+
+public:
+    RenderSet() {}
+
+    void Reset() { layers.clear(); }
+    void AddLayer(Layer layer, Texture *texture)
+    {
+        layers[layer] = texture;
+    }
+    // bool HasLayer(Layer layer) {}
+    Texture *GetLayer(Layer layer) const
+    {
+        return layers.at(layer);
+    }
+};
+
+class Operator
+{
+protected:
+    std::vector<Texture> outputs;
+    unsigned int m_width, m_height;
+    GLuint FBO;
+
+public:
+    void init(unsigned int width, unsigned int height)
+    {
+        m_width = width;
+        m_height = height;
+
+        // Generate an output texture of the right size for each
+        auto layers = outLayers();
+        outputs = std::vector<Texture>(layers.size(), {m_width, m_height});
+
+        // TODO: FBO/GPU setup is only required for shader operators, move to subclass
+        for (Texture &texture : outputs)
+        {
+            texture.EnsureOnGPU();
+        }
+
+        // Generate the FBO with textures bound in order
+        glGenFramebuffers(1, &FBO);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
+        std::vector<GLenum> drawBuffers(outputs.size());
+        for (size_t i = 0; i < outputs.size(); ++i)
+        {
+            glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, outputs[i].ID, 0);
+            drawBuffers[i] = GL_COLOR_ATTACHMENT0 + i;
+        }
+
+        glDrawBuffers(drawBuffers.size(), drawBuffers.data());
+        if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            std::cout << "Failed to generate texture buffer" << std::endl;
+        }
+    }
+    void resize(unsigned int width, unsigned int height)
+    {
+        m_width = width;
+        m_height = height;
+        // Resize each output texture
+        for (Texture &tex : outputs)
+        {
+            tex.Resize(width, height);
+        }
+    }
+
+    virtual std::vector<Layer> inLayers() const = 0;
+    virtual std::vector<Layer> outLayers() const = 0;
+    virtual void process(RenderSet *inRenders) = 0;
+
+    /*
+    Convenience method for populating the renderset that assumes texture outputs
+    are 1:1 with the outLayers.
+    */
+    virtual void PopulateRenderSet(RenderSet *renderSet)
+    {
+        auto layers = outLayers();
+        for (size_t i = 0; i < layers.size(); ++i)
+        {
+            renderSet->AddLayer(layers[i], &outputs[i]);
+        }
+    }
+};
+
+class PerlinNoiseShader : public Shader
+{
+protected:
     float m_frequency = 0.01f;
     glm::ivec2 m_offset = glm::ivec2(0);
 
 public:
-    PerlinNoise() : m_shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/noise/perlin.fs") {}
+    PerlinNoiseShader() : Shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/noise/perlin.fs") {}
 
     float Frequency() { return m_frequency; }
     void SetFrequency(float frequency)
     {
-        m_shader.use();
+        use();
         m_frequency = frequency;
-        m_shader.setFloat("frequency", m_frequency);
+        setFloat("frequency", m_frequency);
     }
 
     glm::ivec2 Offset() { return m_offset; }
     void SetOffset(glm::ivec2 offset)
     {
-        m_shader.use();
+        use();
         m_offset = offset;
-        m_shader.setInt2("offset", m_offset.x, m_offset.y);
+        setInt2("offset", m_offset.x, m_offset.y);
+    }
+};
+
+class PerlinNoiseOperator : public Operator
+{
+public:
+    PerlinNoiseShader shader;
+
+    PerlinNoiseOperator() : shader() {}
+
+    virtual std::vector<Layer> inLayers() const
+    {
+        return {};
+    }
+    virtual std::vector<Layer> outLayers() const
+    {
+        return {LAYER_HEIGHTMAP};
+    }
+    virtual void process(RenderSet *inRenders)
+    {
+        shader.use();
+        glm::mat4 identity(1.0f);
+        shader.setMat4("transform", identity);
+        glBindFramebuffer(GL_DRAW_BUFFER, FBO);
+        glViewport(0, 0, m_width, m_height);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        PopulateRenderSet(inRenders);
     }
 };
 
 class PerlinNoiseUI
 {
 public:
-    void Draw(PerlinNoise *noise)
+    void Draw(PerlinNoiseShader *noise)
     {
         if (!noise)
             return;
@@ -131,6 +313,7 @@ protected:
         if (io.WantCaptureMouse)
             return;
 
+        // TODO: transform the position to get the pixel pos on the map
         int imagePosX = xpos - uiWidth();
         if (imagePosX >= 0)
         {
@@ -203,14 +386,14 @@ public:
     }
 
     void SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
-    void Draw(GLuint renderTexture)
+    void Draw(const RenderSet *const renderSet)
     {
         // Draws the texture into the window slot
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glm::ivec4 mapRegion = GetMapViewportRegion();
         glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renderTexture);
+        glBindTexture(GL_TEXTURE_2D, renderSet->GetLayer(LAYER_HEIGHTMAP)->ID);
         glClearColor(1.0, 1.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
         viewShader.use();
@@ -248,47 +431,11 @@ public:
     }
 };
 
-GLuint makeTexture(unsigned int width, unsigned int height)
-{
-    GLuint renderTexture;
-    glGenTextures(1, &renderTexture);
-    glBindTexture(GL_TEXTURE_2D, renderTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    return renderTexture;
-}
-
-GLuint makeBuffer(GLuint textureID)
-{
-    // Generating a texture as a render target. Each operator will need to
-    // do this for as many layers as it defines.
-    GLuint MapTextureBuffer;
-    glGenFramebuffers(1, &MapTextureBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
-
-    // Bind the texture to a buffer. Increment the COLOR_ATTACHMENT suffix
-    // for multiple textures (and set the number of DrawBuffers)
-    glBindFramebuffer(GL_FRAMEBUFFER, MapTextureBuffer);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, textureID, 0);
-    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-        std::cout << "Failed to generate texture buffer" << std::endl;
-        return 0;
-    }
-    return MapTextureBuffer;
-}
-
 class MapMaker
 {
 protected:
     UI *m_ui;
     PixelPreview m_pixelPreview;
-    // This will eventually be a more structured series of operations to produce
-    // a final image, with multiple intermediate images.
-    PerlinNoise m_noise;
     unsigned int m_width = 1280;
     unsigned int m_height = 720;
 
@@ -314,27 +461,28 @@ public:
     }
     void Exec()
     {
-        GLuint renderTexture = makeTexture(m_width, m_height);
-        GLuint bufferID = makeBuffer(renderTexture);
-
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
 
-        Shader noise("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/noise/perlin.fs");
         Shader viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs");
-        glm::mat4 identity(1.0f);
 
-        noise.use();
-        noise.setMat4("transform", identity);
-        glViewport(0, 0, m_width, m_height);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        // MapMaker owns no textures, each operator owns the textures it generates.
+        // MapMaker instead owns a running mapping of Layer: Texture* as a RenderSet
+        // that it passes as input to each operator. If rewinding to a previous operator,
+        // this must be reset and re-populated by each prior operator in sequence.
+        RenderSet renderSet;
+
+        // Run the first operator on the renderSet
+        PerlinNoiseOperator m_noiseOp;
+        m_noiseOp.init(m_width, m_height);
+        m_noiseOp.process(&renderSet);
 
         while (!m_ui->IsClosed())
         {
             glfwPollEvents();
 
             // Draw and display the buffer
-            m_ui->Draw(renderTexture);
+            m_ui->Draw(&renderSet);
             m_ui->Display();
         }
     }
