@@ -149,6 +149,7 @@ protected:
     GLuint FBO;
 
 public:
+    // TODO: Should have a virtual destructor so that it can be stored as the base class
     void init(unsigned int width, unsigned int height)
     {
         m_width = width;
@@ -166,16 +167,17 @@ public:
 
         // Generate the FBO with textures bound in order
         glGenFramebuffers(1, &FBO);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
+        // TODO: Binding only the draw buffer here causes it to fail. More research into this required.
+        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
         std::vector<GLenum> drawBuffers(outputs.size());
         for (size_t i = 0; i < outputs.size(); ++i)
         {
-            glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, outputs[i].ID, 0);
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, outputs[i].ID, 0);
             drawBuffers[i] = GL_COLOR_ATTACHMENT0 + i;
         }
 
         glDrawBuffers(drawBuffers.size(), drawBuffers.data());
-        if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
             std::cout << "Failed to generate texture buffer" << std::endl;
         }
@@ -253,7 +255,7 @@ public:
     virtual void process(RenderSet *renders)
     {
         shader.use();
-        glBindFramebuffer(GL_DRAW_BUFFER, FBO);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
         glViewport(0, 0, m_width, m_height);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         PopulateRenderSet(renders);
@@ -285,7 +287,7 @@ public:
         shader.setInt("inImage", 0);
 
         // Render
-        glBindFramebuffer(GL_DRAW_BUFFER, FBO);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
         glViewport(0, 0, m_width, m_height);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -468,6 +470,7 @@ class MapMaker
 protected:
     UI *m_ui;
     PixelPreview m_pixelPreview;
+    std::vector<Operator *> operators;
     unsigned int m_width = 1280;
     unsigned int m_height = 720;
 
@@ -487,17 +490,29 @@ protected:
 public:
     MapMaker(UI *ui) : m_ui(ui)
     {
+        // TODO: Switch to smart pointers
+        operators.push_back(new PerlinNoiseOperator);
+        operators.push_back(new InvertOperator);
+        for (auto op : operators)
+        {
+            op->init(m_width, m_height);
+        }
         m_ui->mapPosChanged.connect(this, &MapMaker::OnMouseMoved);
         m_ui->closeRequested.connect(this, &MapMaker::Close);
         m_ui->keyChanged.connect(this, &MapMaker::OnKeyChanged);
         m_ui->SetPixelPreview(&m_pixelPreview);
     }
+    ~MapMaker()
+    {
+        for (size_t i = operators.size() - 1; i >= 0; --i)
+        {
+            delete operators[i];
+        }
+    }
     void Exec()
     {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
-
-        Shader viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs");
 
         // MapMaker owns no textures, each operator owns the textures it generates.
         // MapMaker instead owns a running mapping of Layer: Texture* as a RenderSet
@@ -506,13 +521,10 @@ public:
         RenderSet renderSet;
 
         // Run the first operator on the renderSet
-        PerlinNoiseOperator m_noiseOp;
-        m_noiseOp.init(m_width, m_height);
-        m_noiseOp.process(&renderSet);
-
-        InvertOperator m_invertOp;
-        m_invertOp.init(m_width, m_height);
-        m_invertOp.process(&renderSet);
+        for (auto op : operators)
+        {
+            op->process(&renderSet);
+        }
 
         while (!m_ui->IsClosed())
         {
@@ -536,6 +548,7 @@ int main()
     if (!glfwInit())
         return 1;
 
+    // TODO: context and GLEW still need initialising without the UI... right?
     UI ui = UI(1280, 720, "MapMaker");
     if (!ui.IsInitialised())
         return 1;
