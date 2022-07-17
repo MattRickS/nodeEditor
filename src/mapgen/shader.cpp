@@ -162,7 +162,7 @@ void Shader::setVec4(const std::string &name, glm::vec4 vec) const
     glUniform4f(location, vec.x, vec.y, vec.z, vec.w);
 }
 
-void Shader::setMat4(const std::string &name, glm::mat4 matrix) const
+void Shader::setMat4(const std::string &name, glm::mat4 &matrix) const
 {
     GLuint location = getLocation(name);
     // Location, Number of Matrices, Transpose?, matrices

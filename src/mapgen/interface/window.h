@@ -3,9 +3,10 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include "../context.hpp"
 #include "signal.hpp"
 
-class Window
+class Window : public Context
 {
 public:
     Signal<double, double> cursorMoved;
@@ -15,14 +16,13 @@ public:
     Signal<int, int> sizeChanged;
     Signal<> closeRequested;
 
-    Window(unsigned int width, unsigned int height, const char *name);
+    Window(const char *name, unsigned int width, unsigned int height);
     ~Window();
 
     void Display();
 
     void Close();
     bool IsClosed() const;
-    bool IsInitialised() const;
 
     void Resize(unsigned int width, unsigned int height);
     unsigned int Height() const;
@@ -38,9 +38,7 @@ public:
     virtual void OnCloseRequested();
 
 protected:
-    GLFWwindow *m_window;
     unsigned int m_width, m_height;
-    bool m_glew_init = false;
 
     void ConnectSignals();
     void DisconnectSignals();
