@@ -120,11 +120,8 @@ protected:
         if (isPanning)
         {
             glm::vec2 cursorPos = glm::vec2(xpos, ypos);
-            // TODO: Get a 1:1 translation
-            // glm::vec2 offset = m_ui->ScreenToWorldPos(cursorPos) - m_ui->ScreenToWorldPos(lastCursorPos);
-            glm::vec2 offset = 2.0f * (cursorPos - lastCursorPos);
-            offset = glm::vec2(offset.x / m_ui->Width(), offset.y / m_ui->Height());
-            m_ui->camera.view = glm::translate(m_ui->camera.view, glm::vec3(offset, 0.0f));
+            glm::vec2 offset = m_ui->ScreenToWorldPos(cursorPos) - m_ui->ScreenToWorldPos(lastCursorPos);
+            m_ui->camera.view = glm::translate(m_ui->camera.view, glm::vec3(2.0f * offset, 0.0f));
             lastCursorPos = cursorPos;
         }
     }

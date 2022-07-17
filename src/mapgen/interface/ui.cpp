@@ -58,7 +58,7 @@ void UI::Draw(const RenderSet *const renderSet)
     glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, renderSet->GetLayer(LAYER_HEIGHTMAP)->ID);
-    glClearColor(1.0, 1.0, 0.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     viewShader.use();
     viewShader.setMat4("view", camera.view);
