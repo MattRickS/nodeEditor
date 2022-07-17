@@ -334,6 +334,7 @@ protected:
     bool isPanning = false;
     glm::vec2 lastCursorPos;
 
+    // TODO: Resizing window should not distort the image
     glm::mat4 viewTransform = glm::mat4(1.0f);
     glm::vec2 transformOffset = glm::vec2(0.0f);
     float transformZoom = 1.0f;
@@ -361,7 +362,7 @@ protected:
             glm::vec2 cursorPos = CursorPos();
             glm::vec2 offset = cursorPos - lastCursorPos;
             // Invert y-axis as openGL is inverse
-            transformOffset += glm::vec2(offset.x / m_width, -offset.y / m_height);
+            transformOffset += glm::vec2(offset.x / m_width, -offset.y / m_height) * 2.0f;
             lastCursorPos = cursorPos;
             updateTransform();
         }
