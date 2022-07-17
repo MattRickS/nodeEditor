@@ -86,6 +86,12 @@ protected:
     unsigned int m_width = 1280;
     unsigned int m_height = 720;
 
+    // MapMaker owns no textures, each operator owns the textures it generates.
+    // MapMaker instead owns a running mapping of Layer: Texture* as a RenderSet
+    // that it passes as input to each operator. If rewinding to a previous operator,
+    // this must be reset and re-populated by each prior operator in sequence.
+    RenderSet renderSet;
+
     void OnMouseMoved(unsigned int xpos, unsigned int ypos)
     {
         // TODO: Which framebuffer? Might be simpler once threaded
@@ -126,12 +132,6 @@ public:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
 
-        // MapMaker owns no textures, each operator owns the textures it generates.
-        // MapMaker instead owns a running mapping of Layer: Texture* as a RenderSet
-        // that it passes as input to each operator. If rewinding to a previous operator,
-        // this must be reset and re-populated by each prior operator in sequence.
-        RenderSet renderSet;
-
         // Run the first operator on the renderSet
         for (auto op : operators)
         {
@@ -161,7 +161,7 @@ int main()
         return 1;
 
     // TODO: context and GLEW still need initialising without the UI... right?
-    UI ui = UI(1280, 720, "MapMaker");
+    UI ui = UI();
     if (!ui.IsInitialised())
         return 1;
 
@@ -169,6 +169,8 @@ int main()
     MapMaker app = MapMaker(&ui);
     app.Exec();
 
+    // XXX: Seeing output "Glfw Error 65537: The GLFW library is not initialized"
+    // Think this fails because the window is already destroyed, non-critical
     glfwTerminate();
     return 0;
 }

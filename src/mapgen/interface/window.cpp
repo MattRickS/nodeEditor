@@ -48,32 +48,11 @@ void close_callback(GLFWwindow *window)
 // =============================================================================
 // Public
 
-Window::Window(unsigned int width, unsigned int height, const char *name) : m_width(width), m_height(height)
+Window::Window(const char *name, unsigned int width, unsigned int height) : Context(name, width, height), m_width(width), m_height(height)
 {
-    m_window = glfwCreateWindow(width, height, name, NULL, NULL);
-    if (m_window == NULL)
+    if (!IsInitialised())
         return;
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 3.2+ only
-
-#if defined(__APPLE__)
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
-#endif
-
-    glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
-
-    // GLEW init
-    GLenum err = glewInit();
-    if (err != GLEW_OK)
-    {
-        std::cerr << "Failed to initialise glew: " << glewGetErrorString(err) << std::endl;
-        return;
-    }
-    m_glew_init = true;
-
     ConnectSignals();
 }
 
@@ -88,7 +67,6 @@ void Window::Display() { glfwSwapBuffers(m_window); }
 
 void Window::Close() { glfwSetWindowShouldClose(m_window, true); }
 bool Window::IsClosed() const { return glfwWindowShouldClose(m_window); }
-bool Window::IsInitialised() const { return bool(m_window) && m_glew_init; }
 
 void Window::Resize(unsigned int width, unsigned int height)
 {
