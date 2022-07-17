@@ -83,8 +83,8 @@ void makeQuad()
 class Application
 {
 protected:
-    UI *m_ui;
     MapMaker *m_mapmaker;
+    UI *m_ui;
     PixelPreview m_pixelPreview;
 
     bool isPanning = false;
@@ -108,21 +108,20 @@ protected:
 
     void OnMouseMoved(double xpos, double ypos)
     {
-        // TODO: transform the position to get the pixel pos on the map
         glm::ivec4 viewportRegion = m_ui->GetViewportRegion();
-        // TODO: These are entirely wrong
-        m_pixelPreview.pos = {xpos - viewportRegion.x, ypos - viewportRegion.y};
-        if (m_pixelPreview.pos.x >= 0)
+        glm::vec2 worldPos = m_ui->ScreenToWorldPos({xpos, ypos});
+        if (worldPos.x >= 0 && worldPos.x <= 1 && worldPos.y >= 0 && worldPos.y <= 1)
         {
+            m_pixelPreview.pos = {worldPos.x * m_mapmaker->Width(), worldPos.y * m_mapmaker->Height()};
             // TODO: Which framebuffer? Might be simpler once threaded
-            glReadPixels(m_pixelPreview.pos.x, m_pixelPreview.pos.y, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
+            glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
         }
 
         if (isPanning)
         {
             glm::vec2 cursorPos = glm::vec2(xpos, ypos);
             // TODO: Get a 1:1 translation
-            // glm::vec2 offset = m_ui->ScreenToMapPos(cursorPos) - m_ui->ScreenToMapPos(lastCursorPos);
+            // glm::vec2 offset = m_ui->ScreenToWorldPos(cursorPos) - m_ui->ScreenToWorldPos(lastCursorPos);
             glm::vec2 offset = 2.0f * (cursorPos - lastCursorPos);
             offset = glm::vec2(offset.x / m_ui->Width(), offset.y / m_ui->Height());
             m_ui->camera.view = glm::translate(m_ui->camera.view, glm::vec3(offset, 0.0f));
@@ -202,15 +201,13 @@ int main()
     if (!glfwInit())
         return 1;
 
-    unsigned int width = 1280;
-    unsigned int height = 720;
     // TODO: context and GLEW still need initialising without the UI... right?
-    UI ui = UI(width, height);
+    UI ui = UI(1280, 720);
     if (!ui.IsInitialised())
         return 1;
 
     makeQuad();
-    MapMaker mapmaker(width, height);
+    MapMaker mapmaker(1024, 1024);
     Application app = Application(&mapmaker, &ui);
     app.Exec();
 

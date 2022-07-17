@@ -49,6 +49,6 @@ public:
     glm::ivec4 GetViewportRegion();
     glm::ivec4 GetPropertiesRegion();
 
-    glm::vec2 ScreenToMapPos(glm::vec2 screenPos);
-    glm::vec2 MapToScreenPos(glm::vec2 mapPos);
+    glm::vec2 ScreenToWorldPos(glm::vec2 screenPos);
+    glm::vec2 WorldToScreenPos(glm::vec2 mapPos);
 };

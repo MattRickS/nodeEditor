@@ -22,6 +22,8 @@ public:
     MapMaker(unsigned int width, unsigned int height);
     ~MapMaker();
 
+    unsigned int Width() const;
+    unsigned int Height() const;
     const RenderSet *const GetRenderSet() const;
     bool IsProcessed(size_t index);
     void ProcessTo(size_t index);

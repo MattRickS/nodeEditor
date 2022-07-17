@@ -102,14 +102,20 @@ glm::ivec4 UI::GetPropertiesRegion()
     return glm::ivec4(0, 0, m_width * m_uiScreenWidthPercent, m_height);
 }
 
-glm::vec2 UI::ScreenToMapPos(glm::vec2 screenPos)
+glm::vec2 UI::ScreenToWorldPos(glm::vec2 screenPos)
 {
-    glm::ivec4 uiRegion = GetPropertiesRegion();
-    glm::vec2 viewportPos = glm::vec2(screenPos.x - uiRegion.x, screenPos.y - uiRegion.y);
-    glm::vec4 ndcPos = camera.projection * camera.view * glm::vec4(viewportPos, 0, 1);
-    return {ndcPos.x * m_width, ndcPos.y * m_height};
+    glm::ivec4 viewportRegion = GetViewportRegion();
+    glm::vec2 ndcPos = glm::vec2(
+                           float(screenPos.x - viewportRegion.x) / viewportRegion.z,
+                           float(screenPos.y - viewportRegion.y) / viewportRegion.w) *
+                           2.0f -
+                       1.0f;
+    // This needs inverse matrices
+    glm::vec4 worldPos = glm::inverse(camera.view) * glm::inverse(camera.projection) * glm::vec4(ndcPos, 0, 1);
+    worldPos /= worldPos.w;
+    return glm::vec2(worldPos.x, worldPos.y) * 0.5f + 0.5f;
 }
-glm::vec2 UI::MapToScreenPos(glm::vec2 mapPos)
+glm::vec2 UI::WorldToScreenPos(glm::vec2 mapPos)
 {
     glm::vec2 ndcPos = glm::vec2(mapPos.x / (float)m_width, mapPos.y / (float)m_height);
     // TODO: Convert to actual screen pos

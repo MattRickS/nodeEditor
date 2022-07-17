@@ -1,4 +1,3 @@
-#pragma once
 #include <vector>
 
 #include "operators/invert.hpp"
@@ -19,11 +18,14 @@ MapMaker::MapMaker(unsigned int width, unsigned int height) : m_width(width), m_
 }
 MapMaker::~MapMaker()
 {
-    for (size_t i = operators.size() - 1; i >= 0; --i)
-    {
-        delete operators[i];
-    }
+    // for (size_t i = operators.size() - 1; i >= 0; --i)
+    // {
+    //     delete operators[i];
+    // }
 }
+
+unsigned int MapMaker::Width() const { return m_width; }
+unsigned int MapMaker::Height() const { return m_height; }
 
 const RenderSet *const MapMaker::GetRenderSet() const
 {
