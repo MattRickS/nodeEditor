@@ -28,17 +28,21 @@ protected:
     glm::vec2 lastCursorPos;
 
     // TODO: Resizing window should not distort the image
-    glm::mat4 viewTransform = glm::mat4(1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 projection = glm::mat4(1.0f);
     glm::vec2 transformOffset = glm::vec2(0.0f);
-    float transformZoom = 1.0f;
+    float focal = 1.0f;
 
     unsigned int uiWidth();
-    void updateTransform();
+    void UpdateView();
+    void UpdateProjection();
 
     // Only emits the signal if the UI didn't capture it
     virtual void OnMouseMoved(double xpos, double ypos);
     virtual void OnMouseButtonChanged(int button, int action, int mods);
     virtual void OnMouseScrolled(double xoffset, double yoffset);
+
+    void FuckSake(int width, int height);
 
 public:
     Signal<unsigned int, unsigned int> mapPosChanged;

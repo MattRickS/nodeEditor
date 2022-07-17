@@ -10,14 +10,23 @@
 #include "window.h"
 #include "ui.h"
 
+const float CAM_NEAR = 0.1f;
+const float CAM_FAR = 100.0f;
+
 unsigned int UI::uiWidth() { return m_width * m_uiScreenWidthPercent; }
-void UI::updateTransform()
+void UI::UpdateView()
 {
-    viewTransform = glm::mat4(1.0f);
-    viewTransform = glm::translate(viewTransform, glm::vec3(transformOffset, 0.0f));
-    viewTransform = glm::scale(viewTransform, glm::vec3(transformZoom, transformZoom, 1.0f));
-    viewShader.use();
-    viewShader.setMat4("transform", viewTransform);
+    glm::vec3 pos = glm::vec3(transformOffset, -1.0f);
+    view = glm::mat4(1.0f);
+    view = glm::translate(view, pos);
+}
+void UI::UpdateProjection()
+{
+    glm::ivec4 viewportRegion = GetMapViewportRegion();
+    float hAperture = (float)viewportRegion.z / (float)viewportRegion.w;
+    std::cout << hAperture << std::endl;
+    static float vAperture = 1.0f;
+    projection = glm::ortho(-hAperture * focal, hAperture * focal, -vAperture * focal, vAperture * focal, CAM_NEAR, CAM_FAR);
 }
 
 void UI::OnMouseMoved(double xpos, double ypos)
@@ -42,7 +51,7 @@ void UI::OnMouseMoved(double xpos, double ypos)
         // Invert y-axis as openGL is inverse
         transformOffset += glm::vec2(offset.x / m_width, -offset.y / m_height) * 2.0f;
         lastCursorPos = cursorPos;
-        updateTransform();
+        UpdateView();
     }
 }
 
@@ -72,8 +81,13 @@ void UI::OnMouseScrolled(double xoffset, double yoffset)
     if (io.WantCaptureMouse)
         return;
 
-    transformZoom += yoffset * 0.1f;
-    updateTransform();
+    focal *= (1.0f - yoffset * 0.1f);
+    UpdateProjection();
+}
+
+void UI::FuckSake(int width, int height)
+{
+    UpdateProjection();
 }
 
 UI::UI(unsigned int width, unsigned int height, const char *name) : Window(name, width, height),
@@ -84,6 +98,10 @@ UI::UI(unsigned int width, unsigned int height, const char *name) : Window(name,
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
+
+    UpdateView();
+    UpdateProjection();
+    sizeChanged.connect(this, &UI::FuckSake);
 }
 
 void UI::SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
@@ -98,8 +116,9 @@ void UI::Draw(const RenderSet *const renderSet)
     glClearColor(1.0, 1.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     viewShader.use();
-    viewShader.setMat4("transform", viewTransform);
-    viewShader.setInt("renderTexture", 0); // Why 0 and not renderTexture?
+    viewShader.setMat4("view", view);
+    viewShader.setMat4("projection", projection);
+    viewShader.setInt("renderTexture", 0);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     // Draws the UI around it
