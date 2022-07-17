@@ -20,6 +20,8 @@
 #include "shader.h"
 
 GLuint quadVAO;
+const float CAM_NEAR = 0.1f;
+const float CAM_FAR = 100.0f;
 
 void glfw_error_callback(int error, const char *description)
 {
@@ -85,11 +87,53 @@ protected:
     MapMaker *m_mapmaker;
     PixelPreview m_pixelPreview;
 
-    void OnMouseMoved(unsigned int xpos, unsigned int ypos)
+    bool isPanning = false;
+    glm::vec2 lastCursorPos;
+
+    void OnMouseButtonChanged(int button, int action, int mods)
     {
-        // TODO: Which framebuffer? Might be simpler once threaded
-        glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
-        m_pixelPreview.pos = glm::ivec2(xpos, ypos);
+        if (button == GLFW_MOUSE_BUTTON_LEFT)
+        {
+            if (action == GLFW_PRESS)
+            {
+                lastCursorPos = m_ui->CursorPos();
+                isPanning = true;
+            }
+            else if (action == GLFW_RELEASE)
+            {
+                isPanning = false;
+            }
+        }
+    }
+
+    void OnMouseMoved(double xpos, double ypos)
+    {
+        // TODO: transform the position to get the pixel pos on the map
+        glm::ivec4 viewportRegion = m_ui->GetViewportRegion();
+        // TODO: These are entirely wrong
+        m_pixelPreview.pos = {xpos - viewportRegion.x, ypos - viewportRegion.y};
+        if (m_pixelPreview.pos.x >= 0)
+        {
+            // TODO: Which framebuffer? Might be simpler once threaded
+            glReadPixels(m_pixelPreview.pos.x, m_pixelPreview.pos.y, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
+        }
+
+        if (isPanning)
+        {
+            glm::vec2 cursorPos = glm::vec2(xpos, ypos);
+            // TODO: Get a 1:1 translation
+            // glm::vec2 offset = m_ui->ScreenToMapPos(cursorPos) - m_ui->ScreenToMapPos(lastCursorPos);
+            glm::vec2 offset = 2.0f * (cursorPos - lastCursorPos);
+            offset = glm::vec2(offset.x / m_ui->Width(), offset.y / m_ui->Height());
+            m_ui->camera.view = glm::translate(m_ui->camera.view, glm::vec3(offset, 0.0f));
+            lastCursorPos = cursorPos;
+        }
+    }
+
+    void OnMouseScrolled(double xoffset, double yoffset)
+    {
+        m_ui->camera.focal *= (1.0f - yoffset * 0.1f);
+        UpdateProjection();
     }
 
     void OnKeyChanged(int key, int scancode, int action, int mode)
@@ -98,11 +142,36 @@ protected:
             Close();
     }
 
+    void OnResize(int width, int height)
+    {
+        UpdateProjection();
+    }
+
+    void UpdateProjection()
+    {
+        glm::ivec4 viewportRegion = m_ui->GetViewportRegion();
+        float hAperture = (float)viewportRegion.z / (float)viewportRegion.w;
+        static float vAperture = 1.0f;
+        m_ui->camera.projection = glm::ortho(-hAperture * m_ui->camera.focal,
+                                             hAperture * m_ui->camera.focal,
+                                             -vAperture * m_ui->camera.focal,
+                                             vAperture * m_ui->camera.focal,
+                                             CAM_NEAR,
+                                             CAM_FAR);
+    }
+
 public:
     Application(MapMaker *mapmaker, UI *ui) : m_mapmaker(mapmaker), m_ui(ui)
     {
-        m_ui->mapPosChanged.connect(this, &Application::OnMouseMoved);
+        // TODO: I'm being too lazy to work out the actual matrix for the definition
+        m_ui->camera.view = glm::translate(m_ui->camera.view, glm::vec3(0, 0, -1));
+        UpdateProjection();
+
+        m_ui->cursorMoved.connect(this, &Application::OnMouseMoved);
+        m_ui->mouseButtonChanged.connect(this, &Application::OnMouseButtonChanged);
+        m_ui->mouseScrolled.connect(this, &Application::OnMouseScrolled);
         m_ui->closeRequested.connect(this, &Application::Close);
+        m_ui->sizeChanged.connect(this, &Application::OnResize);
         m_ui->keyChanged.connect(this, &Application::OnKeyChanged);
         m_ui->SetPixelPreview(&m_pixelPreview);
     }

@@ -10,49 +10,15 @@
 #include "window.h"
 #include "ui.h"
 
-const float CAM_NEAR = 0.1f;
-const float CAM_FAR = 100.0f;
-
-unsigned int UI::uiWidth() { return m_width * m_uiScreenWidthPercent; }
-void UI::UpdateView()
-{
-    glm::vec3 pos = glm::vec3(transformOffset, -1.0f);
-    view = glm::mat4(1.0f);
-    view = glm::translate(view, pos);
-}
-void UI::UpdateProjection()
-{
-    glm::ivec4 viewportRegion = GetMapViewportRegion();
-    float hAperture = (float)viewportRegion.z / (float)viewportRegion.w;
-    std::cout << hAperture << std::endl;
-    static float vAperture = 1.0f;
-    projection = glm::ortho(-hAperture * focal, hAperture * focal, -vAperture * focal, vAperture * focal, CAM_NEAR, CAM_FAR);
-}
-
 void UI::OnMouseMoved(double xpos, double ypos)
 {
     ImGuiIO &io = ImGui::GetIO();
     if (io.WantCaptureMouse)
         return;
 
-    // TODO: transform the position to get the pixel pos on the map
-    int imagePosX = xpos - uiWidth();
-    if (imagePosX >= 0)
-    {
-        // glfw measures y from top-left, image positions are referenced from
-        // bot-left, invert the y-axis
-        mapPosChanged.emit(imagePosX, m_height - ypos);
-    }
-
-    if (isPanning)
-    {
-        glm::vec2 cursorPos = CursorPos();
-        glm::vec2 offset = cursorPos - lastCursorPos;
-        // Invert y-axis as openGL is inverse
-        transformOffset += glm::vec2(offset.x / m_width, -offset.y / m_height) * 2.0f;
-        lastCursorPos = cursorPos;
-        UpdateView();
-    }
+    // Invert the ypos so botleft is (0,0) instead of GL's topleft
+    ypos = m_height - ypos;
+    cursorMoved.emit(xpos, ypos);
 }
 
 void UI::OnMouseButtonChanged(int button, int action, int mods)
@@ -61,18 +27,7 @@ void UI::OnMouseButtonChanged(int button, int action, int mods)
     if (io.WantCaptureMouse)
         return;
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT)
-    {
-        if (action == GLFW_PRESS)
-        {
-            lastCursorPos = CursorPos();
-            isPanning = true;
-        }
-        else if (action == GLFW_RELEASE)
-        {
-            isPanning = false;
-        }
-    }
+    mouseButtonChanged.emit(button, action, mods);
 }
 
 void UI::OnMouseScrolled(double xoffset, double yoffset)
@@ -81,13 +36,7 @@ void UI::OnMouseScrolled(double xoffset, double yoffset)
     if (io.WantCaptureMouse)
         return;
 
-    focal *= (1.0f - yoffset * 0.1f);
-    UpdateProjection();
-}
-
-void UI::FuckSake(int width, int height)
-{
-    UpdateProjection();
+    mouseScrolled.emit(xoffset, yoffset);
 }
 
 UI::UI(unsigned int width, unsigned int height, const char *name) : Window(name, width, height),
@@ -98,10 +47,6 @@ UI::UI(unsigned int width, unsigned int height, const char *name) : Window(name,
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
-
-    UpdateView();
-    UpdateProjection();
-    sizeChanged.connect(this, &UI::FuckSake);
 }
 
 void UI::SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
@@ -109,15 +54,15 @@ void UI::Draw(const RenderSet *const renderSet)
 {
     // Draws the texture into the window slot
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glm::ivec4 mapRegion = GetMapViewportRegion();
+    glm::ivec4 mapRegion = GetViewportRegion();
     glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, renderSet->GetLayer(LAYER_HEIGHTMAP)->ID);
     glClearColor(1.0, 1.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     viewShader.use();
-    viewShader.setMat4("view", view);
-    viewShader.setMat4("projection", projection);
+    viewShader.setMat4("view", camera.view);
+    viewShader.setMat4("projection", camera.projection);
     viewShader.setInt("renderTexture", 0);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -129,8 +74,9 @@ void UI::Draw(const RenderSet *const renderSet)
     static bool p_open = NULL;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(uiWidth(), m_height));
+    glm::ivec4 propertiesRegion = GetPropertiesRegion();
+    ImGui::SetNextWindowPos(ImVec2(propertiesRegion.x, propertiesRegion.y));
+    ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
     ImGui::Begin("Mapmaker UI", &p_open, flags);
 
     if (m_pixelPreview)
@@ -145,7 +91,27 @@ void UI::Draw(const RenderSet *const renderSet)
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-glm::ivec4 UI::GetMapViewportRegion()
+
+glm::ivec4 UI::GetViewportRegion()
 {
-    return glm::ivec4(uiWidth(), 0, m_width - uiWidth(), m_height);
+    float uiWidth = m_width * m_uiScreenWidthPercent;
+    return glm::ivec4(uiWidth, 0, m_width - uiWidth, m_height);
+}
+glm::ivec4 UI::GetPropertiesRegion()
+{
+    return glm::ivec4(0, 0, m_width * m_uiScreenWidthPercent, m_height);
+}
+
+glm::vec2 UI::ScreenToMapPos(glm::vec2 screenPos)
+{
+    glm::ivec4 uiRegion = GetPropertiesRegion();
+    glm::vec2 viewportPos = glm::vec2(screenPos.x - uiRegion.x, screenPos.y - uiRegion.y);
+    glm::vec4 ndcPos = camera.projection * camera.view * glm::vec4(viewportPos, 0, 1);
+    return {ndcPos.x * m_width, ndcPos.y * m_height};
+}
+glm::vec2 UI::MapToScreenPos(glm::vec2 mapPos)
+{
+    glm::vec2 ndcPos = glm::vec2(mapPos.x / (float)m_width, mapPos.y / (float)m_height);
+    // TODO: Convert to actual screen pos
+    return ndcPos;
 }

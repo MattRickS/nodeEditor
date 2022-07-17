@@ -13,6 +13,13 @@ struct PixelPreview
     glm::ivec2 pos = glm::ivec2(0);
 };
 
+struct Camera
+{
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 projection = glm::mat4(1.0f);
+    float focal = 1.0f;
+};
+
 /*
 Class for handling User Interface. Responsible for layout and drawing the
 interactive widgets but not for rendering the map.
@@ -23,33 +30,25 @@ protected:
     Shader viewShader;
     float m_uiScreenWidthPercent = 0.25f;
     PixelPreview *m_pixelPreview;
-    // PerlinNoiseUI m_perlinUI;
-    bool isPanning = false;
-    glm::vec2 lastCursorPos;
-
-    // TODO: Resizing window should not distort the image
-    glm::mat4 view = glm::mat4(1.0f);
-    glm::mat4 projection = glm::mat4(1.0f);
-    glm::vec2 transformOffset = glm::vec2(0.0f);
-    float focal = 1.0f;
-
-    unsigned int uiWidth();
-    void UpdateView();
-    void UpdateProjection();
 
     // Only emits the signal if the UI didn't capture it
     virtual void OnMouseMoved(double xpos, double ypos);
     virtual void OnMouseButtonChanged(int button, int action, int mods);
     virtual void OnMouseScrolled(double xoffset, double yoffset);
 
-    void FuckSake(int width, int height);
-
 public:
+    Camera camera;
+
     Signal<unsigned int, unsigned int> mapPosChanged;
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMaker");
 
     void SetPixelPreview(PixelPreview *preview);
     void Draw(const RenderSet *const renderSet);
-    glm::ivec4 GetMapViewportRegion();
+
+    glm::ivec4 GetViewportRegion();
+    glm::ivec4 GetPropertiesRegion();
+
+    glm::vec2 ScreenToMapPos(glm::vec2 screenPos);
+    glm::vec2 MapToScreenPos(glm::vec2 mapPos);
 };
