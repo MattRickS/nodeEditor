@@ -12,6 +12,7 @@
 #include <imgui_impl_opengl3.h>
 
 #include "interface/ui.h"
+#include "mapmaker.h"
 #include "operator.h"
 #include "operators/perlin.h"
 #include "operators/invert.hpp"
@@ -77,20 +78,12 @@ void makeQuad()
 //     }
 // };
 
-class MapMaker
+class Application
 {
 protected:
     UI *m_ui;
+    MapMaker *m_mapmaker;
     PixelPreview m_pixelPreview;
-    std::vector<Operator *> operators;
-    unsigned int m_width = 1280;
-    unsigned int m_height = 720;
-
-    // MapMaker owns no textures, each operator owns the textures it generates.
-    // MapMaker instead owns a running mapping of Layer: Texture* as a RenderSet
-    // that it passes as input to each operator. If rewinding to a previous operator,
-    // this must be reset and re-populated by each prior operator in sequence.
-    RenderSet renderSet;
 
     void OnMouseMoved(unsigned int xpos, unsigned int ypos)
     {
@@ -106,44 +99,24 @@ protected:
     }
 
 public:
-    MapMaker(UI *ui) : m_ui(ui)
+    Application(MapMaker *mapmaker, UI *ui) : m_mapmaker(mapmaker), m_ui(ui)
     {
-        // TODO: Switch to smart pointers
-        operators.push_back(new PerlinNoiseOperator);
-        operators.push_back(new InvertOperator);
-        for (auto op : operators)
-        {
-            op->init(m_width, m_height);
-        }
-        m_ui->mapPosChanged.connect(this, &MapMaker::OnMouseMoved);
-        m_ui->closeRequested.connect(this, &MapMaker::Close);
-        m_ui->keyChanged.connect(this, &MapMaker::OnKeyChanged);
+        m_ui->mapPosChanged.connect(this, &Application::OnMouseMoved);
+        m_ui->closeRequested.connect(this, &Application::Close);
+        m_ui->keyChanged.connect(this, &Application::OnKeyChanged);
         m_ui->SetPixelPreview(&m_pixelPreview);
-    }
-    ~MapMaker()
-    {
-        for (size_t i = operators.size() - 1; i >= 0; --i)
-        {
-            delete operators[i];
-        }
     }
     void Exec()
     {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
 
-        // Run the first operator on the renderSet
-        for (auto op : operators)
-        {
-            op->process(&renderSet);
-        }
+        m_mapmaker->ProcessAll();
 
         while (!m_ui->IsClosed())
         {
             glfwPollEvents();
-
-            // Draw and display the buffer
-            m_ui->Draw(&renderSet);
+            m_ui->Draw(m_mapmaker->GetRenderSet());
             m_ui->Display();
         }
     }
@@ -160,13 +133,16 @@ int main()
     if (!glfwInit())
         return 1;
 
+    unsigned int width = 1280;
+    unsigned int height = 720;
     // TODO: context and GLEW still need initialising without the UI... right?
-    UI ui = UI();
+    UI ui = UI(width, height);
     if (!ui.IsInitialised())
         return 1;
 
     makeQuad();
-    MapMaker app = MapMaker(&ui);
+    MapMaker mapmaker(width, height);
+    Application app = Application(&mapmaker, &ui);
     app.Exec();
 
     // XXX: Seeing output "Glfw Error 65537: The GLFW library is not initialized"

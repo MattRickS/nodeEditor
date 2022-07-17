@@ -76,7 +76,7 @@ void UI::OnMouseScrolled(double xoffset, double yoffset)
     updateTransform();
 }
 
-UI::UI(const char *name, unsigned int width, unsigned int height) : Window(name, width, height),
+UI::UI(unsigned int width, unsigned int height, const char *name) : Window(name, width, height),
                                                                     viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs")
 {
     IMGUI_CHECKVERSION();

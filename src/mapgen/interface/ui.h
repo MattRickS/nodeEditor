@@ -43,7 +43,7 @@ protected:
 public:
     Signal<unsigned int, unsigned int> mapPosChanged;
 
-    UI(const char *name = "MapMaker", unsigned int width = 1280, unsigned int height = 720);
+    UI(unsigned int width, unsigned int height, const char *name = "MapMaker");
 
     void SetPixelPreview(PixelPreview *preview);
     void Draw(const RenderSet *const renderSet);
