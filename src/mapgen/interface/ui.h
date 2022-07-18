@@ -1,6 +1,5 @@
 #pragma once
 #include <glm/glm.hpp>
-#include <imgui.h>
 
 #include "../mapmaker.h"
 #include "../renders.h"
@@ -29,9 +28,11 @@ class UI : public Window
 {
 protected:
     Shader viewShader;
-    float m_uiScreenWidthPercent = 0.25f;
+    float m_opPropertiesWidthPercent = 0.25f;
+    float m_viewPropertiesHeightPercent = 0.05f;
     PixelPreview *m_pixelPreview;
     MapMaker *m_mapmaker = nullptr;
+    Layer m_selectedLayer = LAYER_HEIGHTMAP;
 
     // Only emits the signal if the UI didn't capture it
     virtual void OnMouseMoved(double xpos, double ypos);
@@ -39,8 +40,8 @@ protected:
     virtual void OnMouseScrolled(double xoffset, double yoffset);
 
     void DrawViewport(const RenderSet *const renderSet);
-    void DrawPixelSelection();
-    void DrawProperties();
+    void DrawViewportProperties(const RenderSet *const renderSet);
+    void DrawOperatorProperties();
 
 public:
     Camera camera;
@@ -53,8 +54,9 @@ public:
     void SetPixelPreview(PixelPreview *preview);
     void Draw(const RenderSet *const renderSet);
 
-    glm::ivec4 GetViewportRegion();
-    glm::ivec4 GetPropertiesRegion();
+    glm::ivec4 GetViewportRegion() const;
+    glm::ivec4 GetViewportPropertiesRegion() const;
+    glm::ivec4 GetOperatorPropertiesRegion() const;
 
     glm::vec2 ScreenToWorldPos(glm::vec2 screenPos);
     glm::vec2 WorldToScreenPos(glm::vec2 mapPos);

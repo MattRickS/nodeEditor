@@ -54,6 +54,6 @@ void Operator::PopulateRenderSet(RenderSet *renderSet)
     auto layers = outLayers();
     for (size_t i = 0; i < layers.size(); ++i)
     {
-        renderSet->AddLayer(layers[i], &outputs[i]);
+        (*renderSet)[layers[i]] = &outputs[i];
     }
 }

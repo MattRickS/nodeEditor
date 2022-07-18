@@ -60,10 +60,9 @@ void UI::Draw(const RenderSet *const renderSet)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    DrawProperties();
-    DrawPixelSelection();
+    DrawOperatorProperties();
+    DrawViewportProperties(renderSet);
 
-    ImGui::End();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
@@ -74,7 +73,7 @@ void UI::DrawViewport(const RenderSet *const renderSet)
     glm::ivec4 mapRegion = GetViewportRegion();
     glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, renderSet->GetLayer(LAYER_HEIGHTMAP)->ID);
+    glBindTexture(GL_TEXTURE_2D, renderSet->at(m_selectedLayer)->ID);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     viewShader.use();
@@ -83,22 +82,60 @@ void UI::DrawViewport(const RenderSet *const renderSet)
     viewShader.setInt("renderTexture", 0);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
-void UI::DrawPixelSelection()
-{
-    if (m_pixelPreview)
-    {
-        ImGui::BeginDisabled();
-        ImGui::ColorEdit4("Pixel Value", (float *)&(*m_pixelPreview).value);
-        ImGui::InputInt2("Pixel Position", (int *)&(*m_pixelPreview).pos);
-        ImGui::EndDisabled();
-    }
-}
-void UI::DrawProperties()
+void UI::DrawViewportProperties(const RenderSet *const renderSet)
 {
     static bool p_open = NULL;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
-    glm::ivec4 propertiesRegion = GetPropertiesRegion();
+    glm::ivec4 propertiesRegion = GetViewportPropertiesRegion();
+    ImGui::SetNextWindowPos(ImVec2(propertiesRegion.x, propertiesRegion.y));
+    ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
+    ImGui::Begin("Viewport Properties", &p_open, flags);
+
+    ImGui::PushItemWidth(350.0f);
+    if (ImGui::BeginCombo("Layer", getLayerName(m_selectedLayer)))
+    {
+        for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
+        {
+            bool isSelected = (m_selectedLayer == it->first);
+            if (ImGui::Selectable(getLayerName(it->first), isSelected))
+            {
+                m_selectedLayer = it->first;
+            }
+            if (isSelected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::PopItemWidth();
+
+    if (m_pixelPreview)
+    {
+        ImGui::BeginDisabled();
+
+        ImGui::SameLine();
+        ImGui::PushItemWidth(250.0f);
+        ImGui::ColorEdit4("##PixelColor", (float *)&(*m_pixelPreview).value);
+        ImGui::PopItemWidth();
+
+        ImGui::SameLine();
+        ImGui::PushItemWidth(100.0f);
+        ImGui::InputInt2("##PixelPos", (int *)&(*m_pixelPreview).pos);
+        ImGui::PopItemWidth();
+
+        ImGui::EndDisabled();
+    }
+
+    ImGui::End();
+}
+void UI::DrawOperatorProperties()
+{
+    static bool p_open = NULL;
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
+
+    glm::ivec4 propertiesRegion = GetOperatorPropertiesRegion();
     ImGui::SetNextWindowPos(ImVec2(propertiesRegion.x, propertiesRegion.y));
     ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
     ImGui::Begin("Mapmaker Properties", &p_open, flags);
@@ -115,7 +152,8 @@ void UI::DrawProperties()
             switch (op->type())
             {
             case OP_TERRAIN_GEN:
-                PerlinNoiseOperator *noiseOp = dynamic_cast<PerlinNoiseOperator *>(op);
+                PerlinNoiseOperator *noiseOp = static_cast<PerlinNoiseOperator *>(op);
+
                 float freq = noiseOp->shader.Frequency();
                 if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
                     noiseOp->shader.SetFrequency(freq);
@@ -127,16 +165,27 @@ void UI::DrawProperties()
             }
         }
     }
+
+    ImGui::End();
 }
 
-glm::ivec4 UI::GetViewportRegion()
+glm::ivec4 UI::GetViewportRegion() const
 {
-    float uiWidth = m_width * m_uiScreenWidthPercent;
-    return glm::ivec4(uiWidth, 0, m_width - uiWidth, m_height);
+    float panelWidth = m_width * m_opPropertiesWidthPercent;
+    float panelHeight = m_height * m_viewPropertiesHeightPercent;
+    // Remember, positions start from (0,0) at top-left
+    return glm::ivec4(panelWidth, 0, m_width - panelWidth, m_height - panelHeight);
 }
-glm::ivec4 UI::GetPropertiesRegion()
+glm::ivec4 UI::GetViewportPropertiesRegion() const
 {
-    return glm::ivec4(0, 0, m_width * m_uiScreenWidthPercent, m_height);
+    float panelHeight = m_height * m_viewPropertiesHeightPercent;
+    float panelWidth = m_width * m_opPropertiesWidthPercent;
+    // Remember, positions start from (0,0) at top-left
+    return glm::ivec4(panelWidth, 0, m_width - panelWidth, panelHeight);
+}
+glm::ivec4 UI::GetOperatorPropertiesRegion() const
+{
+    return glm::ivec4(0, 0, m_width * m_opPropertiesWidthPercent, m_height);
 }
 
 glm::vec2 UI::ScreenToWorldPos(glm::vec2 screenPos)

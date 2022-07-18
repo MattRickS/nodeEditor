@@ -28,7 +28,7 @@ public:
         // Setup shader
         shader.use();
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renders->GetLayer(LAYER_HEIGHTMAP)->ID);
+        glBindTexture(GL_TEXTURE_2D, renders->at(LAYER_HEIGHTMAP)->ID);
         shader.setInt("inImage", 0);
 
         // Render

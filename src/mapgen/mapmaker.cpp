@@ -41,7 +41,7 @@ bool MapMaker::IsProcessed(size_t index)
 }
 void MapMaker::ProcessTo(size_t index)
 {
-    renderSet.Reset();
+    renderSet.clear();
     for (size_t i = 0; i <= index; ++i)
     {
         if (IsProcessed(i))
