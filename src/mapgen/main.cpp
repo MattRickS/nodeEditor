@@ -118,6 +118,12 @@ protected:
     {
         if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
             Close();
+        else if (key == GLFW_KEY_F)
+        {
+            m_ui->camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -1));
+            m_ui->camera.focal = 1.0f;
+            UpdateProjection();
+        }
     }
 
     void OnResize(int width, int height)
