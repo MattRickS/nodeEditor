@@ -46,4 +46,9 @@ void PerlinNoiseOperator::process(RenderSet *renders)
     glViewport(0, 0, m_width, m_height);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     PopulateRenderSet(renders);
+    m_processed = true;
+}
+bool PerlinNoiseOperator::isProcessed() const
+{
+    return m_processed;
 }

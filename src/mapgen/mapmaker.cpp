@@ -44,14 +44,19 @@ void MapMaker::ProcessTo(size_t index)
     renderSet.clear();
     for (size_t i = 0; i <= index; ++i)
     {
-        if (IsProcessed(i))
+        if (operators[i]->isProcessed())
         {
             // Accrue available renders from alreayd processed operators
             operators[i]->PopulateRenderSet(&renderSet);
         }
         else
         {
-            operators[i]->process(&renderSet);
+            // TODO: This needs some sort of guarantee of completion. Perhaps a max
+            // limit or indication of progress
+            while (!operators[i]->isProcessed())
+            {
+                operators[i]->process(&renderSet);
+            }
         }
     }
 }

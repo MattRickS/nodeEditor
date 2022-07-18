@@ -49,7 +49,10 @@ public:
     Called by the framework to generate outputs and populate/update the renderset layers
     */
     virtual void process(RenderSet *renders) = 0;
-
+    /*
+    process() is called repeatedly until this returns true
+    */
+    virtual bool isProcessed() const = 0;
     /*
     Convenience method for populating the renderset that assumes texture outputs
     are 1:1 with the outLayers. Must be overridden if different behaviour is required.

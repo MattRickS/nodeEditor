@@ -25,6 +25,9 @@ public:
 
 class PerlinNoiseOperator : public Operator
 {
+protected:
+    bool m_processed = false;
+
 public:
     PerlinNoiseShader shader;
 
@@ -36,4 +39,5 @@ public:
     virtual std::vector<Layer> inLayers() const;
     virtual std::vector<Layer> outLayers() const;
     virtual void process(RenderSet *renders);
+    virtual bool isProcessed() const;
 };

@@ -33,6 +33,7 @@ protected:
     PixelPreview *m_pixelPreview;
     MapMaker *m_mapmaker = nullptr;
     Layer m_selectedLayer = LAYER_HEIGHTMAP;
+    size_t m_selectedOpIndex = -1;
 
     // Only emits the signal if the UI didn't capture it
     virtual void OnMouseMoved(double xpos, double ypos);
@@ -47,6 +48,7 @@ public:
     Camera camera;
 
     Signal<unsigned int, unsigned int> mapPosChanged;
+    Signal<size_t> activeOperatorChanged;
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMaker");
 

@@ -138,6 +138,11 @@ protected:
                                              CAM_FAR);
     }
 
+    void SetActiveOperator(size_t index)
+    {
+        m_mapmaker->ProcessTo(index);
+    }
+
 public:
     Application(MapMaker *mapmaker, UI *ui) : m_mapmaker(mapmaker), m_ui(ui)
     {
@@ -154,6 +159,7 @@ public:
         m_ui->closeRequested.connect(this, &Application::Close);
         m_ui->sizeChanged.connect(this, &Application::OnResize);
         m_ui->keyChanged.connect(this, &Application::OnKeyChanged);
+        m_ui->activeOperatorChanged.connect(this, &Application::SetActiveOperator);
     }
     void Exec()
     {

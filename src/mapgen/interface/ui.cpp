@@ -145,24 +145,32 @@ void UI::DrawOperatorProperties()
         return;
     }
 
-    for (auto &op : m_mapmaker->operators)
+    ImGui::BeginListBox("##Operators");
+    for (size_t i = 0; i < m_mapmaker->operators.size(); ++i)
     {
-        if (ImGui::CollapsingHeader(op->name().c_str()))
+        if (ImGui::Selectable(m_mapmaker->operators[i]->name().c_str(), i == m_selectedOpIndex))
         {
-            switch (op->type())
-            {
-            case OP_TERRAIN_GEN:
-                PerlinNoiseOperator *noiseOp = static_cast<PerlinNoiseOperator *>(op);
+            m_selectedOpIndex = i;
+            activeOperatorChanged.emit(i);
+        }
+    }
+    ImGui::EndListBox();
+    ImGui::Text("Operator Settings");
+    if (m_selectedOpIndex != -1)
+    {
+        switch (m_mapmaker->operators[m_selectedOpIndex]->type())
+        {
+        case OP_TERRAIN_GEN:
+            PerlinNoiseOperator *noiseOp = static_cast<PerlinNoiseOperator *>(m_mapmaker->operators[m_selectedOpIndex]);
 
-                float freq = noiseOp->shader.Frequency();
-                if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-                    noiseOp->shader.SetFrequency(freq);
+            float freq = noiseOp->shader.Frequency();
+            if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
+                noiseOp->shader.SetFrequency(freq);
 
-                glm::ivec2 offset = noiseOp->shader.Offset();
-                if (ImGui::DragInt2("Offset", (int *)&offset))
-                    noiseOp->shader.SetOffset(offset);
-                break;
-            }
+            glm::ivec2 offset = noiseOp->shader.Offset();
+            if (ImGui::DragInt2("Offset", (int *)&offset))
+                noiseOp->shader.SetOffset(offset);
+            break;
         }
     }
 

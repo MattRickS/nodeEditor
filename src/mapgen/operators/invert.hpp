@@ -7,6 +7,9 @@
 
 class InvertOperator : public Operator
 {
+protected:
+    bool m_processed = false;
+
 public:
     Shader shader;
 
@@ -36,7 +39,13 @@ public:
         glViewport(0, 0, m_width, m_height);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+        m_processed = true;
+
         // Put outputs into render set
         PopulateRenderSet(renders);
+    }
+    virtual bool isProcessed() const
+    {
+        return m_processed;
     }
 };
