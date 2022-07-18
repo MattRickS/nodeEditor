@@ -9,7 +9,6 @@
 class MapMaker
 {
 protected:
-    std::vector<Operator *> operators;
     unsigned int m_width;
     unsigned int m_height;
     // MapMaker owns no textures, each operator owns the textures it generates.
@@ -19,6 +18,9 @@ protected:
     RenderSet renderSet;
 
 public:
+    // Making this public for now, should really expose an iterator of some sort
+    std::vector<Operator *> operators;
+
     MapMaker(unsigned int width, unsigned int height);
     ~MapMaker();
 

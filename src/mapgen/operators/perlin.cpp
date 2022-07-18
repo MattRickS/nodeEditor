@@ -1,3 +1,5 @@
+#include <string>
+
 #include <glm/glm.hpp>
 
 #include "../operator.h"
@@ -24,6 +26,10 @@ void PerlinNoiseShader::SetOffset(glm::ivec2 offset)
 }
 
 PerlinNoiseOperator::PerlinNoiseOperator() : shader() {}
+
+OpType PerlinNoiseOperator::type() const { return OP_TERRAIN_GEN; }
+
+std::string PerlinNoiseOperator::name() const { return "Noise"; }
 
 std::vector<Layer> PerlinNoiseOperator::inLayers() const
 {

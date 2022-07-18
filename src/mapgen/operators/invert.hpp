@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 #include "../operator.h"
 #include "../renders.h"
@@ -12,6 +13,8 @@ public:
     InvertOperator() : shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/invert.fs")
     {
     }
+    virtual OpType type() const { return OP_INVERT; }
+    virtual std::string name() const { return "Invert"; }
     virtual std::vector<Layer> inLayers() const
     {
         return {LAYER_HEIGHTMAP};

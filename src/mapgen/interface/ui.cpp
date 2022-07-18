@@ -49,10 +49,27 @@ UI::UI(unsigned int width, unsigned int height, const char *name) : Window(name,
     ImGui_ImplOpenGL3_Init("#version 330");
 }
 
+void UI::SetMapMaker(MapMaker *mapmaker) { m_mapmaker = mapmaker; }
 void UI::SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void UI::Draw(const RenderSet *const renderSet)
 {
-    // Draws the texture into the window slot
+    DrawViewport(renderSet);
+
+    // Draws the UI around it
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    DrawProperties();
+    DrawPixelSelection();
+
+    ImGui::End();
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+void UI::DrawViewport(const RenderSet *const renderSet)
+{
+    // Draws the texture into the viewport
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glm::ivec4 mapRegion = GetViewportRegion();
     glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
@@ -65,20 +82,9 @@ void UI::Draw(const RenderSet *const renderSet)
     viewShader.setMat4("projection", camera.projection);
     viewShader.setInt("renderTexture", 0);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-    // Draws the UI around it
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    static bool p_open = NULL;
-    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
-
-    glm::ivec4 propertiesRegion = GetPropertiesRegion();
-    ImGui::SetNextWindowPos(ImVec2(propertiesRegion.x, propertiesRegion.y));
-    ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
-    ImGui::Begin("Mapmaker UI", &p_open, flags);
-
+}
+void UI::DrawPixelSelection()
+{
     if (m_pixelPreview)
     {
         ImGui::BeginDisabled();
@@ -86,10 +92,41 @@ void UI::Draw(const RenderSet *const renderSet)
         ImGui::InputInt2("Pixel Position", (int *)&(*m_pixelPreview).pos);
         ImGui::EndDisabled();
     }
+}
+void UI::DrawProperties()
+{
+    static bool p_open = NULL;
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
-    ImGui::End();
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    glm::ivec4 propertiesRegion = GetPropertiesRegion();
+    ImGui::SetNextWindowPos(ImVec2(propertiesRegion.x, propertiesRegion.y));
+    ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
+    ImGui::Begin("Mapmaker Properties", &p_open, flags);
+
+    if (!m_mapmaker)
+    {
+        return;
+    }
+
+    for (auto &op : m_mapmaker->operators)
+    {
+        if (ImGui::CollapsingHeader(op->name().c_str()))
+        {
+            switch (op->type())
+            {
+            case OP_TERRAIN_GEN:
+                PerlinNoiseOperator *noiseOp = dynamic_cast<PerlinNoiseOperator *>(op);
+                float freq = noiseOp->shader.Frequency();
+                if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
+                    noiseOp->shader.SetFrequency(freq);
+
+                glm::ivec2 offset = noiseOp->shader.Offset();
+                if (ImGui::DragInt2("Offset", (int *)&offset))
+                    noiseOp->shader.SetOffset(offset);
+                break;
+            }
+        }
+    }
 }
 
 glm::ivec4 UI::GetViewportRegion()

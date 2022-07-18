@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 #include <glm/glm.hpp>
 
@@ -28,6 +29,9 @@ public:
     PerlinNoiseShader shader;
 
     PerlinNoiseOperator();
+
+    virtual OpType type() const;
+    virtual std::string name() const;
 
     virtual std::vector<Layer> inLayers() const;
     virtual std::vector<Layer> outLayers() const;

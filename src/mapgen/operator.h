@@ -1,9 +1,16 @@
 #pragma once
+#include <string>
 #include <vector>
 
 #include <GL/glew.h>
 
 #include "renders.h"
+
+enum OpType
+{
+    OP_TERRAIN_GEN,
+    OP_INVERT,
+};
 
 class Operator
 {
@@ -20,6 +27,10 @@ public:
     which would be undefined in the constructor.
     */
     void init(unsigned int width, unsigned int height);
+    /* Type of the operator */
+    virtual OpType type() const = 0;
+    /* Display name for the operator */
+    virtual std::string name() const = 0;
     /*
     Resizes the operators outputs. Data preservation is optional as the framework
     will try to reprocess the outputs.

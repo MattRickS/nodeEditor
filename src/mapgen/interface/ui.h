@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <imgui.h>
 
+#include "../mapmaker.h"
 #include "../renders.h"
 #include "../shader.h"
 #include "window.h"
@@ -30,11 +31,16 @@ protected:
     Shader viewShader;
     float m_uiScreenWidthPercent = 0.25f;
     PixelPreview *m_pixelPreview;
+    MapMaker *m_mapmaker = nullptr;
 
     // Only emits the signal if the UI didn't capture it
     virtual void OnMouseMoved(double xpos, double ypos);
     virtual void OnMouseButtonChanged(int button, int action, int mods);
     virtual void OnMouseScrolled(double xoffset, double yoffset);
+
+    void DrawViewport(const RenderSet *const renderSet);
+    void DrawPixelSelection();
+    void DrawProperties();
 
 public:
     Camera camera;
@@ -43,6 +49,7 @@ public:
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMaker");
 
+    void SetMapMaker(MapMaker *mapmaker);
     void SetPixelPreview(PixelPreview *preview);
     void Draw(const RenderSet *const renderSet);
 

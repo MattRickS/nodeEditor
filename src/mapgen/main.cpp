@@ -62,24 +62,6 @@ void makeQuad()
     glEnableVertexAttribArray(1);
 }
 
-// class PerlinNoiseUI
-// {
-// public:
-//     void Draw(PerlinNoiseShader *noise)
-//     {
-//         if (!noise)
-//             return;
-
-//         float freq = noise->Frequency();
-//         if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-//             noise->SetFrequency(freq);
-
-//         glm::ivec2 offset = noise->Offset();
-//         if (ImGui::DragInt2("Offset", (int *)&offset))
-//             noise->SetOffset(offset);
-//     }
-// };
-
 class Application
 {
 protected:
@@ -159,6 +141,9 @@ protected:
 public:
     Application(MapMaker *mapmaker, UI *ui) : m_mapmaker(mapmaker), m_ui(ui)
     {
+        m_ui->SetMapMaker(mapmaker);
+        m_ui->SetPixelPreview(&m_pixelPreview);
+
         // TODO: I'm being too lazy to work out the actual matrix for the definition
         m_ui->camera.view = glm::translate(m_ui->camera.view, glm::vec3(0, 0, -1));
         UpdateProjection();
@@ -169,7 +154,6 @@ public:
         m_ui->closeRequested.connect(this, &Application::Close);
         m_ui->sizeChanged.connect(this, &Application::OnResize);
         m_ui->keyChanged.connect(this, &Application::OnKeyChanged);
-        m_ui->SetPixelPreview(&m_pixelPreview);
     }
     void Exec()
     {
