@@ -5,6 +5,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include "../operator.h"
 #include "../renders.h"
 #include "../shader.h"
 #include "window.h"
@@ -163,13 +164,14 @@ void UI::DrawOperatorProperties()
         case OP_TERRAIN_GEN:
             PerlinNoiseOperator *noiseOp = static_cast<PerlinNoiseOperator *>(m_mapmaker->operators[m_selectedOpIndex]);
 
-            float freq = noiseOp->shader.Frequency();
+            float freq = noiseOp->settings.Get<float>("frequency");
             if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-                noiseOp->shader.SetFrequency(freq);
+                opSettingChanged.emit(m_mapmaker->operators[m_selectedOpIndex], "frequency", freq);
 
-            glm::ivec2 offset = noiseOp->shader.Offset();
+            glm::ivec2 offset = noiseOp->settings.Get<glm::ivec2>("offset");
             if (ImGui::DragInt2("Offset", (int *)&offset))
-                noiseOp->shader.SetOffset(offset);
+                opSettingChanged.emit(m_mapmaker->operators[m_selectedOpIndex], "offset", offset);
+
             break;
         }
     }

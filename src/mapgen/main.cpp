@@ -1,6 +1,7 @@
 #define GLEW_STATIC
 #include <iostream>
 #include <map>
+#include <string>
 #include <vector>
 
 #include <GL/glew.h>
@@ -149,6 +150,14 @@ protected:
         m_mapmaker->ProcessTo(index);
     }
 
+    void UpdateSetting(Operator *op, std::string key, SettingValue value)
+    {
+        if (!op->settings.Set(key, value))
+        {
+            std::cerr << "Unable to update setting '" << key << "' for operator: " << op->name() << std::endl;
+        }
+    }
+
 public:
     Application(MapMaker *mapmaker, UI *ui) : m_mapmaker(mapmaker), m_ui(ui)
     {
@@ -166,6 +175,7 @@ public:
         m_ui->sizeChanged.connect(this, &Application::OnResize);
         m_ui->keyChanged.connect(this, &Application::OnKeyChanged);
         m_ui->activeOperatorChanged.connect(this, &Application::SetActiveOperator);
+        m_ui->opSettingChanged.connect(this, &Application::UpdateSetting);
     }
     void Exec()
     {

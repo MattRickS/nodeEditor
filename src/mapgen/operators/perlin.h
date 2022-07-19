@@ -7,29 +7,13 @@
 #include "../renders.h"
 #include "../shader.h"
 
-class PerlinNoiseShader : public Shader
-{
-protected:
-    float m_frequency = 0.01f;
-    glm::ivec2 m_offset = glm::ivec2(0);
-
-public:
-    PerlinNoiseShader();
-
-    float Frequency();
-    void SetFrequency(float frequency);
-
-    glm::ivec2 Offset();
-    void SetOffset(glm::ivec2 offset);
-};
-
 class PerlinNoiseOperator : public Operator
 {
 protected:
     bool m_processed = false;
 
 public:
-    PerlinNoiseShader shader;
+    Shader shader;
 
     PerlinNoiseOperator();
 

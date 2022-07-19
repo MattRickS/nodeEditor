@@ -7,25 +7,11 @@
 #include "../shader.h"
 #include "perlin.h"
 
-PerlinNoiseShader::PerlinNoiseShader() : Shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/noise/perlin.fs") {}
-
-float PerlinNoiseShader::Frequency() { return m_frequency; }
-void PerlinNoiseShader::SetFrequency(float frequency)
+PerlinNoiseOperator::PerlinNoiseOperator() : shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/noise/perlin.fs")
 {
-    use();
-    m_frequency = frequency;
-    setFloat("frequency", m_frequency);
+    settings.Register<float>("frequency", 0.01f);
+    settings.Register<glm::ivec2>("offset", glm::ivec2(0));
 }
-
-glm::ivec2 PerlinNoiseShader::Offset() { return m_offset; }
-void PerlinNoiseShader::SetOffset(glm::ivec2 offset)
-{
-    use();
-    m_offset = offset;
-    setInt2("offset", m_offset.x, m_offset.y);
-}
-
-PerlinNoiseOperator::PerlinNoiseOperator() : shader() {}
 
 OpType PerlinNoiseOperator::type() const { return OP_TERRAIN_GEN; }
 
@@ -42,6 +28,8 @@ std::vector<Layer> PerlinNoiseOperator::outLayers() const
 void PerlinNoiseOperator::process(RenderSet *renders)
 {
     shader.use();
+    shader.setFloat("frequency", settings.Get<float>("frequency"));
+    shader.setIVec2("offset", settings.Get<glm::ivec2>("offset"));
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
     glViewport(0, 0, m_width, m_height);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

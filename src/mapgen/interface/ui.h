@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 
 #include "../mapmaker.h"
+#include "../operator.h"
 #include "../renders.h"
 #include "../shader.h"
 #include "window.h"
@@ -49,6 +50,7 @@ public:
 
     Signal<unsigned int, unsigned int> mapPosChanged;
     Signal<size_t> activeOperatorChanged;
+    Signal<Operator *, std::string, SettingValue> opSettingChanged;
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMaker");
 

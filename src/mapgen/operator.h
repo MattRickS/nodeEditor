@@ -1,10 +1,51 @@
 #pragma once
+#include <map>
 #include <string>
+#include <variant>
 #include <vector>
 
+#include <glm/glm.hpp>
 #include <GL/glew.h>
 
 #include "renders.h"
+
+typedef std::variant<bool, unsigned int, int, float, glm::vec2, glm::vec3, glm::vec4, glm::ivec2> SettingValue;
+
+class Settings
+{
+protected:
+    std::map<std::string, SettingValue> m_settings;
+
+public:
+    template <typename T>
+    void Register(std::string key, T defaultValue)
+    {
+        // Key can only be registered once
+        if (m_settings.find(key) != m_settings.end())
+        {
+            throw std::invalid_argument(key);
+        }
+        m_settings[key] = defaultValue;
+    }
+    bool Set(std::string key, SettingValue value)
+    {
+        if (m_settings.find(key) == m_settings.end())
+        {
+            return false;
+        }
+        m_settings[key] = value;
+        return true;
+    }
+    template <typename T>
+    T Get(std::string key)
+    {
+        if (m_settings.find(key) == m_settings.end())
+        {
+            throw std::out_of_range(key);
+        }
+        return std::get<T>(m_settings[key]);
+    }
+};
 
 enum OpType
 {
@@ -20,6 +61,7 @@ protected:
     GLuint FBO;
 
 public:
+    Settings settings;
     // TODO: Should have a virtual destructor so that it can be stored as the base class
 
     /*
