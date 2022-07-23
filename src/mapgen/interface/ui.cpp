@@ -40,8 +40,8 @@ void UI::OnMouseScrolled(double xoffset, double yoffset)
     mouseScrolled.emit(xoffset, yoffset);
 }
 
-UI::UI(unsigned int width, unsigned int height, const char *name) : Window(name, width, height),
-                                                                    viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs")
+UI::UI(unsigned int width, unsigned int height, const char *name, Context *sharedContext) : Window(name, width, height, sharedContext),
+                                                                                            viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs")
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -74,7 +74,9 @@ void UI::DrawViewport(const RenderSet *const renderSet)
     glm::ivec4 mapRegion = GetViewportRegion();
     glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, renderSet->at(m_selectedLayer)->ID);
+    // Not binding a texture may result in garbage in the render, but that's fine for now
+    if (renderSet->find(m_selectedLayer) != renderSet->end())
+        glBindTexture(GL_TEXTURE_2D, renderSet->at(m_selectedLayer)->ID);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     viewShader.use();
