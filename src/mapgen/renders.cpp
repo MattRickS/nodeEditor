@@ -4,6 +4,17 @@
 
 #include "renders.h"
 
+const char *getLayerName(Layer layer)
+{
+    switch (layer)
+    {
+    case LAYER_HEIGHTMAP:
+        return "Heightmap";
+    default:
+        return "--";
+    }
+}
+
 // =============================================================================
 // Texture
 
@@ -53,20 +64,4 @@ void Texture::EnsureOnGPU()
         glGenTextures(1, &ID);
         LoadOnGPU();
     }
-}
-
-// =============================================================================
-// RenderSet
-
-RenderSet::RenderSet() {}
-
-void RenderSet::Reset() { layers.clear(); }
-void RenderSet::AddLayer(Layer layer, Texture *texture)
-{
-    layers[layer] = texture;
-}
-// bool HasLayer(Layer layer) {}
-Texture *RenderSet::GetLayer(Layer layer) const
-{
-    return layers.at(layer);
 }

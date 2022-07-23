@@ -1,4 +1,3 @@
-#pragma once
 #include <vector>
 
 #include "operators/invert.hpp"
@@ -19,11 +18,14 @@ MapMaker::MapMaker(unsigned int width, unsigned int height) : m_width(width), m_
 }
 MapMaker::~MapMaker()
 {
-    for (size_t i = operators.size() - 1; i >= 0; --i)
-    {
-        delete operators[i];
-    }
+    // for (size_t i = operators.size() - 1; i >= 0; --i)
+    // {
+    //     delete operators[i];
+    // }
 }
+
+unsigned int MapMaker::Width() const { return m_width; }
+unsigned int MapMaker::Height() const { return m_height; }
 
 const RenderSet *const MapMaker::GetRenderSet() const
 {
@@ -39,17 +41,22 @@ bool MapMaker::IsProcessed(size_t index)
 }
 void MapMaker::ProcessTo(size_t index)
 {
-    renderSet.Reset();
+    renderSet.clear();
     for (size_t i = 0; i <= index; ++i)
     {
-        if (IsProcessed(i))
+        if (operators[i]->isProcessed())
         {
             // Accrue available renders from alreayd processed operators
             operators[i]->PopulateRenderSet(&renderSet);
         }
         else
         {
-            operators[i]->process(&renderSet);
+            // TODO: This needs some sort of guarantee of completion. Perhaps a max
+            // limit or indication of progress
+            while (!operators[i]->isProcessed())
+            {
+                operators[i]->process(&renderSet);
+            }
         }
     }
 }

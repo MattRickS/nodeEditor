@@ -5,8 +5,11 @@
 
 enum Layer
 {
-    LAYER_HEIGHTMAP
+    LAYER_HEIGHTMAP,
+    LAYER_MAX
 };
+
+const char *getLayerName(Layer layer);
 
 class Texture
 {
@@ -31,16 +34,4 @@ public:
     // TODO: Read/Write pixel methods, unload from GPU. This is to support CPU operators.
 };
 
-class RenderSet
-{
-protected:
-    std::map<Layer, Texture *> layers;
-
-public:
-    RenderSet();
-
-    void Reset();
-    void AddLayer(Layer layer, Texture *texture);
-    // bool HasLayer(Layer layer) {}
-    Texture *GetLayer(Layer layer) const;
-};
+typedef std::map<Layer, Texture *> RenderSet;
