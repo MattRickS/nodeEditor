@@ -12,6 +12,7 @@ Weigerts blog: https://nickmcd.me/2022/04/15/soilmachine/
 # Offscreen Rendering
 GLFW off screen rendering: https://www.glfw.org/docs/latest/context.html#context_offscreen
 EGL: OpenGL without requiring an xserver: https://developer.nvidia.com/blog/egl-eye-opengl-visualization-without-x-server/
+Thread pausing: https://stackoverflow.com/a/39631825/8564295
 
 # Plugin Registry
 https://dxuuu.xyz/cpp-static-registration.html

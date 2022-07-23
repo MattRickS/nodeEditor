@@ -1,3 +1,9 @@
+#include <condition_variable>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
 #include <vector>
 
 #include "operators/invert.hpp"
@@ -18,50 +24,216 @@ MapMaker::MapMaker(unsigned int width, unsigned int height) : m_width(width), m_
 }
 MapMaker::~MapMaker()
 {
+    // TODO: minor, as this being destroyed is also exiting the process
     // for (size_t i = operators.size() - 1; i >= 0; --i)
     // {
     //     delete operators[i];
     // }
+    if (!m_stopped.load())
+    {
+        // TODO: Doesn't appear to be working
+        stopProcessing();
+    }
 }
 
-unsigned int MapMaker::Width() const { return m_width; }
-unsigned int MapMaker::Height() const { return m_height; }
+unsigned int MapMaker::Width() const { return m_width.load(); }
+unsigned int MapMaker::Height() const { return m_height.load(); }
 
 const RenderSet *const MapMaker::GetRenderSet() const
 {
     return &renderSet;
 }
 
-bool MapMaker::IsProcessed(size_t index)
+void MapMaker::setTargetIndex(size_t index)
 {
-    // TODO: Where should this be tracked?
-    // If Operators store it, they have to remember to set it when finished processing
-    // Better for the framework to manage it, but a bit uglier code
-    return false;
+    // TODO: this may also need to reset the state of the current operator
+    //       if it's still processing. This is because an operator potentially
+    //       relies on preprocess to set global state that would be lost when
+    //       switching to another operator. Current design means no other
+    //       operator _should_ be called, but something to be wary of.
+    m_targetIdx = index;
 }
-void MapMaker::ProcessTo(size_t index)
+
+void MapMaker::updateSetting(size_t index, std::string key, SettingValue value)
 {
-    context.use();
-    renderSet.clear();
-    for (size_t i = 0; i <= index; ++i)
+    operators[index]->settings.Set(key, value);
+    // This will be picked up on the next iteration of the thread loop, causing
+    // all operators from this index and above to be reset.
+    m_resetIdx = index;
+}
+
+bool MapMaker::startProcessing()
+{
+    if (m_thread)
     {
-        if (operators[i]->isProcessed())
+        return false;
+    }
+    m_stopped = false;
+    m_thread = std::make_unique<std::thread>(std::bind(&MapMaker::process, this));
+    return true;
+}
+
+void MapMaker::stopProcessing()
+{
+    m_stopped = true;
+    m_thread->join();
+}
+
+void MapMaker::setPaused(bool paused)
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_paused = paused;
+
+    // If there were any state changes the idle flag should have been disabled,
+    // but disable as a safety check - it will only perform a single iteration
+    // of the process loop before idling again.
+    if (!paused)
+    {
+        m_idle = false;
+    }
+
+    m_condition.notify_one();
+}
+
+bool MapMaker::isPaused()
+{
+    return m_paused.load();
+}
+
+// =============================================================================
+// Private
+
+bool MapMaker::operatorStep()
+{
+    if (m_currIdx > m_targetIdx.load())
+        return true;
+
+    // TODO: states need some lock handling. They're only modified within the sequential
+    //       methods of this process loop, but their are potential synchronization/memory
+    //       barrier issues that might affect the reads from the main thread.
+    bool isComplete = false;
+    size_t currIdx = m_currIdx;
+    std::unique_lock<std::mutex> guard;
+    bool isProcessed;
+    switch (m_states[currIdx])
+    {
+    case State::Error:
+        guard = std::unique_lock<std::mutex>(m_mutex);
+        m_idle = true;
+        break;
+    case State::Idle:
+        m_states[currIdx] = State::Preprocessing;
+        operators[currIdx]->preprocess(&renderSet);
+        break;
+    case State::Preprocessing:
+    case State::Processing:
+        m_states[currIdx] = State::Processing;
+
+        // Release lock while the operator method processes
+        isProcessed = operators[currIdx]->process(&renderSet);
+
+        // Regain the lock and if state changed while processing, discard the result
+        if (isProcessed && m_states[currIdx] == State::Processing && currIdx == m_currIdx)
         {
-            // Accrue available renders from alreayd processed operators
-            operators[i]->PopulateRenderSet(&renderSet);
+            m_states[currIdx] = State::Processed;
         }
-        else
+
+        // If process is incomplete, release the lock and let the cycle continue
+        // Otherwise fall through into Processed state behaviour.
+        if (!isProcessed)
         {
-            // TODO: This needs some sort of guarantee of completion. Perhaps a max
-            // limit or indication of progress
-            while (!operators[i]->isProcessed())
-            {
-                operators[i]->process(&renderSet);
-            }
+            break;
+        }
+    case State::Processed:
+        isComplete = ++m_currIdx > m_targetIdx.load();
+        break;
+    default:
+        throw ""; // TODO: handle this
+    }
+
+    return isComplete;
+}
+
+bool MapMaker::maybeReset()
+{
+    if (m_resetIdx == -1)
+        return false;
+
+    int resetIdx = m_resetIdx.exchange(-1);
+
+    for (size_t i = resetIdx; i < operators.size(); ++i)
+    {
+        operators[i]->reset();
+        // TODO: lock?
+        m_states[i] = State::Idle;
+    }
+
+    if (resetIdx < m_currIdx)
+    {
+        m_currIdx = resetIdx;
+    }
+
+    // Ensure the thread wakes up if it had paused itself
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_idle = false;
+    return true;
+}
+
+bool MapMaker::maybeResize()
+{
+    if (!m_resizing.load())
+    {
+        return false;
+    }
+    m_resizing = false;
+
+    for (size_t i = 0; i < operators.size(); ++i)
+    {
+        // If resizing was requested again, stop processing. This will be called
+        // again so all operators resize to the new values
+        if (m_resizing.load())
+            break;
+        operators[i]->resize(m_width, m_height);
+        operators[i]->reset();
+        // TODO: lock?
+        m_states[i] = State::Idle;
+    }
+
+    // Ensure the thread wakes up if it had paused itself
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_idle = false;
+    return true;
+}
+
+void MapMaker::waitToProcess()
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_condition.wait(lock, std::bind(&MapMaker::isActive, this));
+}
+
+void MapMaker::process()
+{
+    while (!m_stopped.load())
+    {
+        // Ensure the main thread hasn't requested the thread be paused
+        waitToProcess();
+
+        // Ensure all state changes are processed first
+        if (maybeReset() || maybeResize())
+        {
+            continue;
+        }
+
+        // If everything has processed up to the target operator, mark the thread as idle
+        if (operatorStep())
+        {
+            std::lock_guard<std::mutex> guard(m_mutex);
+            m_idle = true;
         }
     }
 }
-void MapMaker::ProcessAll()
+
+bool MapMaker::isActive()
 {
-    ProcessTo(operators.size() - 1);
+    return !m_paused.load() && m_idle.load();
 }

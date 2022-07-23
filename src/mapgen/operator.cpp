@@ -48,6 +48,7 @@ void Operator::resize(unsigned int width, unsigned int height)
         tex.Resize(width, height);
     }
 }
+void Operator::preprocess(RenderSet *renders) {}
 
 void Operator::PopulateRenderSet(RenderSet *renderSet)
 {

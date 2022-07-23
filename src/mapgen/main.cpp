@@ -149,7 +149,7 @@ protected:
 
     void SetActiveOperator(size_t index)
     {
-        m_mapmaker->ProcessTo(index);
+        // m_mapmaker->ProcessTo(index);
     }
 
     void UpdateSetting(Operator *op, std::string key, SettingValue value)
@@ -181,7 +181,7 @@ public:
     }
     void Exec()
     {
-        m_mapmaker->ProcessAll();
+        m_mapmaker->startProcessing();
 
         m_ui->use();
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -207,6 +207,7 @@ int main()
     if (!glfwInit())
         return 1;
 
+    // TODO: The quad transform/vertices need to be scaled in the x-axis to match the image ratio
     MapMaker mapmaker(1024, 1024);
     if (!mapmaker.context.IsInitialised())
         return 1;

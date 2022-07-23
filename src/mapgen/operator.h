@@ -77,7 +77,7 @@ public:
     Resizes the operators outputs. Data preservation is optional as the framework
     will try to reprocess the outputs.
     */
-    void resize(unsigned int width, unsigned int height);
+    virtual void resize(unsigned int width, unsigned int height);
 
     /*
     List of the layer types this operator requires.
@@ -90,11 +90,23 @@ public:
     /*
     Called by the framework to generate outputs and populate/update the renderset layers
     */
-    virtual void process(RenderSet *renders) = 0;
+    virtual bool process(RenderSet *renders) = 0;
     /*
-    process() is called repeatedly until this returns true
+    Called once before calls to process are made. Is not called again unless
+    reset() is called.
+
+    Pseudo example of how this is called
+
+        preprocess()
+        while (!process());
     */
-    virtual bool isProcessed() const = 0;
+    virtual void preprocess(RenderSet *renders);
+    /*
+    Operator should implement to reset any internal state.
+
+    After a reset, preprocess will always be called before calls to process.
+    */
+    virtual void reset() = 0;
     /*
     Convenience method for populating the renderset that assumes texture outputs
     are 1:1 with the outLayers. Must be overridden if different behaviour is required.

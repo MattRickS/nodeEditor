@@ -105,7 +105,6 @@ private:
 // take an unknown length of time.
 .step()
     if currIdx >= targetIdx
-        release_lock()
         return true
 
     // Ensure currIdx doesn't change while determining course of action

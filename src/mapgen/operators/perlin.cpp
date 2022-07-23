@@ -25,7 +25,7 @@ std::vector<Layer> PerlinNoiseOperator::outLayers() const
 {
     return {LAYER_HEIGHTMAP};
 }
-void PerlinNoiseOperator::process(RenderSet *renders)
+bool PerlinNoiseOperator::process(RenderSet *renders)
 {
     shader.use();
     shader.setFloat("frequency", settings.Get<float>("frequency"));
@@ -34,9 +34,6 @@ void PerlinNoiseOperator::process(RenderSet *renders)
     glViewport(0, 0, m_width, m_height);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     PopulateRenderSet(renders);
-    m_processed = true;
+    return true;
 }
-bool PerlinNoiseOperator::isProcessed() const
-{
-    return m_processed;
-}
+void PerlinNoiseOperator::reset() {}
