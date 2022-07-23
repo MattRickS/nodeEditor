@@ -1,5 +1,6 @@
 BUILD_TYPE="${1:-Debug}"
-sudo apt install libfreetype-dev libopenal-dev libvorbis-dev libflac-dev
+# TODO: Double check which are actually needed for current dependencies
+sudo apt install libfreetype-dev
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
