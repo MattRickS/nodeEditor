@@ -181,12 +181,9 @@ public:
     }
     void Exec()
     {
-        m_mapmaker->context.use();
-        glBindVertexArray(quadVAO);
         m_mapmaker->ProcessAll();
 
         m_ui->use();
-        glBindVertexArray(quadVAO_UI);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
 
