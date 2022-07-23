@@ -20,7 +20,9 @@
 #include "renders.h"
 #include "shader.h"
 
+// TODO: will likely have to move this onto the context/owning class and bind each time the context is switched
 GLuint quadVAO;
+GLuint quadVAO_UI;
 const float CAM_NEAR = 0.1f;
 const float CAM_FAR = 100.0f;
 
@@ -29,7 +31,7 @@ void glfw_error_callback(int error, const char *description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-void makeQuad()
+void makeQuad(GLuint *VAO)
 {
     static const GLfloat vertexData[] = {
         // positions          // texture coords
@@ -43,8 +45,8 @@ void makeQuad()
         1, 2, 3  // second triangle
     };
 
-    glGenVertexArrays(1, &quadVAO);
-    glBindVertexArray(quadVAO);
+    glGenVertexArrays(1, VAO);
+    glBindVertexArray(*VAO);
 
     GLuint quadVBO;
     glGenBuffers(1, &quadVBO);
@@ -179,10 +181,14 @@ public:
     }
     void Exec()
     {
+        m_mapmaker->context.use();
+        glBindVertexArray(quadVAO);
+        m_mapmaker->ProcessAll();
+
+        m_ui->use();
+        glBindVertexArray(quadVAO_UI);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
-
-        m_mapmaker->ProcessAll();
 
         while (!m_ui->IsClosed())
         {
@@ -204,13 +210,20 @@ int main()
     if (!glfwInit())
         return 1;
 
-    // TODO: context and GLEW still need initialising without the UI... right?
-    UI ui = UI(1280, 720);
+    MapMaker mapmaker(1024, 1024);
+    if (!mapmaker.context.IsInitialised())
+        return 1;
+
+    // Make a quad to be used by the MapMaker context.
+    makeQuad(&quadVAO);
+
+    UI ui = UI(1280, 720, "MapMakerUI", &mapmaker.context);
     if (!ui.IsInitialised())
         return 1;
 
-    makeQuad();
-    MapMaker mapmaker(1024, 1024);
+    // Make a quad to be used by the UI context - VAOs are not shared
+    makeQuad(&quadVAO_UI);
+
     Application app = Application(&mapmaker, &ui);
     app.Exec();
 

@@ -6,7 +6,7 @@
 #include "renders.h"
 #include "mapmaker.h"
 
-MapMaker::MapMaker(unsigned int width, unsigned int height) : m_width(width), m_height(height)
+MapMaker::MapMaker(unsigned int width, unsigned int height) : m_width(width), m_height(height), context("MapMaker")
 {
     // TODO: Switch to smart pointers
     operators.push_back(new PerlinNoiseOperator);
@@ -41,6 +41,7 @@ bool MapMaker::IsProcessed(size_t index)
 }
 void MapMaker::ProcessTo(size_t index)
 {
+    context.use();
     renderSet.clear();
     for (size_t i = 0; i <= index; ++i)
     {

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 
+#include "context.hpp"
 #include "operators/invert.hpp"
 #include "operators/perlin.h"
 #include "operator.h"
@@ -18,6 +19,7 @@ protected:
     RenderSet renderSet;
 
 public:
+    Context context;
     // Making this public for now, should really expose an iterator of some sort
     std::vector<Operator *> operators;
 

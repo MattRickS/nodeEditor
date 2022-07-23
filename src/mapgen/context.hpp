@@ -15,13 +15,10 @@ protected:
     bool m_glew_init = false;
 
 public:
-    Context(const char *name) : Context(name, 1, 1, false) {}
-    Context(const char *name, unsigned int width, unsigned int height, bool visible = true)
+    Context(const char *name, Context *sharedContext = nullptr) : Context(name, 1, 1, sharedContext, false) {}
+    Context(const char *name, unsigned int width, unsigned int height, Context *sharedContext = nullptr, bool visible = true)
     {
-        if (!visible)
-        {
-            glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        }
+        glfwWindowHint(GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 3.2+ only
@@ -30,7 +27,7 @@ public:
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
 #endif
 
-        m_window = glfwCreateWindow(width, height, name, NULL, NULL);
+        m_window = glfwCreateWindow(width, height, name, NULL, sharedContext ? sharedContext->m_window : NULL);
         if (m_window == NULL)
             return;
 
@@ -51,4 +48,5 @@ public:
             glfwDestroyWindow(m_window);
     }
     bool IsInitialised() const { return bool(m_window) && m_glew_init; }
+    void use() { glfwMakeContextCurrent(m_window); }
 };
