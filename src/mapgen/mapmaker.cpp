@@ -52,6 +52,12 @@ void MapMaker::setTargetIndex(size_t index)
     //       switching to another operator. Current design means no other
     //       operator _should_ be called, but something to be wary of.
     m_targetIdx = index;
+    if (m_targetIdx >= m_currIdx)
+    {
+        // There are internal state changes to process, ensure the thread is awake.
+        // If the thread is paused from the UI, it won't wake until unpaused.
+        setAwake(true);
+    }
 }
 
 bool MapMaker::updateSetting(size_t index, std::string key, SettingValue value)
@@ -60,9 +66,20 @@ bool MapMaker::updateSetting(size_t index, std::string key, SettingValue value)
     {
         return false;
     }
-    // This will be picked up on the next iteration of the thread loop, causing
-    // all operators from this index and above to be reset.
-    m_resetIdx = index;
+    // Internal state only needs processing if the operator or it's dependents
+    // were processed.
+    for (size_t i = index; i < operators.size(); ++i)
+    {
+        if (m_states[i] != State::Idle)
+        {
+            // This will be picked up on the next iteration of the thread loop, causing
+            // all operators from this index and above to be reset.
+            m_resetIdx = index;
+            // There are internal state changes to process, ensure the thread is awake.
+            // If the thread is paused from the UI, it won't wake until unpaused.
+            setAwake(true);
+        }
+    }
     return true;
 }
 
@@ -253,4 +270,5 @@ void MapMaker::setAwake(bool idle)
     std::cout << "Idle thread, going to sleep" << std::endl;
     std::lock_guard<std::mutex> guard(m_mutex);
     m_awake = idle;
+    m_condition.notify_one();
 }

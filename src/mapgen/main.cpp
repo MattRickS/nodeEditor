@@ -149,14 +149,14 @@ protected:
 
     void SetActiveOperator(size_t index)
     {
-        // m_mapmaker->ProcessTo(index);
+        m_mapmaker->setTargetIndex(index);
     }
 
-    void UpdateSetting(Operator *op, std::string key, SettingValue value)
+    void UpdateSetting(size_t index, std::string key, SettingValue value)
     {
-        if (!op->settings.Set(key, value))
+        if (!m_mapmaker->updateSetting(index, key, value))
         {
-            std::cerr << "Unable to update setting '" << key << "' for operator: " << op->name() << std::endl;
+            std::cerr << "Unable to update setting '" << key << "' for operator: " << m_mapmaker->operators[index]->name() << std::endl;
         }
     }
 

@@ -50,7 +50,7 @@ public:
 
     Signal<unsigned int, unsigned int> mapPosChanged;
     Signal<size_t> activeOperatorChanged;
-    Signal<Operator *, std::string, SettingValue> opSettingChanged;
+    Signal<size_t, std::string, SettingValue> opSettingChanged;
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMakerUI", Context *sharedContext = nullptr);
 

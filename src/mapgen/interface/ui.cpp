@@ -168,11 +168,11 @@ void UI::DrawOperatorProperties()
 
             float freq = noiseOp->settings.Get<float>("frequency");
             if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-                opSettingChanged.emit(m_mapmaker->operators[m_selectedOpIndex], "frequency", freq);
+                opSettingChanged.emit(m_selectedOpIndex, "frequency", freq);
 
             glm::ivec2 offset = noiseOp->settings.Get<glm::ivec2>("offset");
             if (ImGui::DragInt2("Offset", (int *)&offset))
-                opSettingChanged.emit(m_mapmaker->operators[m_selectedOpIndex], "offset", offset);
+                opSettingChanged.emit(m_selectedOpIndex, "offset", offset);
 
             break;
         }
