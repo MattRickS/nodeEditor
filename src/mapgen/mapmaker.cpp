@@ -32,7 +32,6 @@ MapMaker::~MapMaker()
     // }
     if (!m_stopped.load())
     {
-        // TODO: Doesn't appear to be working
         stopProcessing();
     }
 }
@@ -55,12 +54,16 @@ void MapMaker::setTargetIndex(size_t index)
     m_targetIdx = index;
 }
 
-void MapMaker::updateSetting(size_t index, std::string key, SettingValue value)
+bool MapMaker::updateSetting(size_t index, std::string key, SettingValue value)
 {
-    operators[index]->settings.Set(key, value);
+    if (!operators[index]->settings.Set(key, value))
+    {
+        return false;
+    }
     // This will be picked up on the next iteration of the thread loop, causing
     // all operators from this index and above to be reset.
     m_resetIdx = index;
+    return true;
 }
 
 bool MapMaker::startProcessing()
@@ -76,7 +79,10 @@ bool MapMaker::startProcessing()
 
 void MapMaker::stopProcessing()
 {
+    // Ensure the thread is woken up so that it can stop the loop
     m_stopped = true;
+    setAwake(true);
+    setPaused(false);
     m_thread->join();
 }
 
@@ -205,21 +211,22 @@ bool MapMaker::maybeResize()
     return true;
 }
 
-void MapMaker::waitToProcess()
+bool MapMaker::waitToProcess()
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     m_condition.wait(lock, std::bind(&MapMaker::isActive, this));
+    return true;
 }
 
 void MapMaker::process()
 {
     context.use();
     std::cout << "Starting process" << std::endl;
-    while (!m_stopped.load())
+    // Ensure the main thread hasn't requested the thread be paused
+    // m_stopped is checked last so that a request to stop the thread is
+    // immediate when it wakes up
+    while (waitToProcess() && !m_stopped.load())
     {
-        // Ensure the main thread hasn't requested the thread be paused
-        waitToProcess();
-
         // Ensure all state changes are processed first
         if (maybeReset() || maybeResize())
         {

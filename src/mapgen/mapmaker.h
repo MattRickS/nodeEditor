@@ -79,7 +79,7 @@ protected:
     /*
     Used by the thread to wait for work to be available, and to not be paused.
     */
-    void waitToProcess();
+    bool waitToProcess();
     /*
     Whether or not the thread is active, ie, unpaused and has data to process
     */
@@ -110,8 +110,9 @@ public:
     Updates an operator's setting. This causes the operator and all subsequent
     operators to reset. It is advised to pause the thread if making consecutive
     changes.
+    Returns true if the setting was set, otherwise false.
     */
-    void updateSetting(size_t index, std::string key, SettingValue value);
+    bool updateSetting(size_t index, std::string key, SettingValue value);
     /*
     Starts the thread processing. Returns false if thread is already started.
     */
