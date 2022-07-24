@@ -19,9 +19,9 @@
 #include "operators/invert.hpp"
 #include "renders.h"
 #include "shader.h"
+#include "util.hpp"
 
 // TODO: will likely have to move this onto the context/owning class and bind each time the context is switched
-GLuint quadVAO;
 GLuint quadVAO_UI;
 const float CAM_NEAR = 0.1f;
 const float CAM_FAR = 100.0f;
@@ -29,40 +29,6 @@ const float CAM_FAR = 100.0f;
 void glfw_error_callback(int error, const char *description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
-}
-
-void makeQuad(GLuint *VAO)
-{
-    static const GLfloat vertexData[] = {
-        // positions          // texture coords
-        1.0f, 1.0f, 0.0f, 1.0f, 1.0f,   // top right
-        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
-        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // bottom left
-        -1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
-    };
-    unsigned int indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
-    };
-
-    glGenVertexArrays(1, VAO);
-    glBindVertexArray(*VAO);
-
-    GLuint quadVBO;
-    glGenBuffers(1, &quadVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
-
-    GLuint quadEBO;
-    glGenBuffers(1, &quadEBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
 }
 
 class Application
@@ -184,6 +150,9 @@ public:
         m_mapmaker->startProcessing();
 
         m_ui->use();
+        // Make a quad to be used by the UI context - VAOs are not shared
+        makeQuad(&quadVAO_UI);
+
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
 
@@ -193,6 +162,8 @@ public:
             m_ui->Draw(m_mapmaker->GetRenderSet());
             m_ui->Display();
         }
+
+        m_mapmaker->stopProcessing();
     }
     void Close()
     {
@@ -212,15 +183,9 @@ int main()
     if (!mapmaker.context.IsInitialised())
         return 1;
 
-    // Make a quad to be used by the MapMaker context.
-    makeQuad(&quadVAO);
-
     UI ui = UI(1280, 720, "MapMakerUI", &mapmaker.context);
     if (!ui.IsInitialised())
         return 1;
-
-    // Make a quad to be used by the UI context - VAOs are not shared
-    makeQuad(&quadVAO_UI);
 
     Application app = Application(&mapmaker, &ui);
     app.Exec();

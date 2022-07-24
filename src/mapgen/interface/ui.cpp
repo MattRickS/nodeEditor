@@ -73,12 +73,15 @@ void UI::DrawViewport(const RenderSet *const renderSet)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glm::ivec4 mapRegion = GetViewportRegion();
     glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     glActiveTexture(GL_TEXTURE0);
     // Not binding a texture may result in garbage in the render, but that's fine for now
     if (renderSet->find(m_selectedLayer) != renderSet->end())
         glBindTexture(GL_TEXTURE_2D, renderSet->at(m_selectedLayer)->ID);
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    else
+        std::cout << "No texture to draw" << std::endl;
     viewShader.use();
     viewShader.setMat4("view", camera.view);
     viewShader.setMat4("projection", camera.projection);

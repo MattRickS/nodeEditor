@@ -33,6 +33,7 @@ class MapMaker
 protected:
     std::atomic<unsigned int> m_width;
     std::atomic<unsigned int> m_height;
+    GLuint quadVAO;
     RenderSet renderSet; // Needs to be owned by thread
 
     // Thread variables. Lock is required for non-atomic states and the `stopped`

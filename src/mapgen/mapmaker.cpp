@@ -11,17 +11,10 @@
 #include "operator.h"
 #include "renders.h"
 #include "mapmaker.h"
+#include "util.hpp"
 
 MapMaker::MapMaker(unsigned int width, unsigned int height) : m_width(width), m_height(height), context("MapMaker")
 {
-    // TODO: Switch to smart pointers
-    operators.push_back(new PerlinNoiseOperator);
-    operators.push_back(new InvertOperator);
-    for (auto op : operators)
-    {
-        op->init(m_width, m_height);
-    }
-    m_states = std::vector<State>(operators.size(), State::Idle);
 }
 MapMaker::~MapMaker()
 {
@@ -89,6 +82,7 @@ bool MapMaker::startProcessing()
     {
         return false;
     }
+
     m_stopped = false;
     m_thread = std::make_unique<std::thread>(std::bind(&MapMaker::process, this));
     return true;
@@ -100,6 +94,7 @@ void MapMaker::stopProcessing()
     m_stopped = true;
     setAwake(true);
     setPaused(false);
+    std::cout << "Waiting on thread to stop" << std::endl;
     m_thread->join();
 }
 
@@ -237,7 +232,23 @@ bool MapMaker::waitToProcess()
 
 void MapMaker::process()
 {
+    // TODO: Tidy up this thread initialisation
+    // TODO: Switch to smart pointers
     context.use();
+    std::cout << "Initialising thread" << std::endl;
+
+    makeQuad(&quadVAO);
+
+    // Creating the operators in the thread as they may create shaders which
+    // are not shared
+    operators.push_back(new PerlinNoiseOperator);
+    operators.push_back(new InvertOperator);
+    for (auto op : operators)
+    {
+        op->init(m_width, m_height);
+    }
+    m_states = std::vector<State>(operators.size(), State::Idle);
+
     std::cout << "Starting process" << std::endl;
     // Ensure the main thread hasn't requested the thread be paused
     // m_stopped is checked last so that a request to stop the thread is
