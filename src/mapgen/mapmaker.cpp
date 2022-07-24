@@ -21,6 +21,7 @@ MapMaker::MapMaker(unsigned int width, unsigned int height) : m_width(width), m_
     {
         op->init(m_width, m_height);
     }
+    m_states = std::vector<State>(operators.size(), State::Idle);
 }
 MapMaker::~MapMaker()
 {
@@ -84,13 +85,14 @@ void MapMaker::setPaused(bool paused)
     std::unique_lock<std::mutex> lock(m_mutex);
     m_paused = paused;
 
+    // TODO: Can't use the lock guard twice, needs a refactor before doing this
     // If there were any state changes the idle flag should have been disabled,
     // but disable as a safety check - it will only perform a single iteration
     // of the process loop before idling again.
-    if (!paused)
-    {
-        m_idle = false;
-    }
+    // if (!paused)
+    // {
+    //     setIdle(false);
+    // }
 
     m_condition.notify_one();
 }
@@ -113,22 +115,22 @@ bool MapMaker::operatorStep()
     //       barrier issues that might affect the reads from the main thread.
     bool isComplete = false;
     size_t currIdx = m_currIdx;
-    std::unique_lock<std::mutex> guard;
     bool isProcessed;
     switch (m_states[currIdx])
     {
     case State::Error:
-        guard = std::unique_lock<std::mutex>(m_mutex);
-        m_idle = true;
+        setAwake(false);
         break;
     case State::Idle:
         m_states[currIdx] = State::Preprocessing;
+        std::cout << "Pre-processing op: " << currIdx << std::endl;
         operators[currIdx]->preprocess(&renderSet);
         break;
     case State::Preprocessing:
     case State::Processing:
         m_states[currIdx] = State::Processing;
 
+        std::cout << "Processing op: " << currIdx << std::endl;
         // Release lock while the operator method processes
         isProcessed = operators[currIdx]->process(&renderSet);
 
@@ -174,8 +176,7 @@ bool MapMaker::maybeReset()
     }
 
     // Ensure the thread wakes up if it had paused itself
-    std::unique_lock<std::mutex> lock(m_mutex);
-    m_idle = false;
+    setAwake(true);
     return true;
 }
 
@@ -200,8 +201,7 @@ bool MapMaker::maybeResize()
     }
 
     // Ensure the thread wakes up if it had paused itself
-    std::unique_lock<std::mutex> lock(m_mutex);
-    m_idle = false;
+    setAwake(true);
     return true;
 }
 
@@ -213,6 +213,8 @@ void MapMaker::waitToProcess()
 
 void MapMaker::process()
 {
+    context.use();
+    std::cout << "Starting process" << std::endl;
     while (!m_stopped.load())
     {
         // Ensure the main thread hasn't requested the thread be paused
@@ -221,19 +223,27 @@ void MapMaker::process()
         // Ensure all state changes are processed first
         if (maybeReset() || maybeResize())
         {
+            std::cout << "State change" << std::endl;
             continue;
         }
 
+        std::cout << "Operator step" << std::endl;
         // If everything has processed up to the target operator, mark the thread as idle
         if (operatorStep())
         {
-            std::lock_guard<std::mutex> guard(m_mutex);
-            m_idle = true;
+            setAwake(false);
         }
     }
 }
 
 bool MapMaker::isActive()
 {
-    return !m_paused.load() && m_idle.load();
+    return !m_paused.load() && m_awake.load();
+}
+
+void MapMaker::setAwake(bool idle)
+{
+    std::cout << "Idle thread, going to sleep" << std::endl;
+    std::lock_guard<std::mutex> guard(m_mutex);
+    m_awake = idle;
 }

@@ -47,7 +47,7 @@ protected:
     std::atomic<int> m_resetIdx = -1;
     std::atomic<bool> m_resizing = false;
     std::atomic<bool> m_paused = false;
-    std::atomic<bool> m_idle = false;
+    std::atomic<bool> m_awake = true;
     std::atomic<bool> m_stopped = false;
     // This is only ever read and written to by the thread
     size_t m_currIdx = 0;
@@ -84,6 +84,10 @@ protected:
     Whether or not the thread is active, ie, unpaused and has data to process
     */
     bool isActive();
+    /*
+    Make the process go to sleep until state is changed
+    */
+    void setAwake(bool idle);
 
 public:
     Context context;
