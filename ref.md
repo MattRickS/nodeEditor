@@ -13,6 +13,15 @@ Weigerts blog: https://nickmcd.me/2022/04/15/soilmachine/
 GLFW off screen rendering: https://www.glfw.org/docs/latest/context.html#context_offscreen
 EGL: OpenGL without requiring an xserver: https://developer.nvidia.com/blog/egl-eye-opengl-visualization-without-x-server/
 Thread pausing: https://stackoverflow.com/a/39631825/8564295
+OpenGL and multithreading: https://www.khronos.org/opengl/wiki/OpenGL_and_multithreading
 
 # Plugin Registry
 https://dxuuu.xyz/cpp-static-registration.html
+
+# CPU processing
+Compute Shader: https://www.khronos.org/opengl/wiki/Compute_Shader
+OpenGL vs OpenCL: https://stackoverflow.com/questions/7907510/opengl-vs-opencl-which-to-choose-and-why
+How Cuda Works: https://www.nvidia.com/en-us/on-demand/session/gtcspring22-s41487/?playlistId=playList-b5be3b9b-cc52-48ed-b83d-4352b108e766
+Usage of compute shaders in Umbra Ignite engine: https://www.mediamolecule.com/blog/article/alex_at_umbra_ignite_2015_learning_from_failure_video
+Compute Shader vs Frag Shader: https://computergraphics.stackexchange.com/a/5903
+Compute Shader Intro: https://antongerdelan.net/opengl/compute.html
