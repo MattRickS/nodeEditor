@@ -33,7 +33,9 @@ bool PerlinNoiseOperator::process(RenderSet *renders)
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
     glViewport(0, 0, m_width, m_height);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    // TODO: These calls should be part of the framework
     PopulateRenderSet(renders);
+    glFinish();
     return true;
 }
 void PerlinNoiseOperator::reset() {}

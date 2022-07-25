@@ -38,7 +38,7 @@ public:
 
         // Put outputs into render set
         PopulateRenderSet(renders);
-
+        glFinish();
         return true;
     }
     virtual void reset(){};
