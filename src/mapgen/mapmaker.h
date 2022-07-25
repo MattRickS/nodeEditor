@@ -90,6 +90,12 @@ protected:
     */
     void setAwake(bool idle);
 
+    /*
+    Whenever the current index changes, the renderset must also update.
+    Should never set the currIdx to or after an unprocessed operator.
+    */
+    void setCurrentIndex(size_t currIdx);
+
 public:
     Context context;
     // Making this public for now, should really expose an iterator of some sort

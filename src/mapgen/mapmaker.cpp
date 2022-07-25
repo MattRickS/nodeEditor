@@ -51,6 +51,12 @@ void MapMaker::setTargetIndex(size_t index)
         // If the thread is paused from the UI, it won't wake until unpaused.
         setAwake(true);
     }
+    else
+    {
+        // If going back to an old index, need to rewind the current index and
+        // load the renderset for that index
+        setCurrentIndex(m_targetIdx);
+    }
 }
 
 bool MapMaker::updateSetting(size_t index, std::string key, SettingValue value)
@@ -165,6 +171,12 @@ bool MapMaker::operatorStep()
             break;
         }
     case State::Processed:
+        // Add the completed operator's renders to the renderset, replacing layers
+        // that were updated
+        operators[m_currIdx]->PopulateRenderSet(&renderSet);
+        // Sync the updated textures with the shared context
+        glFinish();
+        // Advance to the next index and check if finished
         isComplete = ++m_currIdx > m_targetIdx.load();
         break;
     default:
@@ -282,4 +294,22 @@ void MapMaker::setAwake(bool idle)
     std::lock_guard<std::mutex> guard(m_mutex);
     m_awake = idle;
     m_condition.notify_one();
+}
+
+void MapMaker::setCurrentIndex(size_t currIdx)
+{
+    // TODO: This needs lock handling as it will be triggered from the main thread,
+    // but modified the renderset used by the render thread
+    renderSet.clear();
+    for (size_t i = 0; i <= currIdx; ++i)
+    {
+        if (m_states[i] != State::Processed)
+        {
+            std::cerr << "Current index set to " << currIdx << " but index " << i << " is not processed" << std::endl;
+            break;
+        }
+        operators[i]->PopulateRenderSet(&renderSet);
+    }
+
+    m_currIdx = currIdx;
 }

@@ -36,9 +36,6 @@ public:
         glViewport(0, 0, m_width, m_height);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        // Put outputs into render set
-        PopulateRenderSet(renders);
-        glFinish();
         return true;
     }
     virtual void reset(){};
