@@ -13,7 +13,7 @@ PerlinNoiseOperator::PerlinNoiseOperator() : shader("src/mapgen/shaders/posUV.vs
     settings.Register<glm::ivec2>("offset", glm::ivec2(0));
 }
 
-OpType PerlinNoiseOperator::type() const { return OP_TERRAIN_GEN; }
+OpType PerlinNoiseOperator::type() const { return OP_PERLIN; }
 
 std::string PerlinNoiseOperator::name() const { return "Noise"; }
 

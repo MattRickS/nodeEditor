@@ -5,6 +5,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include "../operators/perlin.h"
+#include "../operators/voronoi.hpp"
 #include "../operator.h"
 #include "../renders.h"
 #include "../shader.h"
@@ -166,22 +168,48 @@ void UI::DrawOperatorProperties()
     {
         switch (m_mapmaker->operators[m_selectedOpIndex]->type())
         {
-        case OP_TERRAIN_GEN:
-            PerlinNoiseOperator *noiseOp = static_cast<PerlinNoiseOperator *>(m_mapmaker->operators[m_selectedOpIndex]);
-
-            float freq = noiseOp->settings.Get<float>("frequency");
-            if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-                opSettingChanged.emit(m_selectedOpIndex, "frequency", freq);
-
-            glm::ivec2 offset = noiseOp->settings.Get<glm::ivec2>("offset");
-            if (ImGui::DragInt2("Offset", (int *)&offset))
-                opSettingChanged.emit(m_selectedOpIndex, "offset", offset);
-
+        case OP_PERLIN:
+            DrawPerlinControls();
+            break;
+        case OP_VORONOI:
+            DrawVoronoiControls();
             break;
         }
     }
 
     ImGui::End();
+}
+void UI::DrawPerlinControls()
+{
+    PerlinNoiseOperator *perlinOp = static_cast<PerlinNoiseOperator *>(m_mapmaker->operators[m_selectedOpIndex]);
+
+    float freq = perlinOp->settings.Get<float>("frequency");
+    if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
+        opSettingChanged.emit(m_selectedOpIndex, "frequency", freq);
+
+    glm::ivec2 offset = perlinOp->settings.Get<glm::ivec2>("offset");
+    if (ImGui::DragInt2("Offset", (int *)&offset))
+        opSettingChanged.emit(m_selectedOpIndex, "offset", offset);
+}
+void UI::DrawVoronoiControls()
+{
+    VoronoiNoiseOperator *voronoiOp = static_cast<VoronoiNoiseOperator *>(m_mapmaker->operators[m_selectedOpIndex]);
+
+    glm::ivec2 offset = voronoiOp->settings.Get<glm::ivec2>("offset");
+    if (ImGui::DragInt2("Offset", (int *)&offset))
+        opSettingChanged.emit(m_selectedOpIndex, "offset", offset);
+
+    float size = voronoiOp->settings.Get<float>("size");
+    if (ImGui::SliderFloat("Cell size", &size, 0.1, 1000, "%.3f", ImGuiSliderFlags_Logarithmic))
+        opSettingChanged.emit(m_selectedOpIndex, "size", size);
+
+    float skew = voronoiOp->settings.Get<float>("skew");
+    if (ImGui::SliderFloat("Cell offset", &skew, 0.0f, 1.0f, "%.3f"))
+        opSettingChanged.emit(m_selectedOpIndex, "skew", skew);
+
+    float blend = voronoiOp->settings.Get<float>("blend");
+    if (ImGui::SliderFloat("Blend", &blend, 0.0f, 1.0f, "%.3f"))
+        opSettingChanged.emit(m_selectedOpIndex, "blend", blend);
 }
 
 glm::ivec4 UI::GetViewportRegion() const

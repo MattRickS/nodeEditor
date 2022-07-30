@@ -8,6 +8,7 @@
 
 #include "operators/invert.hpp"
 #include "operators/perlin.h"
+#include "operators/voronoi.hpp"
 #include "operator.h"
 #include "renders.h"
 #include "mapmaker.h"
@@ -74,6 +75,7 @@ bool MapMaker::updateSetting(size_t index, std::string key, SettingValue value)
             // This will be picked up on the next iteration of the thread loop, causing
             // all operators from this index and above to be reset.
             m_resetIdx = index;
+            // TODO: resetting timer before processing is triggered?
             // There are internal state changes to process, ensure the thread is awake.
             // If the thread is paused from the UI, it won't wake until unpaused.
             setAwake(true);
@@ -253,7 +255,8 @@ void MapMaker::process()
 
     // Creating the operators in the thread as they may create shaders which
     // are not shared
-    operators.push_back(new PerlinNoiseOperator);
+    operators.push_back(new VoronoiNoiseOperator);
+    // operators.push_back(new PerlinNoiseOperator);
     operators.push_back(new InvertOperator);
     for (auto op : operators)
     {

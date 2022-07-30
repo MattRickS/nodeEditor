@@ -49,7 +49,8 @@ public:
 
 enum OpType
 {
-    OP_TERRAIN_GEN,
+    OP_PERLIN,
+    OP_VORONOI,
     OP_INVERT,
 };
 

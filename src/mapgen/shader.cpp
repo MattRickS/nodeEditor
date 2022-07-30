@@ -165,7 +165,7 @@ void Shader::setVec4(const std::string &name, glm::vec4 vec) const
 void Shader::setIVec2(const std::string &name, glm::ivec2 vec) const
 {
     GLuint location = getLocation(name);
-    glUniform2f(location, vec.x, vec.y);
+    glUniform2i(location, vec.x, vec.y);
 }
 
 void Shader::setMat4(const std::string &name, glm::mat4 &matrix) const

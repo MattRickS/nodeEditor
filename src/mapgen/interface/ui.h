@@ -45,6 +45,10 @@ protected:
     void DrawViewportProperties(const RenderSet *const renderSet);
     void DrawOperatorProperties();
 
+    // Operators - eventually these would be automatic based on settings, or defined by the operator
+    void DrawPerlinControls();
+    void DrawVoronoiControls();
+
 public:
     Camera camera;
 
