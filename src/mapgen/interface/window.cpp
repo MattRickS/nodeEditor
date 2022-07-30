@@ -48,7 +48,7 @@ void close_callback(GLFWwindow *window)
 // =============================================================================
 // Public
 
-Window::Window(const char *name, unsigned int width, unsigned int height) : Context(name, width, height), m_width(width), m_height(height)
+Window::Window(const char *name, unsigned int width, unsigned int height, Context *sharedContext) : Context(name, width, height, sharedContext), m_width(width), m_height(height)
 {
     if (!IsInitialised())
         return;

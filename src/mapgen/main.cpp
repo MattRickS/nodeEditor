@@ -19,48 +19,16 @@
 #include "operators/invert.hpp"
 #include "renders.h"
 #include "shader.h"
+#include "util.hpp"
 
-GLuint quadVAO;
+// TODO: will likely have to move this onto the context/owning class and bind each time the context is switched
+GLuint quadVAO_UI;
 const float CAM_NEAR = 0.1f;
 const float CAM_FAR = 100.0f;
 
 void glfw_error_callback(int error, const char *description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
-}
-
-void makeQuad()
-{
-    static const GLfloat vertexData[] = {
-        // positions          // texture coords
-        1.0f, 1.0f, 0.0f, 1.0f, 1.0f,   // top right
-        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
-        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // bottom left
-        -1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
-    };
-    unsigned int indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
-    };
-
-    glGenVertexArrays(1, &quadVAO);
-    glBindVertexArray(quadVAO);
-
-    GLuint quadVBO;
-    glGenBuffers(1, &quadVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
-
-    GLuint quadEBO;
-    glGenBuffers(1, &quadEBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
 }
 
 class Application
@@ -147,14 +115,14 @@ protected:
 
     void SetActiveOperator(size_t index)
     {
-        m_mapmaker->ProcessTo(index);
+        m_mapmaker->setTargetIndex(index);
     }
 
-    void UpdateSetting(Operator *op, std::string key, SettingValue value)
+    void UpdateSetting(size_t index, std::string key, SettingValue value)
     {
-        if (!op->settings.Set(key, value))
+        if (!m_mapmaker->updateSetting(index, key, value))
         {
-            std::cerr << "Unable to update setting '" << key << "' for operator: " << op->name() << std::endl;
+            std::cerr << "Unable to update setting '" << key << "' for operator: " << m_mapmaker->operators[index]->name() << std::endl;
         }
     }
 
@@ -179,10 +147,14 @@ public:
     }
     void Exec()
     {
+        m_mapmaker->startProcessing();
+
+        m_ui->use();
+        // Make a quad to be used by the UI context - VAOs are not shared
+        makeQuad(&quadVAO_UI);
+
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
-
-        m_mapmaker->ProcessAll();
 
         while (!m_ui->IsClosed())
         {
@@ -190,6 +162,8 @@ public:
             m_ui->Draw(m_mapmaker->GetRenderSet());
             m_ui->Display();
         }
+
+        m_mapmaker->stopProcessing();
     }
     void Close()
     {
@@ -204,13 +178,15 @@ int main()
     if (!glfwInit())
         return 1;
 
-    // TODO: context and GLEW still need initialising without the UI... right?
-    UI ui = UI(1280, 720);
+    // TODO: The quad transform/vertices need to be scaled in the x-axis to match the image ratio
+    MapMaker mapmaker(1024, 1024);
+    if (!mapmaker.context.IsInitialised())
+        return 1;
+
+    UI ui = UI(1280, 720, "MapMakerUI", &mapmaker.context);
     if (!ui.IsInitialised())
         return 1;
 
-    makeQuad();
-    MapMaker mapmaker(1024, 1024);
     Application app = Application(&mapmaker, &ui);
     app.Exec();
 

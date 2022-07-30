@@ -16,7 +16,7 @@ public:
     Signal<int, int> sizeChanged;
     Signal<> closeRequested;
 
-    Window(const char *name, unsigned int width, unsigned int height);
+    Window(const char *name, unsigned int width, unsigned int height, Context *sharedContext = nullptr);
     ~Window();
 
     void Display();

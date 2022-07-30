@@ -40,8 +40,8 @@ void UI::OnMouseScrolled(double xoffset, double yoffset)
     mouseScrolled.emit(xoffset, yoffset);
 }
 
-UI::UI(unsigned int width, unsigned int height, const char *name) : Window(name, width, height),
-                                                                    viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs")
+UI::UI(unsigned int width, unsigned int height, const char *name, Context *sharedContext) : Window(name, width, height, sharedContext),
+                                                                                            viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs")
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -73,10 +73,15 @@ void UI::DrawViewport(const RenderSet *const renderSet)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glm::ivec4 mapRegion = GetViewportRegion();
     glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, renderSet->at(m_selectedLayer)->ID);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glActiveTexture(GL_TEXTURE0);
+    // Not binding a texture may result in garbage in the render, but that's fine for now
+    if (renderSet->find(m_selectedLayer) != renderSet->end())
+        glBindTexture(GL_TEXTURE_2D, renderSet->at(m_selectedLayer)->ID);
+    else
+        std::cout << "No texture to draw" << std::endl;
     viewShader.use();
     viewShader.setMat4("view", camera.view);
     viewShader.setMat4("projection", camera.projection);
@@ -166,11 +171,11 @@ void UI::DrawOperatorProperties()
 
             float freq = noiseOp->settings.Get<float>("frequency");
             if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-                opSettingChanged.emit(m_mapmaker->operators[m_selectedOpIndex], "frequency", freq);
+                opSettingChanged.emit(m_selectedOpIndex, "frequency", freq);
 
             glm::ivec2 offset = noiseOp->settings.Get<glm::ivec2>("offset");
             if (ImGui::DragInt2("Offset", (int *)&offset))
-                opSettingChanged.emit(m_mapmaker->operators[m_selectedOpIndex], "offset", offset);
+                opSettingChanged.emit(m_selectedOpIndex, "offset", offset);
 
             break;
         }

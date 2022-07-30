@@ -7,9 +7,6 @@
 
 class InvertOperator : public Operator
 {
-protected:
-    bool m_processed = false;
-
 public:
     Shader shader;
 
@@ -26,7 +23,7 @@ public:
     {
         return {LAYER_HEIGHTMAP};
     }
-    virtual void process(RenderSet *renders)
+    virtual bool process(RenderSet *renders)
     {
         // Setup shader
         shader.use();
@@ -39,13 +36,7 @@ public:
         glViewport(0, 0, m_width, m_height);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        m_processed = true;
-
-        // Put outputs into render set
-        PopulateRenderSet(renders);
+        return true;
     }
-    virtual bool isProcessed() const
-    {
-        return m_processed;
-    }
+    virtual void reset(){};
 };

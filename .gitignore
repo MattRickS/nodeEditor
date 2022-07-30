@@ -1,3 +1,5 @@
 .vscode/
+.scratch/
+
 build/
 imgui.ini
