@@ -5,17 +5,16 @@
 #include "../renders.h"
 #include "../shader.h"
 
-class VoronoiNoiseOperator : public GPUOperator
+class VoronoiNoiseOperator : public Operator
 {
 public:
     Shader shader;
 
-    VoronoiNoiseOperator() : shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/noise/voronoi.fs")
+    VoronoiNoiseOperator() : shader("src/mapgen/shaders/compute/voronoi.glsl")
     {
         settings.Register<glm::ivec2>("offset", glm::ivec2(0));
         settings.Register<float>("size", 100.0f);
         settings.Register<float>("skew", 0.5f);
-        settings.Register<float>("blend", 0.0f);
     }
     virtual OpType type() const { return OP_VORONOI; }
     virtual std::string name() const { return "Voronoi"; }
@@ -33,10 +32,13 @@ public:
         shader.setIVec2("offset", settings.Get<glm::ivec2>("offset"));
         shader.setFloat("size", settings.Get<float>("size"));
         shader.setFloat("skew", settings.Get<float>("skew"));
-        shader.setFloat("blend", settings.Get<float>("blend"));
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
-        glViewport(0, 0, m_width, m_height);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, outputs[0].ID);
+        glBindImageTexture(0, outputs[0].ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outputs[0].internalFormat());
+
+        glDispatchCompute(ceil(m_width / 8), ceil(m_height / 4), 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
         return true;
     }

@@ -6,7 +6,7 @@
 #include <thread>
 #include <vector>
 
-#include "operators/compute.hpp"
+#include "operators/erosion.hpp"
 #include "operators/invert.hpp"
 #include "operators/perlin.h"
 #include "operators/voronoi.hpp"
@@ -17,6 +17,13 @@
 
 MapMaker::MapMaker(unsigned int width, unsigned int height) : m_width(width), m_height(height), context("MapMaker")
 {
+    operators.push_back(new VoronoiNoiseOperator);
+    // operators.push_back(new PerlinNoiseOperator);
+    operators.push_back(new ErosionOperator);
+    for (auto op : operators)
+    {
+        op->init(m_width, m_height);
+    }
 }
 MapMaker::~MapMaker()
 {
@@ -39,6 +46,14 @@ const RenderSet *const MapMaker::GetRenderSet() const
     return &renderSet;
 }
 
+size_t MapMaker::GetCurrentIndex()
+{
+    // Current index is used to track processing and gets incremented until it
+    // exceeds the target
+    return std::min(m_currIdx, m_targetIdx.load());
+}
+size_t MapMaker::GetTargetIndex() { return m_targetIdx.load(); }
+
 void MapMaker::setTargetIndex(size_t index)
 {
     // TODO: this may also need to reset the state of the current operator
@@ -49,16 +64,20 @@ void MapMaker::setTargetIndex(size_t index)
     m_targetIdx = index;
     if (m_targetIdx >= m_currIdx)
     {
-        // There are internal state changes to process, ensure the thread is awake.
-        // If the thread is paused from the UI, it won't wake until unpaused.
-        setAwake(true);
+        for (size_t i = m_currIdx; i <= m_targetIdx; ++i)
+        {
+            if (m_states[i] != State::Processed)
+            {
+                // There are internal state changes to process, ensure the thread is awake.
+                // If the thread is paused from the UI, it won't wake until unpaused.
+                setAwake(true);
+                return;
+            }
+        }
     }
-    else
-    {
-        // If going back to an old index, need to rewind the current index and
-        // load the renderset for that index
-        setCurrentIndex(m_targetIdx);
-    }
+    // If going back to an old or processed index, set the current index to
+    // load the renderset for that index
+    setCurrentIndex(m_targetIdx);
 }
 
 bool MapMaker::updateSetting(size_t index, std::string key, SettingValue value)
@@ -135,7 +154,9 @@ bool MapMaker::isPaused()
 bool MapMaker::operatorStep()
 {
     if (m_currIdx > m_targetIdx.load())
+    {
         return true;
+    }
 
     // TODO: states need some lock handling. They're only modified within the sequential
     //       methods of this process loop, but their are potential synchronization/memory
@@ -167,6 +188,21 @@ bool MapMaker::operatorStep()
             m_states[currIdx] = State::Processed;
         }
 
+        // If only one step was requested, reset the flag. If not paused, processing
+        // may continue if moved to a new operator with multiple iterations.
+        if (m_processOne.load())
+        {
+            m_processOne = false;
+        }
+
+        // XXX: Perhaps this should be moved to a "sync" method so that it's only called
+        //      when required, eg, on frame draw (1/60s)
+        // Add the completed operator's renders to the renderset, replacing layers
+        // that were updated
+        operators[m_currIdx]->PopulateRenderSet(&renderSet);
+        // Sync the updated textures with the shared context
+        glFinish();
+
         // If process is incomplete, release the lock and let the cycle continue
         // Otherwise fall through into Processed state behaviour.
         if (!isProcessed)
@@ -174,11 +210,6 @@ bool MapMaker::operatorStep()
             break;
         }
     case State::Processed:
-        // Add the completed operator's renders to the renderset, replacing layers
-        // that were updated
-        operators[m_currIdx]->PopulateRenderSet(&renderSet);
-        // Sync the updated textures with the shared context
-        glFinish();
         // Advance to the next index and check if finished
         isComplete = ++m_currIdx > m_targetIdx.load();
         break;
@@ -254,15 +285,6 @@ void MapMaker::process()
 
     makeQuad(&quadVAO);
 
-    // Creating the operators in the thread as they may create shaders which
-    // are not shared
-    operators.push_back(new VoronoiNoiseOperator);
-    // operators.push_back(new PerlinNoiseOperator);
-    operators.push_back(new InvertOperator);
-    for (auto op : operators)
-    {
-        op->init(m_width, m_height);
-    }
     m_states = std::vector<State>(operators.size(), State::Idle);
 
     std::cout << "Starting process" << std::endl;
@@ -278,7 +300,6 @@ void MapMaker::process()
             continue;
         }
 
-        std::cout << "Operator step" << std::endl;
         // If everything has processed up to the target operator, mark the thread as idle
         if (operatorStep())
         {
@@ -289,7 +310,9 @@ void MapMaker::process()
 
 bool MapMaker::isActive()
 {
-    return !m_paused.load() && m_awake.load();
+    // Stop on step requests advancing a single operator step and should occur
+    // even when paused but without clearing the paused state.
+    return m_processOne.load() || (!m_paused.load() && m_awake.load());
 }
 
 void MapMaker::setAwake(bool idle)
@@ -316,4 +339,31 @@ void MapMaker::setCurrentIndex(size_t currIdx)
     }
 
     m_currIdx = currIdx;
+}
+
+bool MapMaker::processOne()
+{
+    if (isActive())
+    {
+        return false;
+    }
+
+    // Ensure there is an unprocessed target
+    for (size_t i = m_targetIdx; i < operators.size(); ++i)
+    {
+        if (m_states[i] != State::Processed)
+        {
+            m_targetIdx = i;
+            break;
+        }
+    }
+    // If already fully processed, return
+    if (m_states[m_targetIdx.load()] == State::Processed)
+    {
+        return false;
+    }
+
+    m_processOne = true;
+    setAwake(true);
+    return true;
 }

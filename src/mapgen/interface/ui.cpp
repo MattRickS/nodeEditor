@@ -71,6 +71,8 @@ UI::UI(unsigned int width, unsigned int height, const char *name, Context *share
     ImGui_ImplOpenGL3_Init("#version 330");
 }
 
+Layer UI::GetCurrentLayer() const { return m_selectedLayer; }
+
 void UI::ToggleIsolateChannel(IsolateChannel channel)
 {
     m_isolateChannel = (m_isolateChannel == channel) ? ISOLATE_NONE : channel;
@@ -102,16 +104,27 @@ void UI::DrawViewport(const RenderSet *const renderSet)
     glClear(GL_COLOR_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
+    IsolateChannel channel = m_isolateChannel;
     // Not binding a texture may result in garbage in the render, but that's fine for now
-    if (renderSet->find(m_selectedLayer) != renderSet->end())
-        glBindTexture(GL_TEXTURE_2D, renderSet->at(m_selectedLayer)->ID);
+    const auto it = renderSet->find(m_selectedLayer);
+    if (it != renderSet->end())
+    {
+        glBindTexture(GL_TEXTURE_2D, it->second->ID);
+        // TODO: Tidy this up
+        if (it->second->numChannels() == 1)
+        {
+            channel = ISOLATE_RED;
+        }
+    }
     else
+    {
         std::cout << "No texture to draw" << std::endl;
+    }
     viewShader.use();
     viewShader.setMat4("view", camera.view);
     viewShader.setMat4("projection", camera.projection);
     viewShader.setInt("renderTexture", 0);
-    viewShader.setInt("isolateChannel", (int)m_isolateChannel);
+    viewShader.setInt("isolateChannel", (int)channel);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 void UI::DrawViewportProperties(const RenderSet *const renderSet)
@@ -133,6 +146,10 @@ void UI::DrawViewportProperties(const RenderSet *const renderSet)
             if (ImGui::Selectable(getLayerName(it->first), isSelected))
             {
                 m_selectedLayer = it->first;
+                if (it->second->numChannels() == 1)
+                {
+                    m_isolateChannel = ISOLATE_RED;
+                }
             }
             if (isSelected)
             {
@@ -147,16 +164,25 @@ void UI::DrawViewportProperties(const RenderSet *const renderSet)
     ImGui::PushItemWidth(100.0f);
     if (ImGui::BeginCombo("##IsolateChannel", getIsolateChannelName(m_isolateChannel)))
     {
-        for (int channel = ISOLATE_NONE; channel != ISOLATE_LAST; ++channel)
+        // TODO: Tidy this up
+        const auto it = renderSet->find(m_selectedLayer);
+        if (it != renderSet->end() && it->second->numChannels() == 1)
         {
-            bool isSelected = (m_isolateChannel == channel);
-            if (ImGui::Selectable(getIsolateChannelName(IsolateChannel(channel)), isSelected))
+            ImGui::Selectable(getIsolateChannelName(ISOLATE_RED), true);
+        }
+        else
+        {
+            for (int channel = ISOLATE_NONE; channel != ISOLATE_LAST; ++channel)
             {
-                m_isolateChannel = IsolateChannel(channel);
-            }
-            if (isSelected)
-            {
-                ImGui::SetItemDefaultFocus();
+                bool isSelected = (m_isolateChannel == channel);
+                if (ImGui::Selectable(getIsolateChannelName(IsolateChannel(channel)), isSelected))
+                {
+                    m_isolateChannel = IsolateChannel(channel);
+                }
+                if (isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
             }
         }
         ImGui::EndCombo();
@@ -198,62 +224,63 @@ void UI::DrawOperatorProperties()
     }
 
     ImGui::BeginListBox("##Operators");
+    size_t selectedIndex = m_mapmaker->GetCurrentIndex();
     for (size_t i = 0; i < m_mapmaker->operators.size(); ++i)
     {
-        if (ImGui::Selectable(m_mapmaker->operators[i]->name().c_str(), i == m_selectedOpIndex))
+        if (ImGui::Selectable(m_mapmaker->operators[i]->name().c_str(), i == selectedIndex))
         {
-            m_selectedOpIndex = i;
+            selectedIndex = i;
             activeOperatorChanged.emit(i);
         }
     }
     ImGui::EndListBox();
     ImGui::Text("Operator Settings");
-    if (m_selectedOpIndex != -1)
+    switch (m_mapmaker->operators[selectedIndex]->type())
     {
-        switch (m_mapmaker->operators[m_selectedOpIndex]->type())
-        {
-        case OP_PERLIN:
-            DrawPerlinControls();
-            break;
-        case OP_VORONOI:
-            DrawVoronoiControls();
-            break;
-        }
+    case OP_PERLIN:
+        DrawPerlinControls(selectedIndex);
+        break;
+    case OP_VORONOI:
+        DrawVoronoiControls(selectedIndex);
+        break;
     }
 
+    bool isPaused = m_mapmaker->isPaused();
+    if (ImGui::Button(isPaused ? "Play" : "Pause"))
+    {
+        pauseToggled.emit(!isPaused);
+    }
+
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::End();
 }
-void UI::DrawPerlinControls()
+void UI::DrawPerlinControls(size_t index)
 {
-    PerlinNoiseOperator *perlinOp = static_cast<PerlinNoiseOperator *>(m_mapmaker->operators[m_selectedOpIndex]);
+    PerlinNoiseOperator *perlinOp = static_cast<PerlinNoiseOperator *>(m_mapmaker->operators[index]);
 
     float freq = perlinOp->settings.Get<float>("frequency");
     if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-        opSettingChanged.emit(m_selectedOpIndex, "frequency", freq);
+        opSettingChanged.emit(index, "frequency", freq);
 
     glm::ivec2 offset = perlinOp->settings.Get<glm::ivec2>("offset");
     if (ImGui::DragInt2("Offset", (int *)&offset))
-        opSettingChanged.emit(m_selectedOpIndex, "offset", offset);
+        opSettingChanged.emit(index, "offset", offset);
 }
-void UI::DrawVoronoiControls()
+void UI::DrawVoronoiControls(size_t index)
 {
-    VoronoiNoiseOperator *voronoiOp = static_cast<VoronoiNoiseOperator *>(m_mapmaker->operators[m_selectedOpIndex]);
+    VoronoiNoiseOperator *voronoiOp = static_cast<VoronoiNoiseOperator *>(m_mapmaker->operators[index]);
 
     glm::ivec2 offset = voronoiOp->settings.Get<glm::ivec2>("offset");
     if (ImGui::DragInt2("Offset", (int *)&offset))
-        opSettingChanged.emit(m_selectedOpIndex, "offset", offset);
+        opSettingChanged.emit(index, "offset", offset);
 
     float size = voronoiOp->settings.Get<float>("size");
     if (ImGui::SliderFloat("Cell size", &size, 0.1, 1000, "%.3f", ImGuiSliderFlags_Logarithmic))
-        opSettingChanged.emit(m_selectedOpIndex, "size", size);
+        opSettingChanged.emit(index, "size", size);
 
     float skew = voronoiOp->settings.Get<float>("skew");
     if (ImGui::SliderFloat("Cell offset", &skew, 0.0f, 1.0f, "%.3f"))
-        opSettingChanged.emit(m_selectedOpIndex, "skew", skew);
-
-    float blend = voronoiOp->settings.Get<float>("blend");
-    if (ImGui::SliderFloat("Blend", &blend, 0.0f, 1.0f, "%.3f"))
-        opSettingChanged.emit(m_selectedOpIndex, "blend", blend);
+        opSettingChanged.emit(index, "skew", skew);
 }
 
 glm::ivec4 UI::GetViewportRegion() const

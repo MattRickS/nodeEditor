@@ -12,12 +12,11 @@ void Operator::init(unsigned int width, unsigned int height)
 
     // Generate an output texture of the right size for each
     auto layers = outLayers();
-    outputs = std::vector<Texture>(layers.size(), {m_width, m_height});
-
-    // TODO: FBO/GPU setup is only required for shader operators, move to subclass
-    for (Texture &texture : outputs)
+    // TODO: format by layer type, eg, height is 1 channel
+    outputs = std::vector<Texture>();
+    for (const Layer layer : layers)
     {
-        texture.EnsureOnGPU();
+        outputs.emplace_back(m_width, m_height, getLayerFormat(layer));
     }
 }
 
@@ -28,7 +27,7 @@ void Operator::resize(unsigned int width, unsigned int height)
     // Resize each output texture
     for (Texture &tex : outputs)
     {
-        tex.Resize(width, height);
+        tex.resize(width, height);
     }
 }
 void Operator::preprocess(RenderSet *renders) {}

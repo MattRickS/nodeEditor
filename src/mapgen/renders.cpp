@@ -10,33 +10,36 @@ const char *getLayerName(Layer layer)
     {
     case LAYER_HEIGHTMAP:
         return "Heightmap";
+    case LAYER_OUTFLOW:
+        return "Outflow";
     default:
         return "--";
+    }
+}
+
+GLenum getLayerFormat(Layer layer)
+{
+    switch (layer)
+    {
+    case LAYER_HEIGHTMAP:
+        return GL_RED;
+    default:
+        return GL_RGBA;
     }
 }
 
 // =============================================================================
 // Texture
 
-void Texture::LoadOnGPU()
+Texture::Texture(unsigned int width, unsigned int height, GLenum format, float *data) : width(width), height(height), format(format)
 {
+    glGenTextures(1, &ID);
     glBindTexture(GL_TEXTURE_2D, ID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, format, GL_FLOAT, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat(format), width, height, 0, format, GL_FLOAT, data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    // If the data's on the GPU it's likely being modified so do not keep a local
-    // copy of the old data. Retrieve the data from the GPU if requested.
-    DeleteLocalData();
-}
-void Texture::DeleteLocalData()
-{
-    if (data)
-    {
-        delete[] data;
-    }
 }
 
-Texture::Texture(unsigned int width, unsigned int height, GLenum format, float *data) : width(width), height(height), format(format), data(data) {}
 Texture::~Texture()
 {
     if (ID)
@@ -45,7 +48,41 @@ Texture::~Texture()
     }
 }
 
-void Texture::Resize(unsigned int width, unsigned int height)
+// Copy constructor
+Texture::Texture(const Texture &other)
+{
+    // TODO
+}
+
+// Move constructor
+Texture::Texture(Texture &&other) noexcept
+{
+    this->ID = other.ID;
+    this->format = other.format;
+    this->width = other.width;
+    this->height = other.height;
+    other.ID = 0;
+}
+
+// Copy Assignment
+Texture &Texture::operator=(const Texture &other)
+{
+    // TODO
+    return *this;
+}
+
+// Move assignment
+Texture &Texture::operator=(Texture &&other) noexcept
+{
+    this->ID = other.ID;
+    this->format = other.format;
+    this->width = other.width;
+    this->height = other.height;
+    other.ID = 0;
+    return *this;
+}
+
+void Texture::resize(unsigned int width, unsigned int height)
 {
     this->width = width;
     this->height = height;
@@ -53,15 +90,41 @@ void Texture::Resize(unsigned int width, unsigned int height)
     // TODO: Should probably just restructure the data so it's in the same pixel
     // positions, but either truncate or pad with black. For purposes of this tool,
     // deleting it should be fine.
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, format, GL_FLOAT, 0);
-    DeleteLocalData();
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat(format), width, height, 0, format, GL_FLOAT, 0);
 }
-bool Texture::IsOnGPU() { return ID != 0; }
-void Texture::EnsureOnGPU()
+
+size_t Texture::numChannels() const
 {
-    if (!IsOnGPU())
+    switch (format)
     {
-        glGenTextures(1, &ID);
-        LoadOnGPU();
+    case GL_RGBA:
+        return 4;
+    case GL_RGB:
+        return 3;
+    case GL_RG:
+        return 2;
+    case GL_RED:
+        return 1;
+    default:
+        throw "Unsupported format, only 32F formats currently supported";
     }
 }
+
+GLint Texture::internalFormat(GLenum format) const
+{
+    switch (format)
+    {
+    case GL_RGBA:
+        return GL_RGBA32F;
+    case GL_RGB:
+        return GL_RGB32F;
+    case GL_RG:
+        return GL_RG32F;
+    case GL_RED:
+        return GL_R32F;
+    default:
+        throw "Unsupported format, only 32F formats currently supported";
+    }
+}
+
+GLint Texture::internalFormat() const { return internalFormat(format); }

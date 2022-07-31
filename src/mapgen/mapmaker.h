@@ -50,6 +50,7 @@ protected:
     std::atomic<bool> m_paused = false;
     std::atomic<bool> m_awake = true;
     std::atomic<bool> m_stopped = false;
+    std::atomic<bool> m_processOne = false;
     // This is only ever read and written to by the thread
     size_t m_currIdx = 0;
 
@@ -108,6 +109,8 @@ public:
     unsigned int Height() const;
     const RenderSet *const GetRenderSet() const;
 
+    size_t GetCurrentIndex();
+    size_t GetTargetIndex();
     /*
     Sets what operator the thread will process up to.
     If the target is already processed, no new processing is performed.
@@ -137,4 +140,16 @@ public:
     The thread might still be processing it's last operation.
     */
     bool isPaused();
+    /*
+    Processes the current/next operator once.
+
+    If already active, has no effect.
+    If paused, thread is awoken for one step, then remains paused.
+    If not paused but already processed to the target operator, advances to the
+    next operator (if any) and fully processes it. If only one step of the next
+    operator is required, pause first.
+
+    Returns true if there is anything to process, otherwise false.
+    */
+    bool processOne();
 };

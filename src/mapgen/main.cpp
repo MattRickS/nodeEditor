@@ -42,6 +42,10 @@ protected:
     glm::vec2 lastCursorPos;
     float *buffer;
 
+    // FPS limiting as vsync does not appear to be working
+    double lastFrameTime = 0;
+    double fpsLimit = 1.0 / 60.0;
+
     void OnMouseButtonChanged(int button, int action, int mods)
     {
         if (button == GLFW_MOUSE_BUTTON_LEFT)
@@ -58,7 +62,19 @@ protected:
         }
     }
 
-    void OnMouseMoved(double xpos, double ypos)
+    const Texture *currentTexture() const
+    {
+        auto renderSet = m_mapmaker->GetRenderSet();
+        Layer layer = m_ui->GetCurrentLayer();
+        auto it = renderSet->find(layer);
+        if (it == renderSet->end())
+        {
+            return nullptr;
+        }
+        return it->second;
+    }
+
+    void UpdatePixelPreview(double xpos, double ypos)
     {
         glm::ivec4 viewportRegion = m_ui->GetViewportRegion();
         glm::vec2 worldPos = m_ui->ScreenToWorldPos({xpos, ypos});
@@ -75,11 +91,22 @@ protected:
             // TODO: If keeping this method, only read the texture data once when
             // - requested
             // - active texture has changed / was processed further
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer);
-            int index = (y * m_mapmaker->Width() + x) * 4;
-            for (int i = 0; i < 4; ++i)
-                m_pixelPreview.value[i] = buffer[index + i];
+            glActiveTexture(GL_TEXTURE0);
+            const Texture *texptr = currentTexture();
+            if (texptr)
+            {
+                glBindTexture(GL_TEXTURE_2D, texptr->ID);
+                glGetTexImage(GL_TEXTURE_2D, 0, texptr->format, GL_FLOAT, buffer);
+                int index = (y * m_mapmaker->Width() + x) * texptr->numChannels();
+                for (int i = 0; i < 4; ++i)
+                    m_pixelPreview.value[i] = i < texptr->numChannels() ? buffer[index + i] : 0.0f;
+            }
         }
+    }
+
+    void OnMouseMoved(double xpos, double ypos)
+    {
+        UpdatePixelPreview(xpos, ypos);
 
         if (isPanning)
         {
@@ -122,7 +149,43 @@ protected:
             case GLFW_KEY_A:
                 m_ui->ToggleIsolateChannel(ISOLATE_ALPHA);
                 break;
+            case GLFW_KEY_UP:
+                DecrementActiveOperator();
+                break;
+            case GLFW_KEY_DOWN:
+                IncrementActiveOperator();
+                break;
+            case GLFW_KEY_RIGHT:
+                m_mapmaker->processOne();
+                break;
+            case GLFW_KEY_SPACE:
+                TogglePause(!m_mapmaker->isPaused());
+                break;
             }
+        }
+    }
+
+    void DecrementActiveOperator()
+    {
+        size_t index = m_mapmaker->GetTargetIndex();
+        if (index > 0)
+        {
+            SetActiveOperator(index - 1);
+            glm::vec2 pos = m_ui->CursorPos();
+            UpdatePixelPreview(pos.x, pos.y);
+        }
+    }
+
+    void IncrementActiveOperator()
+    {
+        size_t index = m_mapmaker->GetTargetIndex();
+        if (index < m_mapmaker->operators.size() - 1)
+        {
+            SetActiveOperator(index + 1);
+            // If the next operator isn't processed yet, this won't be
+            // able to read the texture, wasted call
+            glm::vec2 pos = m_ui->CursorPos();
+            UpdatePixelPreview(pos.x, pos.y);
         }
     }
 
@@ -160,6 +223,11 @@ protected:
         }
     }
 
+    void TogglePause(bool pause)
+    {
+        m_mapmaker->setPaused(pause);
+    }
+
 public:
     Application(MapMaker *mapmaker, UI *ui) : m_mapmaker(mapmaker), m_ui(ui)
     {
@@ -181,6 +249,7 @@ public:
         m_ui->keyChanged.connect(this, &Application::OnKeyChanged);
         m_ui->activeOperatorChanged.connect(this, &Application::SetActiveOperator);
         m_ui->opSettingChanged.connect(this, &Application::UpdateSetting);
+        m_ui->pauseToggled.connect(this, &Application::TogglePause);
     }
     ~Application()
     {
@@ -200,8 +269,14 @@ public:
         while (!m_ui->IsClosed())
         {
             glfwPollEvents();
-            m_ui->Draw(m_mapmaker->GetRenderSet());
-            m_ui->Display();
+
+            double now = glfwGetTime();
+            if ((now - lastFrameTime) >= fpsLimit)
+            {
+                m_ui->Draw(m_mapmaker->GetRenderSet());
+                m_ui->Display();
+                lastFrameTime = now;
+            }
         }
 
         m_mapmaker->stopProcessing();

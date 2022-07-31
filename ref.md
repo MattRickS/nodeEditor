@@ -8,6 +8,7 @@ How I learned to build imgui with sfml using cmake: https://eliasdaler.github.io
 Heightmap using DLA: http://voxels.blogspot.com/2014/01/procedural-terrain-heightmap-generation.html
 Always comes back to weigert and his SoilMachine: https://github.com/weigert/SoilMachine
 Weigerts blog: https://nickmcd.me/2022/04/15/soilmachine/
+Sebastian League's unity compute shader: https://github.com/SebLague/Hydraulic-Erosion/blob/master/Assets/Scripts/ComputeShaders/Erosion.compute
 
 # Offscreen Rendering
 GLFW off screen rendering: https://www.glfw.org/docs/latest/context.html#context_offscreen

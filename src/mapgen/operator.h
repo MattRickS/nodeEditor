@@ -52,7 +52,7 @@ enum OpType
     OP_PERLIN,
     OP_VORONOI,
     OP_INVERT,
-    OP_COMPUTE,
+    OP_EROSION,
 };
 
 class Operator

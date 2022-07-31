@@ -46,7 +46,6 @@ protected:
     PixelPreview *m_pixelPreview;
     MapMaker *m_mapmaker = nullptr;
     Layer m_selectedLayer = LAYER_HEIGHTMAP;
-    size_t m_selectedOpIndex = -1;
     IsolateChannel m_isolateChannel = ISOLATE_NONE;
 
     // Only emits the signal if the UI didn't capture it
@@ -59,8 +58,8 @@ protected:
     void DrawOperatorProperties();
 
     // Operators - eventually these would be automatic based on settings, or defined by the operator
-    void DrawPerlinControls();
-    void DrawVoronoiControls();
+    void DrawPerlinControls(size_t index);
+    void DrawVoronoiControls(size_t index);
 
 public:
     Camera camera;
@@ -68,8 +67,11 @@ public:
     Signal<unsigned int, unsigned int> mapPosChanged;
     Signal<size_t> activeOperatorChanged;
     Signal<size_t, std::string, SettingValue> opSettingChanged;
+    Signal<bool> pauseToggled;
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMakerUI", Context *sharedContext = nullptr);
+
+    Layer GetCurrentLayer() const;
 
     void ToggleIsolateChannel(IsolateChannel channel);
     void SetMapMaker(MapMaker *mapmaker);
