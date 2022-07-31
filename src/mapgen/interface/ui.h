@@ -71,6 +71,7 @@ public:
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMakerUI", Context *sharedContext = nullptr);
 
+    void ToggleIsolateChannel(IsolateChannel channel);
     void SetMapMaker(MapMaker *mapmaker);
     void SetPixelPreview(PixelPreview *preview);
     void Draw(const RenderSet *const renderSet);

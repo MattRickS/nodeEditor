@@ -71,6 +71,10 @@ UI::UI(unsigned int width, unsigned int height, const char *name, Context *share
     ImGui_ImplOpenGL3_Init("#version 330");
 }
 
+void UI::ToggleIsolateChannel(IsolateChannel channel)
+{
+    m_isolateChannel = (m_isolateChannel == channel) ? ISOLATE_NONE : channel;
+}
 void UI::SetMapMaker(MapMaker *mapmaker) { m_mapmaker = mapmaker; }
 void UI::SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void UI::Draw(const RenderSet *const renderSet)
@@ -121,7 +125,7 @@ void UI::DrawViewportProperties(const RenderSet *const renderSet)
     ImGui::Begin("Viewport Properties", &p_open, flags);
 
     ImGui::PushItemWidth(150.0f);
-    if (ImGui::BeginCombo("Layer", getLayerName(m_selectedLayer)))
+    if (ImGui::BeginCombo("##Layer", getLayerName(m_selectedLayer)))
     {
         for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
         {
@@ -141,7 +145,7 @@ void UI::DrawViewportProperties(const RenderSet *const renderSet)
 
     ImGui::SameLine();
     ImGui::PushItemWidth(100.0f);
-    if (ImGui::BeginCombo("IsolateChannel", getIsolateChannelName(m_isolateChannel)))
+    if (ImGui::BeginCombo("##IsolateChannel", getIsolateChannelName(m_isolateChannel)))
     {
         for (int channel = ISOLATE_NONE; channel != ISOLATE_LAST; ++channel)
         {

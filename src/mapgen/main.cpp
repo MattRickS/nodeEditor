@@ -98,13 +98,31 @@ protected:
 
     void OnKeyChanged(int key, int scancode, int action, int mode)
     {
-        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-            Close();
-        else if (key == GLFW_KEY_F)
+        if (action == GLFW_PRESS)
         {
-            m_ui->camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -1));
-            m_ui->camera.focal = 1.0f;
-            UpdateProjection();
+            switch (key)
+            {
+            case GLFW_KEY_ESCAPE:
+                Close();
+                break;
+            case GLFW_KEY_F:
+                m_ui->camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -1));
+                m_ui->camera.focal = 1.0f;
+                UpdateProjection();
+                break;
+            case GLFW_KEY_R:
+                m_ui->ToggleIsolateChannel(ISOLATE_RED);
+                break;
+            case GLFW_KEY_G:
+                m_ui->ToggleIsolateChannel(ISOLATE_GREEN);
+                break;
+            case GLFW_KEY_B:
+                m_ui->ToggleIsolateChannel(ISOLATE_BLUE);
+                break;
+            case GLFW_KEY_A:
+                m_ui->ToggleIsolateChannel(ISOLATE_ALPHA);
+                break;
+            }
         }
     }
 
