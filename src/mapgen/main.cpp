@@ -40,6 +40,7 @@ protected:
 
     bool isPanning = false;
     glm::vec2 lastCursorPos;
+    float *buffer;
 
     void OnMouseButtonChanged(int button, int action, int mods)
     {
@@ -63,9 +64,21 @@ protected:
         glm::vec2 worldPos = m_ui->ScreenToWorldPos({xpos, ypos});
         if (worldPos.x >= 0 && worldPos.x <= 1 && worldPos.y >= 0 && worldPos.y <= 1)
         {
-            m_pixelPreview.pos = {worldPos.x * m_mapmaker->Width(), worldPos.y * m_mapmaker->Height()};
-            // TODO: Which framebuffer? Might be simpler once threaded
-            glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
+            int x = worldPos.x * m_mapmaker->Width();
+            int y = worldPos.y * m_mapmaker->Height();
+            m_pixelPreview.pos = {x, y};
+            // TODO: Only reads from buffer. Current framebuffer only has 0-1 values.
+            //       Could mount the texture to a storage buffer, but not sure if that
+            //       will improve retrieved values/performance
+            // glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
+
+            // TODO: If keeping this method, only read the texture data once when
+            // - requested
+            // - active texture has changed / was processed further
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer);
+            int index = (y * m_mapmaker->Width() + x) * 4;
+            for (int i = 0; i < 4; ++i)
+                m_pixelPreview.value[i] = buffer[index + i];
         }
 
         if (isPanning)
@@ -98,6 +111,9 @@ protected:
     void OnResize(int width, int height)
     {
         UpdateProjection();
+        // m_mapmaker->Resize(width, height);
+        delete[] buffer;
+        buffer = new float[m_mapmaker->Width() * m_mapmaker->Height() * 4];
     }
 
     void UpdateProjection()
@@ -129,6 +145,9 @@ protected:
 public:
     Application(MapMaker *mapmaker, UI *ui) : m_mapmaker(mapmaker), m_ui(ui)
     {
+        // prep a buffer for reading the image values
+        buffer = new float[m_mapmaker->Width() * m_mapmaker->Height() * 4];
+
         m_ui->SetMapMaker(mapmaker);
         m_ui->SetPixelPreview(&m_pixelPreview);
 
@@ -144,6 +163,10 @@ public:
         m_ui->keyChanged.connect(this, &Application::OnKeyChanged);
         m_ui->activeOperatorChanged.connect(this, &Application::SetActiveOperator);
         m_ui->opSettingChanged.connect(this, &Application::UpdateSetting);
+    }
+    ~Application()
+    {
+        delete[] buffer;
     }
     void Exec()
     {

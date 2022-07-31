@@ -5,5 +5,5 @@ layout(rgba32f, binding=0) uniform image2D imgOutput;
 void main()
 {
     ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
-    imageStore(imgOutput, pixel_coords, vec4(1, 0, 0, 1));
+    imageStore(imgOutput, pixel_coords, vec4(pixel_coords, 0, 1));
 }

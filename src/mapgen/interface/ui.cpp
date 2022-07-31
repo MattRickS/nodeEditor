@@ -125,7 +125,7 @@ void UI::DrawViewportProperties(const RenderSet *const renderSet)
 
         ImGui::SameLine();
         ImGui::PushItemWidth(250.0f);
-        ImGui::ColorEdit4("##PixelColor", (float *)&(*m_pixelPreview).value);
+        ImGui::DragFloat4("Pixel##PixelColor", (float *)&(*m_pixelPreview).value);
         ImGui::PopItemWidth();
 
         ImGui::SameLine();
