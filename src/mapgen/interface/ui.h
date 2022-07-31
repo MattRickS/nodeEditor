@@ -21,6 +21,18 @@ struct Camera
     float focal = 1.0f;
 };
 
+enum IsolateChannel
+{
+    ISOLATE_NONE = -1,
+    ISOLATE_RED = 0,
+    ISOLATE_GREEN = 1,
+    ISOLATE_BLUE = 2,
+    ISOLATE_ALPHA = 3,
+    ISOLATE_LAST
+};
+
+const char *getIsolateChannelName(IsolateChannel channel);
+
 /*
 Class for handling User Interface. Responsible for layout and drawing the
 interactive widgets but not for rendering the map.
@@ -35,6 +47,7 @@ protected:
     MapMaker *m_mapmaker = nullptr;
     Layer m_selectedLayer = LAYER_HEIGHTMAP;
     size_t m_selectedOpIndex = -1;
+    IsolateChannel m_isolateChannel = ISOLATE_NONE;
 
     // Only emits the signal if the UI didn't capture it
     virtual void OnMouseMoved(double xpos, double ypos);

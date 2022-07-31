@@ -13,6 +13,25 @@
 #include "window.h"
 #include "ui.h"
 
+const char *getIsolateChannelName(IsolateChannel channel)
+{
+    switch (channel)
+    {
+    case ISOLATE_NONE:
+        return "RGBA";
+    case ISOLATE_RED:
+        return "Red";
+    case ISOLATE_GREEN:
+        return "Green";
+    case ISOLATE_BLUE:
+        return "Blue";
+    case ISOLATE_ALPHA:
+        return "Alpha";
+    default:
+        return "";
+    }
+}
+
 void UI::OnMouseMoved(double xpos, double ypos)
 {
     ImGuiIO &io = ImGui::GetIO();
@@ -88,6 +107,7 @@ void UI::DrawViewport(const RenderSet *const renderSet)
     viewShader.setMat4("view", camera.view);
     viewShader.setMat4("projection", camera.projection);
     viewShader.setInt("renderTexture", 0);
+    viewShader.setInt("isolateChannel", (int)m_isolateChannel);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 void UI::DrawViewportProperties(const RenderSet *const renderSet)
@@ -100,7 +120,7 @@ void UI::DrawViewportProperties(const RenderSet *const renderSet)
     ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
     ImGui::Begin("Viewport Properties", &p_open, flags);
 
-    ImGui::PushItemWidth(350.0f);
+    ImGui::PushItemWidth(150.0f);
     if (ImGui::BeginCombo("Layer", getLayerName(m_selectedLayer)))
     {
         for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
@@ -109,6 +129,26 @@ void UI::DrawViewportProperties(const RenderSet *const renderSet)
             if (ImGui::Selectable(getLayerName(it->first), isSelected))
             {
                 m_selectedLayer = it->first;
+            }
+            if (isSelected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::PopItemWidth();
+
+    ImGui::SameLine();
+    ImGui::PushItemWidth(100.0f);
+    if (ImGui::BeginCombo("IsolateChannel", getIsolateChannelName(m_isolateChannel)))
+    {
+        for (int channel = ISOLATE_NONE; channel != ISOLATE_LAST; ++channel)
+        {
+            bool isSelected = (m_isolateChannel == channel);
+            if (ImGui::Selectable(getIsolateChannelName(IsolateChannel(channel)), isSelected))
+            {
+                m_isolateChannel = IsolateChannel(channel);
             }
             if (isSelected)
             {

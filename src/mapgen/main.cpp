@@ -62,7 +62,7 @@ protected:
     {
         glm::ivec4 viewportRegion = m_ui->GetViewportRegion();
         glm::vec2 worldPos = m_ui->ScreenToWorldPos({xpos, ypos});
-        if (worldPos.x >= 0 && worldPos.x <= 1 && worldPos.y >= 0 && worldPos.y <= 1)
+        if (worldPos.x >= 0 && worldPos.x < 1 && worldPos.y >= 0 && worldPos.y < 1)
         {
             int x = worldPos.x * m_mapmaker->Width();
             int y = worldPos.y * m_mapmaker->Height();
