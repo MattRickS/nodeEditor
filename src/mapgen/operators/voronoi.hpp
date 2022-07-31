@@ -5,7 +5,7 @@
 #include "../renders.h"
 #include "../shader.h"
 
-class VoronoiNoiseOperator : public Operator
+class VoronoiNoiseOperator : public GPUOperator
 {
 public:
     Shader shader;

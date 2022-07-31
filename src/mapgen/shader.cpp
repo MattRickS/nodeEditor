@@ -51,11 +51,13 @@ GLuint CompileShader(const char *source, GLenum shaderType)
     return shaderID;
 }
 
-GLuint CompileProgram(GLuint vertexShader, GLuint fragmentShader)
+GLuint CompileProgram(size_t numShaders, GLuint *shaders)
 {
     GLuint programID = glCreateProgram();
-    glAttachShader(programID, vertexShader);
-    glAttachShader(programID, fragmentShader);
+    for (size_t i = 0; i < numShaders; ++i)
+    {
+        glAttachShader(programID, shaders[i]);
+    }
     glLinkProgram(programID);
 
     GLint success;
@@ -72,6 +74,16 @@ GLuint CompileProgram(GLuint vertexShader, GLuint fragmentShader)
     return programID;
 }
 
+Shader::Shader(const char *computeShader)
+{
+    std::string source = LoadFile(computeShader);
+    GLuint shader = CompileShader(source.c_str(), GL_COMPUTE_SHADER);
+
+    ID = CompileProgram(1, &shader);
+
+    glDeleteShader(shader);
+}
+
 Shader::Shader(const char *vertexPath, const char *fragmentPath)
 {
     std::string vertexSource = LoadFile(vertexPath);
@@ -80,7 +92,8 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath)
     GLuint vertexShader = CompileShader(vertexSource.c_str(), GL_VERTEX_SHADER);
     GLuint fragmentShader = CompileShader(fragmentSource.c_str(), GL_FRAGMENT_SHADER);
 
-    ID = CompileProgram(vertexShader, fragmentShader);
+    GLuint shaders[2] = {vertexShader, fragmentShader};
+    ID = CompileProgram(2, shaders);
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);

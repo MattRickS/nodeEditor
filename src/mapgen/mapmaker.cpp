@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 
+#include "operators/compute.hpp"
 #include "operators/invert.hpp"
 #include "operators/perlin.h"
 #include "operators/voronoi.hpp"
@@ -255,7 +256,7 @@ void MapMaker::process()
 
     // Creating the operators in the thread as they may create shaders which
     // are not shared
-    operators.push_back(new VoronoiNoiseOperator);
+    operators.push_back(new ComputeOperator);
     // operators.push_back(new PerlinNoiseOperator);
     operators.push_back(new InvertOperator);
     for (auto op : operators)

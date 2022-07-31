@@ -5,7 +5,7 @@
 #include "../renders.h"
 #include "../shader.h"
 
-class InvertOperator : public Operator
+class InvertOperator : public GPUOperator
 {
 public:
     Shader shader;

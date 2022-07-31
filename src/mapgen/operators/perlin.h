@@ -7,7 +7,7 @@
 #include "../renders.h"
 #include "../shader.h"
 
-class PerlinNoiseOperator : public Operator
+class PerlinNoiseOperator : public GPUOperator
 {
 public:
     Shader shader;

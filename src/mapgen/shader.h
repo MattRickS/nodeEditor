@@ -6,13 +6,14 @@
 
 std::string LoadFile(const char *filename);
 GLuint CompileShader(const char *source, GLenum shaderType);
-GLuint CompileProgram(GLuint vertexShader, GLuint fragmentShader);
+GLuint CompileProgram(size_t numShaders, GLuint *shaders);
 
 class Shader
 {
 public:
     GLuint ID;
 
+    Shader(const char *computeShader);
     Shader(const char *vertexPath, const char *fragmentPath);
 
     void use();

@@ -52,6 +52,7 @@ enum OpType
     OP_PERLIN,
     OP_VORONOI,
     OP_INVERT,
+    OP_COMPUTE,
 };
 
 class Operator
@@ -69,7 +70,7 @@ public:
     Separate init method used so that it can use the virtual in/out layers methods
     which would be undefined in the constructor.
     */
-    void init(unsigned int width, unsigned int height);
+    virtual void init(unsigned int width, unsigned int height);
     /* Type of the operator */
     virtual OpType type() const = 0;
     /* Display name for the operator */
@@ -113,4 +114,10 @@ public:
     are 1:1 with the outLayers. Must be overridden if different behaviour is required.
     */
     virtual void PopulateRenderSet(RenderSet *renderSet);
+};
+
+class GPUOperator : public Operator
+{
+public:
+    virtual void init(unsigned int width, unsigned int height);
 };

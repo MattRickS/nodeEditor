@@ -21,7 +21,7 @@ const char *getLayerName(Layer layer)
 void Texture::LoadOnGPU()
 {
     glBindTexture(GL_TEXTURE_2D, ID);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_FLOAT, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, format, GL_FLOAT, data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     // If the data's on the GPU it's likely being modified so do not keep a local
@@ -53,7 +53,7 @@ void Texture::Resize(unsigned int width, unsigned int height)
     // TODO: Should probably just restructure the data so it's in the same pixel
     // positions, but either truncate or pad with black. For purposes of this tool,
     // deleting it should be fine.
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_FLOAT, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, format, GL_FLOAT, 0);
     DeleteLocalData();
 }
 bool Texture::IsOnGPU() { return ID != 0; }
