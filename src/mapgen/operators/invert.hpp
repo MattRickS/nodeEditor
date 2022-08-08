@@ -5,15 +5,17 @@
 #include "../renders.h"
 #include "../shader.h"
 
-class InvertOperator : public GPUOperator
+class InvertOp : public Operator
 {
 public:
     Shader shader;
 
-    InvertOperator() : shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/invert.fs")
+    static InvertOp *create()
     {
+        return new InvertOp();
     }
-    virtual OpType type() const { return OP_INVERT; }
+
+    InvertOp() : shader("src/mapgen/shaders/compute/invert.glsl") {}
     virtual std::string name() const { return "Invert"; }
     virtual std::vector<Layer> inLayers() const
     {
@@ -27,16 +29,23 @@ public:
     {
         // Setup shader
         shader.use();
+
+        auto tex = renders->at(LAYER_HEIGHTMAP);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renders->at(LAYER_HEIGHTMAP)->ID);
-        shader.setInt("inImage", 0);
+        glBindTexture(GL_TEXTURE_2D, tex->ID);
+        glBindImageTexture(0, tex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, tex->internalFormat());
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, outputs[0].ID);
+        glBindImageTexture(1, outputs[0].ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outputs[0].internalFormat());
 
         // Render
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
-        glViewport(0, 0, m_width, m_height);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDispatchCompute(ceil(m_width / 8), ceil(m_height / 4), 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
         return true;
     }
     virtual void reset(){};
 };
+
+REGISTER_OPERATOR(InvertOp, InvertOp::create);

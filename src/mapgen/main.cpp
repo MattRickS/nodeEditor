@@ -15,8 +15,6 @@
 #include "interface/ui.h"
 #include "mapmaker.h"
 #include "operator.h"
-#include "operators/perlin.h"
-#include "operators/invert.hpp"
 #include "renders.h"
 #include "shader.h"
 #include "util.hpp"
@@ -76,7 +74,6 @@ protected:
 
     void UpdatePixelPreview(double xpos, double ypos)
     {
-        glm::ivec4 viewportRegion = m_ui->GetViewportRegion();
         glm::vec2 worldPos = m_ui->ScreenToWorldPos({xpos, ypos});
         if (worldPos.x >= 0 && worldPos.x < 1 && worldPos.y >= 0 && worldPos.y < 1)
         {

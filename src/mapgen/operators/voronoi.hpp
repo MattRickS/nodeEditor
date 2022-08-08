@@ -5,18 +5,22 @@
 #include "../renders.h"
 #include "../shader.h"
 
-class VoronoiNoiseOperator : public Operator
+class VoronoiNoise : public Operator
 {
 public:
     Shader shader;
 
-    VoronoiNoiseOperator() : shader("src/mapgen/shaders/compute/voronoi.glsl")
+    static VoronoiNoise *create()
     {
-        settings.Register<glm::ivec2>("offset", glm::ivec2(0));
-        settings.Register<float>("size", 100.0f);
-        settings.Register<float>("skew", 0.5f);
+        return new VoronoiNoise();
     }
-    virtual OpType type() const { return OP_VORONOI; }
+
+    VoronoiNoise() : shader("src/mapgen/shaders/compute/voronoi.glsl")
+    {
+        settings.registerInt2("offset", glm::ivec2(0));
+        settings.registerFloat("size", 100.0f);
+        settings.registerFloat("skew", 0.5f);
+    }
     virtual std::string name() const { return "Voronoi"; }
     virtual std::vector<Layer> inLayers() const
     {
@@ -29,9 +33,9 @@ public:
     virtual bool process(RenderSet *renders)
     {
         shader.use();
-        shader.setIVec2("offset", settings.Get<glm::ivec2>("offset"));
-        shader.setFloat("size", settings.Get<float>("size"));
-        shader.setFloat("skew", settings.Get<float>("skew"));
+        shader.setIVec2("offset", settings.getInt2("offset"));
+        shader.setFloat("size", settings.getFloat("size"));
+        shader.setFloat("skew", settings.getFloat("skew"));
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, outputs[0].ID);
@@ -44,3 +48,5 @@ public:
     }
     virtual void reset(){};
 };
+
+REGISTER_OPERATOR(VoronoiNoise, VoronoiNoise::create);

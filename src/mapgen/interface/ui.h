@@ -57,9 +57,15 @@ protected:
     void DrawViewportProperties(const RenderSet *const renderSet);
     void DrawOperatorProperties();
 
-    // Operators - eventually these would be automatic based on settings, or defined by the operator
-    void DrawPerlinControls(size_t index);
-    void DrawVoronoiControls(size_t index);
+    void drawBoolSetting(size_t index, const Setting &setting);
+    void drawFloatSetting(size_t index, const Setting &setting);
+    void drawFloat2Setting(size_t index, const Setting &setting);
+    void drawFloat3Setting(size_t index, const Setting &setting);
+    void drawFloat4Setting(size_t index, const Setting &setting);
+    void drawIntSetting(size_t index, const Setting &setting);
+    void drawInt2Setting(size_t index, const Setting &setting);
+    void drawUIntSetting(size_t index, const Setting &setting);
+    void drawOperatorSettings(size_t index);
 
 public:
     Camera camera;

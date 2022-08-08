@@ -1,5 +1,6 @@
-#version 330 core
-layout(location = 0) out vec4 FragColor;
+#version 430 core
+layout(local_size_x = 8, local_size_y = 4) in;
+layout(r32f, binding=0) uniform image2D imgOut;
 // TODO: Add random seed. Either
 // - Use 3D noise and seed is Z
 // - Use as offset for x,y
@@ -83,7 +84,8 @@ float perlin2D(vec2 point, float freq)
 }
 
 void main() {
-    vec2 pos = ivec2(gl_FragCoord.x, gl_FragCoord.y) + offset;
+    ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+    vec2 pos = pixel_coords + offset;
     float noise = perlin2D(pos, frequency);
-    FragColor = vec4(noise, noise, noise, 1);
+    imageStore(imgOut, pixel_coords, vec4(noise, noise, noise, 1));
 }

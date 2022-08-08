@@ -5,7 +5,7 @@
 #include "../renders.h"
 #include "../shader.h"
 
-class ErosionOperator : public Operator
+class ErosionOp : public Operator
 {
 protected:
     unsigned int m_iterations = 0;
@@ -14,11 +14,15 @@ public:
     Shader erosionShader;
     // Shader reductionShader;  TODO: Will be needed to add outflow back to heightmap
 
-    ErosionOperator() : erosionShader("src/mapgen/shaders/compute/erosion.glsl") //, reductionShader("src/mapgen/shaders/compute/erosion.glsl")
+    static ErosionOp *create()
     {
-        settings.Register<unsigned int>("iterations", 1);
+        return new ErosionOp();
     }
-    virtual OpType type() const { return OP_EROSION; }
+
+    ErosionOp() : erosionShader("src/mapgen/shaders/compute/erosion.glsl") //, reductionShader("src/mapgen/shaders/compute/erosion.glsl")
+    {
+        settings.registerUInt("iterations", 1);
+    }
     virtual std::string name() const { return "Erosion"; }
     virtual std::vector<Layer> inLayers() const
     {
@@ -52,10 +56,12 @@ public:
 
         glDispatchCompute(ceil(m_width / 8), ceil(m_height / 4), 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        return m_iterations == settings.Get<unsigned int>("iterations");
+        return m_iterations == settings.getUInt("iterations");
     }
     virtual void reset()
     {
         m_iterations = 0;
     };
 };
+
+REGISTER_OPERATOR(ErosionOp, ErosionOp::create);

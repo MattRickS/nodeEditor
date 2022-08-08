@@ -7,14 +7,18 @@
 #include "../renders.h"
 #include "../shader.h"
 
-class PerlinNoiseOperator : public GPUOperator
+class PerlinNoise : public Operator
 {
 public:
     Shader shader;
 
-    PerlinNoiseOperator();
+    static PerlinNoise *create()
+    {
+        return new PerlinNoise();
+    }
 
-    virtual OpType type() const;
+    PerlinNoise();
+
     virtual std::string name() const;
 
     virtual std::vector<Layer> inLayers() const;

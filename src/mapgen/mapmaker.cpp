@@ -17,9 +17,10 @@
 
 MapMaker::MapMaker(unsigned int width, unsigned int height) : m_width(width), m_height(height), context("MapMaker")
 {
-    operators.push_back(new VoronoiNoiseOperator);
-    // operators.push_back(new PerlinNoiseOperator);
-    operators.push_back(new ErosionOperator);
+    operators.push_back(OperatorRegistry::create("VoronoiNoise"));
+    operators.push_back(OperatorRegistry::create("InvertOp"));
+    operators.push_back(OperatorRegistry::create("PerlinNoise"));
+    operators.push_back(OperatorRegistry::create("ErosionOp"));
     for (auto op : operators)
     {
         op->init(m_width, m_height);
@@ -82,10 +83,7 @@ void MapMaker::setTargetIndex(size_t index)
 
 bool MapMaker::updateSetting(size_t index, std::string key, SettingValue value)
 {
-    if (!operators[index]->settings.Set(key, value))
-    {
-        return false;
-    }
+    operators[index]->settings.get(key)->set(value);
     // Internal state only needs processing if the operator or it's dependents
     // were processed.
     for (size_t i = index; i < operators.size(); ++i)

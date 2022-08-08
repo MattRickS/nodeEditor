@@ -5,8 +5,6 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include "../operators/perlin.h"
-#include "../operators/voronoi.hpp"
 #include "../operator.h"
 #include "../renders.h"
 #include "../shader.h"
@@ -235,15 +233,7 @@ void UI::DrawOperatorProperties()
     }
     ImGui::EndListBox();
     ImGui::Text("Operator Settings");
-    switch (m_mapmaker->operators[selectedIndex]->type())
-    {
-    case OP_PERLIN:
-        DrawPerlinControls(selectedIndex);
-        break;
-    case OP_VORONOI:
-        DrawVoronoiControls(selectedIndex);
-        break;
-    }
+    drawOperatorSettings(selectedIndex);
 
     bool isPaused = m_mapmaker->isPaused();
     if (ImGui::Button(isPaused ? "Play" : "Pause"))
@@ -254,33 +244,89 @@ void UI::DrawOperatorProperties()
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::End();
 }
-void UI::DrawPerlinControls(size_t index)
+
+void UI::drawBoolSetting(size_t index, const Setting &setting)
 {
-    PerlinNoiseOperator *perlinOp = static_cast<PerlinNoiseOperator *>(m_mapmaker->operators[index]);
-
-    float freq = perlinOp->settings.Get<float>("frequency");
-    if (ImGui::SliderFloat("Frequency", &freq, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-        opSettingChanged.emit(index, "frequency", freq);
-
-    glm::ivec2 offset = perlinOp->settings.Get<glm::ivec2>("offset");
-    if (ImGui::DragInt2("Offset", (int *)&offset))
-        opSettingChanged.emit(index, "offset", offset);
+    bool value = setting.value<bool>();
+    if (ImGui::Checkbox(setting.name().c_str(), &value))
+        opSettingChanged.emit(index, setting.name(), value);
 }
-void UI::DrawVoronoiControls(size_t index)
+void UI::drawFloatSetting(size_t index, const Setting &setting)
 {
-    VoronoiNoiseOperator *voronoiOp = static_cast<VoronoiNoiseOperator *>(m_mapmaker->operators[index]);
-
-    glm::ivec2 offset = voronoiOp->settings.Get<glm::ivec2>("offset");
-    if (ImGui::DragInt2("Offset", (int *)&offset))
-        opSettingChanged.emit(index, "offset", offset);
-
-    float size = voronoiOp->settings.Get<float>("size");
-    if (ImGui::SliderFloat("Cell size", &size, 0.1, 1000, "%.3f", ImGuiSliderFlags_Logarithmic))
-        opSettingChanged.emit(index, "size", size);
-
-    float skew = voronoiOp->settings.Get<float>("skew");
-    if (ImGui::SliderFloat("Cell offset", &skew, 0.0f, 1.0f, "%.3f"))
-        opSettingChanged.emit(index, "skew", skew);
+    float value = setting.value<float>();
+    // TODO: Setting options for min/max
+    if (ImGui::SliderFloat(setting.name().c_str(), &value, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
+        opSettingChanged.emit(index, setting.name(), value);
+}
+void UI::drawFloat2Setting(size_t index, const Setting &setting)
+{
+    glm::vec2 value = setting.value<glm::vec2>();
+    if (ImGui::DragFloat2(setting.name().c_str(), (float *)&value))
+        opSettingChanged.emit(index, setting.name(), value);
+}
+void UI::drawFloat3Setting(size_t index, const Setting &setting)
+{
+    glm::vec3 value = setting.value<glm::vec3>();
+    if (ImGui::DragFloat3(setting.name().c_str(), (float *)&value))
+        opSettingChanged.emit(index, setting.name(), value);
+}
+void UI::drawFloat4Setting(size_t index, const Setting &setting)
+{
+    glm::vec4 value = setting.value<glm::vec4>();
+    if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value))
+        opSettingChanged.emit(index, setting.name(), value);
+}
+void UI::drawIntSetting(size_t index, const Setting &setting)
+{
+    int value = setting.value<int>();
+    if (ImGui::InputInt(setting.name().c_str(), &value))
+        opSettingChanged.emit(index, setting.name(), value);
+}
+void UI::drawInt2Setting(size_t index, const Setting &setting)
+{
+    glm::ivec2 offset = setting.value<glm::ivec2>();
+    if (ImGui::DragInt2(setting.name().c_str(), (int *)&offset))
+        opSettingChanged.emit(index, setting.name(), offset);
+}
+void UI::drawUIntSetting(size_t index, const Setting &setting)
+{
+    unsigned int value = setting.value<unsigned int>();
+    if (ImGui::InputScalar(setting.name().c_str(), ImGuiDataType_U32, &value))
+        opSettingChanged.emit(index, setting.name(), value);
+}
+void UI::drawOperatorSettings(size_t index)
+{
+    Operator *op = m_mapmaker->operators[index];
+    for (auto it = op->settings.begin(); it != op->settings.end(); ++it)
+    {
+        switch (it->type())
+        {
+        case S_BOOL:
+            drawBoolSetting(index, *it);
+            break;
+        case S_FLOAT:
+            drawFloatSetting(index, *it);
+            break;
+        case S_FLOAT2:
+            drawFloat2Setting(index, *it);
+            break;
+        case S_FLOAT3:
+            drawFloat3Setting(index, *it);
+            break;
+        case S_FLOAT4:
+            drawFloat4Setting(index, *it);
+            break;
+        case S_INT:
+            drawIntSetting(index, *it);
+            break;
+        case S_INT2:
+            drawInt2Setting(index, *it);
+            break;
+        case S_UINT:
+            drawUIntSetting(index, *it);
+            break;
+        }
+    }
 }
 
 glm::ivec4 UI::GetViewportRegion() const

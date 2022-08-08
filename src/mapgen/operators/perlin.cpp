@@ -7,33 +7,37 @@
 #include "../shader.h"
 #include "perlin.h"
 
-PerlinNoiseOperator::PerlinNoiseOperator() : shader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/noise/perlin.fs")
+PerlinNoise::PerlinNoise() : shader("src/mapgen/shaders/compute/perlin.glsl")
 {
-    settings.Register<float>("frequency", 0.01f);
-    settings.Register<glm::ivec2>("offset", glm::ivec2(0));
+    settings.registerFloat("frequency", 0.01f);
+    settings.registerInt2("offset", glm::ivec2(0));
 }
 
-OpType PerlinNoiseOperator::type() const { return OP_PERLIN; }
+std::string PerlinNoise::name() const { return "Noise"; }
 
-std::string PerlinNoiseOperator::name() const { return "Noise"; }
-
-std::vector<Layer> PerlinNoiseOperator::inLayers() const
+std::vector<Layer> PerlinNoise::inLayers() const
 {
     return {};
 }
-std::vector<Layer> PerlinNoiseOperator::outLayers() const
+std::vector<Layer> PerlinNoise::outLayers() const
 {
     return {LAYER_HEIGHTMAP};
 }
-bool PerlinNoiseOperator::process(RenderSet *renders)
+bool PerlinNoise::process(RenderSet *renders)
 {
     shader.use();
-    shader.setFloat("frequency", settings.Get<float>("frequency"));
-    shader.setIVec2("offset", settings.Get<glm::ivec2>("offset"));
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
-    glViewport(0, 0, m_width, m_height);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    shader.setFloat("frequency", settings.getFloat("frequency"));
+    shader.setIVec2("offset", settings.getInt2("offset"));
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, outputs[0].ID);
+    glBindImageTexture(0, outputs[0].ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outputs[0].internalFormat());
+
+    glDispatchCompute(ceil(m_width / 8), ceil(m_height / 4), 1);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
     return true;
 }
-void PerlinNoiseOperator::reset() {}
+void PerlinNoise::reset() {}
+
+REGISTER_OPERATOR(PerlinNoise, PerlinNoise::create);

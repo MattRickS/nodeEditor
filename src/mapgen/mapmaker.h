@@ -8,8 +8,6 @@
 #include <vector>
 
 #include "context.hpp"
-#include "operators/invert.hpp"
-#include "operators/perlin.h"
 #include "operator.h"
 #include "renders.h"
 

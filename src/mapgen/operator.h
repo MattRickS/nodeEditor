@@ -1,59 +1,19 @@
 #pragma once
+#define REGISTER_OPERATOR(op_name, create_func) \
+    bool op_name##_registered = OperatorRegistry::registerOperator(#op_name, (create_func))
+
+#include <functional>
 #include <map>
 #include <string>
 #include <variant>
+#include <unordered_map>
 #include <vector>
 
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 
 #include "renders.h"
-
-typedef std::variant<bool, unsigned int, int, float, glm::vec2, glm::vec3, glm::vec4, glm::ivec2> SettingValue;
-
-class Settings
-{
-protected:
-    std::map<std::string, SettingValue> m_settings;
-
-public:
-    template <typename T>
-    void Register(std::string key, T defaultValue)
-    {
-        // Key can only be registered once
-        if (m_settings.find(key) != m_settings.end())
-        {
-            throw std::invalid_argument(key);
-        }
-        m_settings[key] = defaultValue;
-    }
-    bool Set(std::string key, SettingValue value)
-    {
-        if (m_settings.find(key) == m_settings.end())
-        {
-            return false;
-        }
-        m_settings[key] = value;
-        return true;
-    }
-    template <typename T>
-    T Get(std::string key)
-    {
-        if (m_settings.find(key) == m_settings.end())
-        {
-            throw std::out_of_range(key);
-        }
-        return std::get<T>(m_settings[key]);
-    }
-};
-
-enum OpType
-{
-    OP_PERLIN,
-    OP_VORONOI,
-    OP_INVERT,
-    OP_EROSION,
-};
+#include "settings.h"
 
 class Operator
 {
@@ -71,8 +31,6 @@ public:
     which would be undefined in the constructor.
     */
     virtual void init(unsigned int width, unsigned int height);
-    /* Type of the operator */
-    virtual OpType type() const = 0;
     /* Display name for the operator */
     virtual std::string name() const = 0;
     /*
@@ -116,8 +74,37 @@ public:
     virtual void PopulateRenderSet(RenderSet *renderSet);
 };
 
-class GPUOperator : public Operator
+class OperatorRegistry
 {
 public:
-    virtual void init(unsigned int width, unsigned int height);
+    typedef std::function<Operator *()> FactoryFunction;
+    typedef std::unordered_map<std::string, FactoryFunction> FactoryMap;
+
+    static bool registerOperator(const std::string &name, FactoryFunction func)
+    {
+        FactoryMap *map = getFactoryMap();
+        if (map->find(name) != map->end())
+        {
+            return false;
+        }
+        (*map)[name] = func;
+        return true;
+    }
+
+    static Operator *create(const std::string &name)
+    {
+        FactoryMap *map = getFactoryMap();
+        if (map->find(name) == map->end())
+        {
+            return nullptr;
+        }
+        return (*map)[name]();
+    }
+
+private:
+    static FactoryMap *getFactoryMap()
+    {
+        static FactoryMap map;
+        return &map;
+    }
 };
