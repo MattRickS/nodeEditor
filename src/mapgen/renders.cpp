@@ -4,33 +4,6 @@
 
 #include "renders.h"
 
-const char *getLayerName(Layer layer)
-{
-    switch (layer)
-    {
-    case LAYER_HEIGHTMAP:
-        return "Heightmap";
-    case LAYER_OUTFLOW:
-        return "Outflow";
-    default:
-        return "--";
-    }
-}
-
-GLenum getLayerFormat(Layer layer)
-{
-    switch (layer)
-    {
-    case LAYER_HEIGHTMAP:
-        return GL_RED;
-    default:
-        return GL_RGBA;
-    }
-}
-
-// =============================================================================
-// Texture
-
 Texture::Texture(unsigned int width, unsigned int height, GLenum format, float *data) : width(width), height(height), format(format)
 {
     glGenTextures(1, &ID);

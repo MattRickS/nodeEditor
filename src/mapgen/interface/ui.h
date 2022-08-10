@@ -1,9 +1,10 @@
 #pragma once
 #include <glm/glm.hpp>
 
-#include "../mapmaker.h"
+#include "../constants.h"
 #include "../operator.h"
 #include "../renders.h"
+#include "../scene.h"
 #include "../shader.h"
 #include "window.h"
 #include "signal.hpp"
@@ -44,8 +45,9 @@ protected:
     float m_opPropertiesWidthPercent = 0.25f;
     float m_viewPropertiesHeightPercent = 0.05f;
     PixelPreview *m_pixelPreview;
-    MapMaker *m_mapmaker = nullptr;
-    Layer m_selectedLayer = LAYER_HEIGHTMAP;
+    Scene *m_scene = nullptr;
+    Node *m_selectedNode = nullptr;
+    std::string m_selectedLayer = DEFAULT_LAYER;
     IsolateChannel m_isolateChannel = ISOLATE_NONE;
 
     // Only emits the signal if the UI didn't capture it
@@ -53,40 +55,42 @@ protected:
     virtual void OnMouseButtonChanged(int button, int action, int mods);
     virtual void OnMouseScrolled(double xoffset, double yoffset);
 
-    void DrawViewport(const RenderSet *const renderSet);
-    void DrawViewportProperties(const RenderSet *const renderSet);
+    void DrawViewport();
+    void DrawViewportProperties();
     void DrawOperatorProperties();
+    void drawNodegraph();
 
-    void drawBoolSetting(size_t index, const Setting &setting);
-    void drawFloatSetting(size_t index, const Setting &setting);
-    void drawFloat2Setting(size_t index, const Setting &setting);
-    void drawFloat3Setting(size_t index, const Setting &setting);
-    void drawFloat4Setting(size_t index, const Setting &setting);
-    void drawIntSetting(size_t index, const Setting &setting);
-    void drawInt2Setting(size_t index, const Setting &setting);
-    void drawUIntSetting(size_t index, const Setting &setting);
-    void drawOperatorSettings(size_t index);
+    void drawBoolSetting(Node *node, const Setting &setting);
+    void drawFloatSetting(Node *node, const Setting &setting);
+    void drawFloat2Setting(Node *node, const Setting &setting);
+    void drawFloat3Setting(Node *node, const Setting &setting);
+    void drawFloat4Setting(Node *node, const Setting &setting);
+    void drawIntSetting(Node *node, const Setting &setting);
+    void drawInt2Setting(Node *node, const Setting &setting);
+    void drawUIntSetting(Node *node, const Setting &setting);
+    void drawNodeSettings(Node *node);
 
 public:
     Camera camera;
 
     Signal<unsigned int, unsigned int> mapPosChanged;
-    Signal<size_t> activeOperatorChanged;
-    Signal<size_t, std::string, SettingValue> opSettingChanged;
+    Signal<Node *> selectedNodeChanged;
+    Signal<Node *, std::string, SettingValue> opSettingChanged;
     Signal<bool> pauseToggled;
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMakerUI", Context *sharedContext = nullptr);
 
-    Layer GetCurrentLayer() const;
+    std::string GetCurrentLayer() const;
 
     void ToggleIsolateChannel(IsolateChannel channel);
-    void SetMapMaker(MapMaker *mapmaker);
+    void setScene(Scene *scene);
     void SetPixelPreview(PixelPreview *preview);
-    void Draw(const RenderSet *const renderSet);
+    void Draw();
 
     glm::ivec4 GetViewportRegion() const;
     glm::ivec4 GetViewportPropertiesRegion() const;
     glm::ivec4 GetOperatorPropertiesRegion() const;
+    glm::ivec4 getNodegraphRegion() const;
 
     glm::vec2 ScreenToWorldPos(glm::vec2 screenPos);
     glm::vec2 WorldToScreenPos(glm::vec2 mapPos);

@@ -91,43 +91,43 @@ void Settings::registerInt2(const std::string name, glm::ivec2 value)
     validateUniqueSetting(name);
     m_settings[name] = Setting(name, S_INT2, value);
 }
-bool Settings::getBool(const std::string key)
+bool Settings::getBool(const std::string key) const
 {
     validateKeyExists(key);
-    return m_settings[key].value<bool>();
+    return m_settings.at(key).value<bool>();
 }
-unsigned int Settings::getUInt(const std::string key)
+unsigned int Settings::getUInt(const std::string key) const
 {
     validateKeyExists(key);
-    return m_settings[key].value<unsigned int>();
+    return m_settings.at(key).value<unsigned int>();
 }
-int Settings::getInt(const std::string key)
+int Settings::getInt(const std::string key) const
 {
     validateKeyExists(key);
-    return m_settings[key].value<int>();
+    return m_settings.at(key).value<int>();
 }
-float Settings::getFloat(const std::string key)
+float Settings::getFloat(const std::string key) const
 {
     validateKeyExists(key);
-    return m_settings[key].value<float>();
+    return m_settings.at(key).value<float>();
 }
-glm::vec2 Settings::getFloat2(const std::string key)
+glm::vec2 Settings::getFloat2(const std::string key) const
 {
     validateKeyExists(key);
-    return m_settings[key].value<glm::vec2>();
+    return m_settings.at(key).value<glm::vec2>();
 }
-glm::vec3 Settings::getFloat3(const std::string key)
+glm::vec3 Settings::getFloat3(const std::string key) const
 {
     validateKeyExists(key);
-    return m_settings[key].value<glm::vec3>();
+    return m_settings.at(key).value<glm::vec3>();
 }
-glm::vec4 Settings::getFloat4(const std::string key)
+glm::vec4 Settings::getFloat4(const std::string key) const
 {
     validateKeyExists(key);
-    return m_settings[key].value<glm::vec4>();
+    return m_settings.at(key).value<glm::vec4>();
 }
-glm::ivec2 Settings::getInt2(const std::string key)
+glm::ivec2 Settings::getInt2(const std::string key) const
 {
     validateKeyExists(key);
-    return m_settings[key].value<glm::ivec2>();
+    return m_settings.at(key).value<glm::ivec2>();
 }

@@ -3,16 +3,6 @@
 
 #include <GL/glew.h>
 
-enum Layer
-{
-    LAYER_HEIGHTMAP,
-    LAYER_OUTFLOW,
-    LAYER_MAX
-};
-
-const char *getLayerName(Layer layer);
-GLenum getLayerFormat(Layer layer);
-
 class Texture
 {
 protected:
@@ -36,4 +26,4 @@ public:
     GLint internalFormat() const;
 };
 
-typedef std::map<Layer, Texture *> RenderSet;
+typedef std::map<std::string, Texture *> RenderSet;

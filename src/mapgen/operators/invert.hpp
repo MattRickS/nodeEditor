@@ -1,8 +1,10 @@
 #pragma once
 #include <string>
+#include <vector>
 
 #include "../operator.h"
 #include "../renders.h"
+#include "../settings.h"
 #include "../shader.h"
 
 class InvertOp : public Operator
@@ -16,36 +18,34 @@ public:
     }
 
     InvertOp() : shader("src/mapgen/shaders/compute/invert.glsl") {}
-    virtual std::string name() const { return "Invert"; }
-    virtual std::vector<Layer> inLayers() const
+    std::string name() const override { return "Invert"; }
+    std::vector<Input> inputs() const override
     {
-        return {LAYER_HEIGHTMAP};
+        return {{}};
     }
-    virtual std::vector<Layer> outLayers() const
-    {
-        return {LAYER_HEIGHTMAP};
-    }
-    virtual bool process(RenderSet *renders)
+    bool process(const std::vector<Texture *> &inputs,
+                 const std::vector<Texture *> &outputs,
+                 [[maybe_unused]] const Settings *settings) override
     {
         // Setup shader
         shader.use();
 
-        auto tex = renders->at(LAYER_HEIGHTMAP);
+        auto inTex = inputs[0];
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, tex->ID);
-        glBindImageTexture(0, tex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, tex->internalFormat());
+        glBindTexture(GL_TEXTURE_2D, inTex->ID);
+        glBindImageTexture(0, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
 
+        auto outTex = outputs[0];
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, outputs[0].ID);
-        glBindImageTexture(1, outputs[0].ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outputs[0].internalFormat());
+        glBindTexture(GL_TEXTURE_2D, outTex->ID);
+        glBindImageTexture(1, outTex->ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
 
         // Render
-        glDispatchCompute(ceil(m_width / 8), ceil(m_height / 4), 1);
+        glDispatchCompute(ceil(outTex->width / 8), ceil(outTex->height / 4), 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
         return true;
     }
-    virtual void reset(){};
 };
 
 REGISTER_OPERATOR(InvertOp, InvertOp::create);

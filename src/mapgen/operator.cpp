@@ -1,42 +1,17 @@
-#include <iostream>
 #include <vector>
 
 #include <GL/glew.h>
 
 #include "operator.h"
+#include "renders.h"
 
-void Operator::init(unsigned int width, unsigned int height)
-{
-    m_width = width;
-    m_height = height;
+std::vector<Input> Operator::inputs() const { return {}; }
+std::vector<Output> Operator::outputs() const { return {{}}; }
+void Operator::defaultSettings([[maybe_unused]] Settings *settings) const {}
 
-    // Generate an output texture of the right size for each
-    auto layers = outLayers();
-    // TODO: format by layer type, eg, height is 1 channel
-    outputs = std::vector<Texture>();
-    for (const Layer layer : layers)
-    {
-        outputs.emplace_back(m_width, m_height, getLayerFormat(layer));
-    }
-}
+void Operator::preprocess([[maybe_unused]] const std::vector<Texture *> &inputs, [[maybe_unused]] const std::vector<Texture *> &outputs, [[maybe_unused]] const Settings *settings) {}
+const std::string &Operator::error() { return m_error; }
 
-void Operator::resize(unsigned int width, unsigned int height)
-{
-    m_width = width;
-    m_height = height;
-    // Resize each output texture
-    for (Texture &tex : outputs)
-    {
-        tex.resize(width, height);
-    }
-}
-void Operator::preprocess(RenderSet *renders) {}
-
-void Operator::PopulateRenderSet(RenderSet *renderSet)
-{
-    auto layers = outLayers();
-    for (size_t i = 0; i < layers.size(); ++i)
-    {
-        (*renderSet)[layers[i]] = &outputs[i];
-    }
-}
+void Operator::setError(std::string errorMsg) { m_error = errorMsg; }
+bool Operator::hasError() const { return !m_error.empty(); }
+void Operator::reset() { m_error.clear(); }

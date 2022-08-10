@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
@@ -69,17 +70,17 @@ UI::UI(unsigned int width, unsigned int height, const char *name, Context *share
     ImGui_ImplOpenGL3_Init("#version 330");
 }
 
-Layer UI::GetCurrentLayer() const { return m_selectedLayer; }
+std::string UI::GetCurrentLayer() const { return m_selectedLayer; }
 
 void UI::ToggleIsolateChannel(IsolateChannel channel)
 {
     m_isolateChannel = (m_isolateChannel == channel) ? ISOLATE_NONE : channel;
 }
-void UI::SetMapMaker(MapMaker *mapmaker) { m_mapmaker = mapmaker; }
+void UI::setScene(Scene *scene) { m_scene = scene; }
 void UI::SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
-void UI::Draw(const RenderSet *const renderSet)
+void UI::Draw()
 {
-    DrawViewport(renderSet);
+    DrawViewport();
 
     // Draws the UI around it
     ImGui_ImplOpenGL3_NewFrame();
@@ -87,12 +88,13 @@ void UI::Draw(const RenderSet *const renderSet)
     ImGui::NewFrame();
 
     DrawOperatorProperties();
-    DrawViewportProperties(renderSet);
+    DrawViewportProperties();
+    drawNodegraph();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-void UI::DrawViewport(const RenderSet *const renderSet)
+void UI::DrawViewport()
 {
     // Draws the texture into the viewport
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -103,20 +105,23 @@ void UI::DrawViewport(const RenderSet *const renderSet)
 
     glActiveTexture(GL_TEXTURE0);
     IsolateChannel channel = m_isolateChannel;
-    // Not binding a texture may result in garbage in the render, but that's fine for now
-    const auto it = renderSet->find(m_selectedLayer);
-    if (it != renderSet->end())
+    if (m_selectedNode)
     {
-        glBindTexture(GL_TEXTURE_2D, it->second->ID);
-        // TODO: Tidy this up
-        if (it->second->numChannels() == 1)
+        // Not binding a texture may result in garbage in the render, but that's fine for now
+        const auto it = m_selectedNode->renderSet()->find(m_selectedLayer);
+        if (it != m_selectedNode->renderSet()->end())
         {
-            channel = ISOLATE_RED;
+            glBindTexture(GL_TEXTURE_2D, it->second->ID);
+            // TODO: Tidy this up
+            if (it->second->numChannels() == 1)
+            {
+                channel = ISOLATE_RED;
+            }
         }
-    }
-    else
-    {
-        std::cout << "No texture to draw" << std::endl;
+        else
+        {
+            std::cout << "No texture to draw" << std::endl;
+        }
     }
     viewShader.use();
     viewShader.setMat4("view", camera.view);
@@ -125,7 +130,7 @@ void UI::DrawViewport(const RenderSet *const renderSet)
     viewShader.setInt("isolateChannel", (int)channel);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
-void UI::DrawViewportProperties(const RenderSet *const renderSet)
+void UI::DrawViewportProperties()
 {
     static bool p_open = NULL;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
@@ -136,22 +141,25 @@ void UI::DrawViewportProperties(const RenderSet *const renderSet)
     ImGui::Begin("Viewport Properties", &p_open, flags);
 
     ImGui::PushItemWidth(150.0f);
-    if (ImGui::BeginCombo("##Layer", getLayerName(m_selectedLayer)))
+    if (ImGui::BeginCombo("##Layer", m_selectedLayer.c_str()))
     {
-        for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
+        if (m_selectedNode)
         {
-            bool isSelected = (m_selectedLayer == it->first);
-            if (ImGui::Selectable(getLayerName(it->first), isSelected))
+            for (auto it = m_selectedNode->renderSet()->cbegin(); it != m_selectedNode->renderSet()->cend(); ++it)
             {
-                m_selectedLayer = it->first;
-                if (it->second->numChannels() == 1)
+                bool isSelected = (m_selectedLayer == it->first);
+                if (ImGui::Selectable(it->first.c_str(), isSelected))
                 {
-                    m_isolateChannel = ISOLATE_RED;
+                    m_selectedLayer = it->first;
+                    if (it->second->numChannels() == 1)
+                    {
+                        m_isolateChannel = ISOLATE_RED;
+                    }
                 }
-            }
-            if (isSelected)
-            {
-                ImGui::SetItemDefaultFocus();
+                if (isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
             }
         }
         ImGui::EndCombo();
@@ -163,8 +171,8 @@ void UI::DrawViewportProperties(const RenderSet *const renderSet)
     if (ImGui::BeginCombo("##IsolateChannel", getIsolateChannelName(m_isolateChannel)))
     {
         // TODO: Tidy this up
-        const auto it = renderSet->find(m_selectedLayer);
-        if (it != renderSet->end() && it->second->numChannels() == 1)
+        const auto it = m_selectedNode->renderSet()->find(m_selectedLayer);
+        if (it != m_selectedNode->renderSet()->end() && it->second->numChannels() == 1)
         {
             ImGui::Selectable(getIsolateChannelName(ISOLATE_RED), true);
         }
@@ -216,26 +224,27 @@ void UI::DrawOperatorProperties()
     ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
     ImGui::Begin("Mapmaker Properties", &p_open, flags);
 
-    if (!m_mapmaker)
+    if (!m_scene)
     {
         return;
     }
 
     ImGui::BeginListBox("##Operators");
-    size_t selectedIndex = m_mapmaker->GetCurrentIndex();
-    for (size_t i = 0; i < m_mapmaker->operators.size(); ++i)
-    {
-        if (ImGui::Selectable(m_mapmaker->operators[i]->name().c_str(), i == selectedIndex))
-        {
-            selectedIndex = i;
-            activeOperatorChanged.emit(i);
-        }
-    }
+    // TODO: Doesn't need current node, needs selected - tracked separately
+    Node *selectedNode = m_scene->getCurrentNode();
+    // for (size_t i = 0; i < m_scene->operators.size(); ++i)
+    // {
+    //     if (ImGui::Selectable(m_scene->operators[i]->name().c_str(), i == selectedIndex))
+    //     {
+    //         selectedIndex = i;
+    //         activeOperatorChanged.emit(i);
+    //     }
+    // }
     ImGui::EndListBox();
     ImGui::Text("Operator Settings");
-    drawOperatorSettings(selectedIndex);
+    drawNodeSettings(selectedNode);
 
-    bool isPaused = m_mapmaker->isPaused();
+    bool isPaused = m_scene->isPaused();
     if (ImGui::Button(isPaused ? "Play" : "Pause"))
     {
         pauseToggled.emit(!isPaused);
@@ -245,85 +254,88 @@ void UI::DrawOperatorProperties()
     ImGui::End();
 }
 
-void UI::drawBoolSetting(size_t index, const Setting &setting)
+void UI::drawBoolSetting(Node *node, const Setting &setting)
 {
     bool value = setting.value<bool>();
     if (ImGui::Checkbox(setting.name().c_str(), &value))
-        opSettingChanged.emit(index, setting.name(), value);
+        opSettingChanged.emit(node, setting.name(), value);
 }
-void UI::drawFloatSetting(size_t index, const Setting &setting)
+void UI::drawFloatSetting(Node *node, const Setting &setting)
 {
     float value = setting.value<float>();
     // TODO: Setting options for min/max
     if (ImGui::SliderFloat(setting.name().c_str(), &value, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-        opSettingChanged.emit(index, setting.name(), value);
+        opSettingChanged.emit(node, setting.name(), value);
 }
-void UI::drawFloat2Setting(size_t index, const Setting &setting)
+void UI::drawFloat2Setting(Node *node, const Setting &setting)
 {
     glm::vec2 value = setting.value<glm::vec2>();
     if (ImGui::DragFloat2(setting.name().c_str(), (float *)&value))
-        opSettingChanged.emit(index, setting.name(), value);
+        opSettingChanged.emit(node, setting.name(), value);
 }
-void UI::drawFloat3Setting(size_t index, const Setting &setting)
+void UI::drawFloat3Setting(Node *node, const Setting &setting)
 {
     glm::vec3 value = setting.value<glm::vec3>();
     if (ImGui::DragFloat3(setting.name().c_str(), (float *)&value))
-        opSettingChanged.emit(index, setting.name(), value);
+        opSettingChanged.emit(node, setting.name(), value);
 }
-void UI::drawFloat4Setting(size_t index, const Setting &setting)
+void UI::drawFloat4Setting(Node *node, const Setting &setting)
 {
     glm::vec4 value = setting.value<glm::vec4>();
     if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value))
-        opSettingChanged.emit(index, setting.name(), value);
+        opSettingChanged.emit(node, setting.name(), value);
 }
-void UI::drawIntSetting(size_t index, const Setting &setting)
+void UI::drawIntSetting(Node *node, const Setting &setting)
 {
     int value = setting.value<int>();
     if (ImGui::InputInt(setting.name().c_str(), &value))
-        opSettingChanged.emit(index, setting.name(), value);
+        opSettingChanged.emit(node, setting.name(), value);
 }
-void UI::drawInt2Setting(size_t index, const Setting &setting)
+void UI::drawInt2Setting(Node *node, const Setting &setting)
 {
     glm::ivec2 offset = setting.value<glm::ivec2>();
     if (ImGui::DragInt2(setting.name().c_str(), (int *)&offset))
-        opSettingChanged.emit(index, setting.name(), offset);
+        opSettingChanged.emit(node, setting.name(), offset);
 }
-void UI::drawUIntSetting(size_t index, const Setting &setting)
+void UI::drawUIntSetting(Node *node, const Setting &setting)
 {
     unsigned int value = setting.value<unsigned int>();
     if (ImGui::InputScalar(setting.name().c_str(), ImGuiDataType_U32, &value))
-        opSettingChanged.emit(index, setting.name(), value);
+        opSettingChanged.emit(node, setting.name(), value);
 }
-void UI::drawOperatorSettings(size_t index)
+void UI::drawNodeSettings(Node *node)
 {
-    Operator *op = m_mapmaker->operators[index];
-    for (auto it = op->settings.begin(); it != op->settings.end(); ++it)
+    if (!node)
+    {
+        return;
+    }
+    for (auto it = node->settings()->begin(); it != node->settings()->end(); ++it)
     {
         switch (it->type())
         {
         case S_BOOL:
-            drawBoolSetting(index, *it);
+            drawBoolSetting(node, *it);
             break;
         case S_FLOAT:
-            drawFloatSetting(index, *it);
+            drawFloatSetting(node, *it);
             break;
         case S_FLOAT2:
-            drawFloat2Setting(index, *it);
+            drawFloat2Setting(node, *it);
             break;
         case S_FLOAT3:
-            drawFloat3Setting(index, *it);
+            drawFloat3Setting(node, *it);
             break;
         case S_FLOAT4:
-            drawFloat4Setting(index, *it);
+            drawFloat4Setting(node, *it);
             break;
         case S_INT:
-            drawIntSetting(index, *it);
+            drawIntSetting(node, *it);
             break;
         case S_INT2:
-            drawInt2Setting(index, *it);
+            drawInt2Setting(node, *it);
             break;
         case S_UINT:
-            drawUIntSetting(index, *it);
+            drawUIntSetting(node, *it);
             break;
         }
     }
@@ -334,7 +346,7 @@ glm::ivec4 UI::GetViewportRegion() const
     float panelWidth = m_width * m_opPropertiesWidthPercent;
     float panelHeight = m_height * m_viewPropertiesHeightPercent;
     // Remember, positions start from (0,0) at top-left
-    return glm::ivec4(panelWidth, 0, m_width - panelWidth, m_height - panelHeight);
+    return glm::ivec4(panelWidth, m_height * 0.5f, m_width - panelWidth, m_height * 0.5f - panelHeight);
 }
 glm::ivec4 UI::GetViewportPropertiesRegion() const
 {
@@ -346,6 +358,12 @@ glm::ivec4 UI::GetViewportPropertiesRegion() const
 glm::ivec4 UI::GetOperatorPropertiesRegion() const
 {
     return glm::ivec4(0, 0, m_width * m_opPropertiesWidthPercent, m_height);
+}
+glm::ivec4 UI::getNodegraphRegion() const
+{
+    float panelWidth = m_width * m_opPropertiesWidthPercent;
+    float panelHeight = m_height * 0.5f;
+    return glm::ivec4(panelWidth, 0, m_width - panelWidth, panelHeight);
 }
 
 glm::vec2 UI::ScreenToWorldPos(glm::vec2 screenPos)
@@ -366,4 +384,28 @@ glm::vec2 UI::WorldToScreenPos(glm::vec2 mapPos)
     glm::vec2 ndcPos = glm::vec2(mapPos.x / (float)m_width, mapPos.y / (float)m_height);
     // TODO: Convert to actual screen pos
     return ndcPos;
+}
+
+void UI::drawNodegraph()
+{
+    // TODO: Look into how to do this with ImGui. Even nodes should be possible
+    // ImDrawList
+    // drawList->AddRect(m_Bounds.Min, m_Bounds.Max,
+    //     color, m_Rounding, 15, thickness);
+    // drawList->AddRectFilled(
+    //     m_Bounds.Min,
+    //     m_Bounds.Max,
+    //     m_Color, m_Rounding);
+    // It's effectively what I thought, vertices and a draw call for each object.
+    // Clever use of glScissor to minimise affected pixels.
+
+    // glm::ivec4 nodeRegion = getNodegraphRegion();
+    // glViewport(nodeRegion.x, nodeRegion.y, nodeRegion.z, nodeRegion.w);
+    // glClearColor(0.3, 0.3, 0.3, 1.0);
+    // glClear(GL_COLOR_BUFFER_BIT);
+
+    // Try just getting a filled rect drawn on screen...
+    auto drawList = ImGui::GetWindowDrawList();
+    ImRect rect = ImRect(0, 0, 100, 100);
+    drawList->AddRectFilled(rect.Min, rect.Max, 0, 0.0f);
 }

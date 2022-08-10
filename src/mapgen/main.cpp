@@ -13,9 +13,9 @@
 #include <imgui_impl_opengl3.h>
 
 #include "interface/ui.h"
-#include "mapmaker.h"
 #include "operator.h"
 #include "renders.h"
+#include "scene.h"
 #include "shader.h"
 #include "util.hpp"
 
@@ -32,7 +32,7 @@ void glfw_error_callback(int error, const char *description)
 class Application
 {
 protected:
-    MapMaker *m_mapmaker;
+    Scene *m_scene;
     UI *m_ui;
     PixelPreview m_pixelPreview;
 
@@ -44,7 +44,7 @@ protected:
     double lastFrameTime = 0;
     double fpsLimit = 1.0 / 60.0;
 
-    void OnMouseButtonChanged(int button, int action, int mods)
+    void OnMouseButtonChanged(int button, int action, [[maybe_unused]] int mods)
     {
         if (button == GLFW_MOUSE_BUTTON_LEFT)
         {
@@ -62,10 +62,14 @@ protected:
 
     const Texture *currentTexture() const
     {
-        auto renderSet = m_mapmaker->GetRenderSet();
-        Layer layer = m_ui->GetCurrentLayer();
-        auto it = renderSet->find(layer);
-        if (it == renderSet->end())
+        Node *node = m_scene->getCurrentNode();
+        if (!node)
+        {
+            return nullptr;
+        }
+        std::string layer = m_ui->GetCurrentLayer();
+        auto it = node->renderSet()->find(layer);
+        if (it == node->renderSet()->end())
         {
             return nullptr;
         }
@@ -77,8 +81,8 @@ protected:
         glm::vec2 worldPos = m_ui->ScreenToWorldPos({xpos, ypos});
         if (worldPos.x >= 0 && worldPos.x < 1 && worldPos.y >= 0 && worldPos.y < 1)
         {
-            int x = worldPos.x * m_mapmaker->Width();
-            int y = worldPos.y * m_mapmaker->Height();
+            int x = worldPos.x * m_scene->Width();
+            int y = worldPos.y * m_scene->Height();
             m_pixelPreview.pos = {x, y};
             // TODO: Only reads from buffer. Current framebuffer only has 0-1 values.
             //       Could mount the texture to a storage buffer, but not sure if that
@@ -94,8 +98,8 @@ protected:
             {
                 glBindTexture(GL_TEXTURE_2D, texptr->ID);
                 glGetTexImage(GL_TEXTURE_2D, 0, texptr->format, GL_FLOAT, buffer);
-                int index = (y * m_mapmaker->Width() + x) * texptr->numChannels();
-                for (int i = 0; i < 4; ++i)
+                size_t index = (y * m_scene->Width() + x) * texptr->numChannels();
+                for (size_t i = 0; i < 4; ++i)
                     m_pixelPreview.value[i] = i < texptr->numChannels() ? buffer[index + i] : 0.0f;
             }
         }
@@ -114,13 +118,13 @@ protected:
         }
     }
 
-    void OnMouseScrolled(double xoffset, double yoffset)
+    void OnMouseScrolled([[maybe_unused]] double xoffset, double yoffset)
     {
         m_ui->camera.focal *= (1.0f - yoffset * 0.1f);
         UpdateProjection();
     }
 
-    void OnKeyChanged(int key, int scancode, int action, int mode)
+    void OnKeyChanged(int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mode)
     {
         if (action == GLFW_PRESS)
         {
@@ -146,52 +150,19 @@ protected:
             case GLFW_KEY_A:
                 m_ui->ToggleIsolateChannel(ISOLATE_ALPHA);
                 break;
-            case GLFW_KEY_UP:
-                DecrementActiveOperator();
-                break;
-            case GLFW_KEY_DOWN:
-                IncrementActiveOperator();
-                break;
             case GLFW_KEY_RIGHT:
-                m_mapmaker->processOne();
+                m_scene->processOne();
                 break;
             case GLFW_KEY_SPACE:
-                TogglePause(!m_mapmaker->isPaused());
+                TogglePause(!m_scene->isPaused());
                 break;
             }
         }
     }
 
-    void DecrementActiveOperator()
-    {
-        size_t index = m_mapmaker->GetTargetIndex();
-        if (index > 0)
-        {
-            SetActiveOperator(index - 1);
-            glm::vec2 pos = m_ui->CursorPos();
-            UpdatePixelPreview(pos.x, pos.y);
-        }
-    }
-
-    void IncrementActiveOperator()
-    {
-        size_t index = m_mapmaker->GetTargetIndex();
-        if (index < m_mapmaker->operators.size() - 1)
-        {
-            SetActiveOperator(index + 1);
-            // If the next operator isn't processed yet, this won't be
-            // able to read the texture, wasted call
-            glm::vec2 pos = m_ui->CursorPos();
-            UpdatePixelPreview(pos.x, pos.y);
-        }
-    }
-
-    void OnResize(int width, int height)
+    void OnResize([[maybe_unused]] int width, [[maybe_unused]] int height)
     {
         UpdateProjection();
-        // m_mapmaker->Resize(width, height);
-        delete[] buffer;
-        buffer = new float[m_mapmaker->Width() * m_mapmaker->Height() * 4];
     }
 
     void UpdateProjection()
@@ -207,31 +178,31 @@ protected:
                                              CAM_FAR);
     }
 
-    void SetActiveOperator(size_t index)
+    // TODO: This needs to change, difference between selection and view
+    void setSelectedNode(Node *node)
     {
-        m_mapmaker->setTargetIndex(index);
+        m_scene->setViewNode(node);
     }
 
-    void UpdateSetting(size_t index, std::string key, SettingValue value)
+    void UpdateSetting(Node *node, std::string key, SettingValue value)
     {
-        if (!m_mapmaker->updateSetting(index, key, value))
-        {
-            std::cerr << "Unable to update setting '" << key << "' for operator: " << m_mapmaker->operators[index]->name() << std::endl;
-        }
+        node->updateSetting(key, value);
+        // Must also set the scene as dirty so that the graph is re-evaluated
+        m_scene->setDirty();
     }
 
     void TogglePause(bool pause)
     {
-        m_mapmaker->setPaused(pause);
+        m_scene->setPaused(pause);
     }
 
 public:
-    Application(MapMaker *mapmaker, UI *ui) : m_mapmaker(mapmaker), m_ui(ui)
+    Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     {
         // prep a buffer for reading the image values
-        buffer = new float[m_mapmaker->Width() * m_mapmaker->Height() * 4];
+        buffer = new float[m_scene->Width() * m_scene->Height() * 4];
 
-        m_ui->SetMapMaker(mapmaker);
+        m_ui->setScene(mapmaker);
         m_ui->SetPixelPreview(&m_pixelPreview);
 
         // TODO: I'm being too lazy to work out the actual matrix for the definition
@@ -244,7 +215,7 @@ public:
         m_ui->closeRequested.connect(this, &Application::Close);
         m_ui->sizeChanged.connect(this, &Application::OnResize);
         m_ui->keyChanged.connect(this, &Application::OnKeyChanged);
-        m_ui->activeOperatorChanged.connect(this, &Application::SetActiveOperator);
+        m_ui->selectedNodeChanged.connect(this, &Application::setSelectedNode);
         m_ui->opSettingChanged.connect(this, &Application::UpdateSetting);
         m_ui->pauseToggled.connect(this, &Application::TogglePause);
     }
@@ -254,7 +225,7 @@ public:
     }
     void Exec()
     {
-        m_mapmaker->startProcessing();
+        m_scene->startProcessing();
 
         m_ui->use();
         // Make a quad to be used by the UI context - VAOs are not shared
@@ -270,13 +241,13 @@ public:
             double now = glfwGetTime();
             if ((now - lastFrameTime) >= fpsLimit)
             {
-                m_ui->Draw(m_mapmaker->GetRenderSet());
+                m_ui->Draw();
                 m_ui->Display();
                 lastFrameTime = now;
             }
         }
 
-        m_mapmaker->stopProcessing();
+        m_scene->stopProcessing();
     }
     void Close()
     {
@@ -292,7 +263,7 @@ int main()
         return 1;
 
     // TODO: The quad transform/vertices need to be scaled in the x-axis to match the image ratio
-    MapMaker mapmaker(1024, 1024);
+    Scene mapmaker(1024, 1024);
     if (!mapmaker.context.IsInitialised())
         return 1;
 
