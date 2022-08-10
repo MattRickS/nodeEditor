@@ -1,0 +1,119 @@
+#include <string>
+#include <vector>
+
+#include "connector.h"
+#include "node.h"
+
+Connector::Connector(Node *node, Type type, size_t index, int maxConnections) : m_node(node), m_type(type), m_index(index), m_maxConnections(maxConnections)
+{
+    m_bounds = Bounds(0, 0, 15, 8);
+}
+
+bool Connector::connect(Connector *connector)
+{
+    if (!m_node || !connector->node() || connector->m_node == m_node || m_type == connector->type() || isFull() || connector->isFull())
+        return false;
+
+    m_connected.push_back(connector);
+    connector->m_connected.push_back(this);
+
+    // Connections connect output->input. If connected, the output is
+    // unaffected but the input has gained data and must be reevaluated
+    if (m_type == INPUT)
+    {
+        m_node->setDirty();
+    }
+    else
+    {
+        connector->node()->setDirty();
+    }
+    return true;
+}
+bool Connector::disconnectConnection(std::vector<Connector *>::reverse_iterator it)
+{
+    if (it != m_connected.rend())
+    {
+        Connector *connector = *it;
+        // TODO: Check if this returns a copy or if we're modifying the underlying
+        //       base - the latter would break disconnectAll
+        m_connected.erase(it.base() - 1);
+        // Connections connect output->input. If disconnected, the output is
+        // unaffected but the input has lost data and must be reevaluated
+        if (m_type == INPUT)
+        {
+            m_node->setDirty();
+        }
+        else
+        {
+            connector->node()->setDirty();
+        }
+        return connector->disconnect(this);
+    }
+    return false;
+}
+bool Connector::disconnect(Connector *connector)
+{
+    if (!m_node || !connector->node())
+        return false;
+
+    auto it = std::find(m_connected.rbegin(), m_connected.rend(), connector);
+    return disconnectConnection(it);
+}
+void Connector::disconnectAll()
+{
+    if (!m_node)
+    {
+        return;
+    }
+
+    for (auto it = m_connected.rbegin(); it != m_connected.rend(); ++it)
+    {
+        disconnectConnection(it);
+    }
+}
+Connector::Type Connector::type() const { return m_type; }
+size_t Connector::index() const { return m_index; }
+size_t Connector::numConnections() const { return m_connected.size(); }
+int Connector::maxConnections() const { return m_maxConnections; }
+Connector *Connector::connection(size_t index) const { return m_connected[index]; }
+Node *Connector::node() const { return m_node; }
+bool Connector::isFull() const { return m_maxConnections > 0 && m_connected.size() >= (size_t)m_maxConnections; }
+const std::string &Connector::layer() const { return m_layer; }
+void Connector::setLayer(const std::string &layer) { m_layer = layer; }
+Bounds Connector::bounds() const
+{
+    // Should always be associated with a node, but if not, use the default size
+    if (!m_node)
+    {
+        return m_bounds;
+    }
+
+    // Return the bounds relative to the node
+    Bounds nodeBounds = node()->bounds();
+    if (type() == Connector::INPUT)
+    {
+        size_t numInputs = node()->numInputs();
+        float inputSpacing = (index() + 1) * nodeBounds.size().x / float(numInputs + 1) - m_bounds.size().x * 0.5f;
+        return {
+            glm::vec2(nodeBounds.min.x + inputSpacing, nodeBounds.min.y - m_bounds.size().y),
+            glm::vec2(nodeBounds.min.x + inputSpacing + m_bounds.size().x, nodeBounds.min.y)};
+    }
+    else
+    {
+        size_t numOutputs = node()->numOutputs();
+        float outputSpacing = (nodeBounds.size().x - numOutputs * m_bounds.size().x) / float(numOutputs + 1);
+        return {
+            glm::vec2(nodeBounds.min.x + outputSpacing, nodeBounds.max.y),
+            glm::vec2(nodeBounds.min.x + outputSpacing + m_bounds.size().x, nodeBounds.max.y + m_bounds.size().y)};
+    }
+}
+
+InputConnector::InputConnector(Node *node, size_t index, std::string name, bool required) : Connector(node, INPUT, index, 1), m_name(name), m_required(required) {}
+
+const std::string &InputConnector::name() const { return m_name; }
+bool InputConnector::isRequired() const { return m_required; }
+
+OutputConnector::OutputConnector(Node *node, size_t index, std::string layerName) : Connector(node, OUTPUT, index)
+{
+    m_layer = layerName;
+}

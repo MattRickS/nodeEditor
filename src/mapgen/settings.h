@@ -1,3 +1,4 @@
+#pragma once
 #include <map>
 #include <string>
 #include <variant>
@@ -51,7 +52,7 @@ protected:
         value_iterator() : pair_iterator() {}
         value_iterator(pair_iterator it) : pair_iterator(it) {}
         Setting *operator->() { return &(pair_iterator::operator->()->second); }
-        const Setting operator*() { return pair_iterator::operator*().second; }
+        Setting &operator*() { return pair_iterator::operator*().second; }
     };
 
     void validateUniqueSetting(const std::string &name) const;
@@ -63,6 +64,7 @@ public:
 
     Setting *get(const std::string key);
 
+    // TODO: Rename to set, remove name checks
     void registerBool(const std::string name, bool value);
     void registerUInt(const std::string name, unsigned int value);
     void registerInt(const std::string name, int value);
@@ -72,12 +74,12 @@ public:
     void registerFloat4(const std::string name, glm::vec4 value);
     void registerInt2(const std::string name, glm::ivec2 value);
 
-    bool getBool(const std::string key);
-    unsigned int getUInt(const std::string key);
-    int getInt(const std::string key);
-    float getFloat(const std::string key);
-    glm::vec2 getFloat2(const std::string key);
-    glm::vec3 getFloat3(const std::string key);
-    glm::vec4 getFloat4(const std::string key);
-    glm::ivec2 getInt2(const std::string key);
+    bool getBool(const std::string key) const;
+    unsigned int getUInt(const std::string key) const;
+    int getInt(const std::string key) const;
+    float getFloat(const std::string key) const;
+    glm::vec2 getFloat2(const std::string key) const;
+    glm::vec3 getFloat3(const std::string key) const;
+    glm::vec4 getFloat4(const std::string key) const;
+    glm::ivec2 getInt2(const std::string key) const;
 };

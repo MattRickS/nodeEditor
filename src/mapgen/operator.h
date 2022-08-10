@@ -3,9 +3,7 @@
     bool op_name##_registered = OperatorRegistry::registerOperator(#op_name, (create_func))
 
 #include <functional>
-#include <map>
 #include <string>
-#include <variant>
 #include <unordered_map>
 #include <vector>
 
@@ -15,63 +13,71 @@
 #include "renders.h"
 #include "settings.h"
 
+struct Input
+{
+    std::string name = "";
+    bool required = true;
+};
+
+struct Output
+{
+    std::string layer = "";
+};
+
 class Operator
 {
-protected:
-    std::vector<Texture> outputs;
-    unsigned int m_width, m_height;
-    GLuint FBO;
-
 public:
-    Settings settings;
-    // TODO: Should have a virtual destructor so that it can be stored as the base class
+    virtual ~Operator() = default;
 
-    /*
-    Separate init method used so that it can use the virtual in/out layers methods
-    which would be undefined in the constructor.
-    */
-    virtual void init(unsigned int width, unsigned int height);
     /* Display name for the operator */
     virtual std::string name() const = 0;
+    /* Returns the inputs for the operator, which may be optional. Default has no inputs. */
+    virtual std::vector<Input> inputs() const;
+    /* Returns the layers the operator outputs. Defaults to a single output for the default layer. */
+    virtual std::vector<Output> outputs() const;
+    /* Populates the default settings for the operator (if any). Defaults to no settings. */
+    virtual void defaultSettings(Settings *settings) const;
     /*
-    Resizes the operators outputs. Data preservation is optional as the framework
-    will try to reprocess the outputs.
-    */
-    virtual void resize(unsigned int width, unsigned int height);
+    Called once before any calls to process are made.
 
-    /*
-    List of the layer types this operator requires.
-    */
-    virtual std::vector<Layer> inLayers() const = 0;
-    /*
-    List of the layer types this operator produces.
-    */
-    virtual std::vector<Layer> outLayers() const = 0;
-    /*
-    Called by the framework to generate outputs and populate/update the renderset layers
-    */
-    virtual bool process(RenderSet *renders) = 0;
-    /*
-    Called once before calls to process are made. Is not called again unless
-    reset() is called.
+    This is not called again unless reset() is called. Default behaviour does nothing.
 
-    Pseudo example of how this is called
-
-        preprocess()
-        while (!process());
+    @param inputs Vector of pointers to a texture per Input as defined by `inputs()`.
+        Optional inputs may receive a nullptr.
+    @param outputs Vector of pointers to a texture per Output as defined by `outputs()`.
+    @param settings Pointer to the settings to use when processing. Will contain any settings
+        defined in `defaultSettings`.
     */
-    virtual void preprocess(RenderSet *renders);
+    virtual void preprocess(const std::vector<Texture *> &inputs, const std::vector<Texture *> &outputs, const Settings *settings);
+    /*
+    Called by the framework to populate the outputs.
+
+    Returns false if process() should be called again, eg, iterations or incomplete processing.
+
+    @param inputs Vector of pointers to a texture per Input as defined by `inputs()`.
+        Optional inputs may receive a nullptr.
+    @param outputs Vector of pointers to a texture per Output as defined by `outputs()`.
+    @param settings Pointer to the settings to use when processing. Will contain any settings
+        defined in `defaultSettings`.
+    */
+    virtual bool process(const std::vector<Texture *> &inputs,
+                         const std::vector<Texture *> &outputs,
+                         const Settings *settings) = 0;
     /*
     Operator should implement to reset any internal state.
 
+    Default behaviour clears any error message, any custom implementation should
+    make sure to call the base method.
     After a reset, preprocess will always be called before calls to process.
     */
-    virtual void reset() = 0;
-    /*
-    Convenience method for populating the renderset that assumes texture outputs
-    are 1:1 with the outLayers. Must be overridden if different behaviour is required.
-    */
-    virtual void PopulateRenderSet(RenderSet *renderSet);
+    virtual void reset();
+
+    const std::string &error();
+    void setError(std::string errorMsg);
+    bool hasError() const;
+
+protected:
+    std::string m_error;
 };
 
 class OperatorRegistry
@@ -99,6 +105,27 @@ public:
             return nullptr;
         }
         return (*map)[name]();
+    }
+
+    class key_iterator : public FactoryMap::iterator
+    {
+    public:
+        key_iterator() : FactoryMap::iterator() {}
+        key_iterator(FactoryMap::iterator it) : FactoryMap::iterator(it) {}
+        const std::string *operator->() { return &(FactoryMap::iterator::operator->()->first); }
+        const std::string &operator*() { return FactoryMap::iterator::operator*().first; }
+    };
+
+    static key_iterator begin()
+    {
+        FactoryMap *map = getFactoryMap();
+        return map->begin();
+    }
+
+    static key_iterator end()
+    {
+        FactoryMap *map = getFactoryMap();
+        return map->end();
     }
 
 private:

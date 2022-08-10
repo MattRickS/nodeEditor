@@ -7,21 +7,21 @@
 #include "../settings.h"
 #include "../shader.h"
 
-class InvertOp : public Operator
+class AddOp : public Operator
 {
 public:
     Shader shader;
 
-    static InvertOp *create()
+    static AddOp *create()
     {
-        return new InvertOp();
+        return new AddOp();
     }
 
-    InvertOp() : shader("src/mapgen/shaders/compute/invert.glsl") {}
-    std::string name() const override { return "Invert"; }
+    AddOp() : shader("src/mapgen/shaders/compute/add.glsl") {}
+    std::string name() const override { return "Add"; }
     std::vector<Input> inputs() const override
     {
-        return {{}};
+        return {{}, {}};
     }
     bool process(const std::vector<Texture *> &inputs,
                  const std::vector<Texture *> &outputs,
@@ -30,10 +30,15 @@ public:
         // Setup shader
         shader.use();
 
-        auto inTex = inputs[0];
+        auto inTex1 = inputs[0];
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, inTex->ID);
-        glBindImageTexture(0, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
+        glBindTexture(GL_TEXTURE_2D, inTex1->ID);
+        glBindImageTexture(0, inTex1->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex1->internalFormat());
+
+        auto inTex2 = inputs[1];
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, inTex2->ID);
+        glBindImageTexture(2, inTex2->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex2->internalFormat());
 
         auto outTex = outputs[0];
         glActiveTexture(GL_TEXTURE1);
@@ -48,4 +53,4 @@ public:
     }
 };
 
-REGISTER_OPERATOR(InvertOp, InvertOp::create);
+REGISTER_OPERATOR(AddOp, AddOp::create);
