@@ -12,4 +12,5 @@ struct Bounds
 
     glm::vec2 center() const { return min + (max - min) * 0.5f; }
     glm::vec2 size() const { return max - min; }
+    bool contains(glm::vec2 pos) const { return min.x <= pos.x && pos.x <= max.x && min.y <= pos.y && pos.y <= max.y; }
 };

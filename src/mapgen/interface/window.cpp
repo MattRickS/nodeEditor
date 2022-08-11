@@ -82,8 +82,7 @@ glm::vec2 Window::CursorPos() const
 {
     double xpos, ypos;
     glfwGetCursorPos(m_window, &xpos, &ypos);
-    // Convert to use botleft as (0,0) instead of openGL's topleft
-    return glm::vec2(xpos, m_height - ypos);
+    return glm::vec2(xpos, ypos);
 }
 
 // =============================================================================
@@ -114,8 +113,7 @@ bool Window::HasKeyPressed(int key) { return glfwGetKey(m_window, key) == GLFW_P
 // =============================================================================
 // Callbacks
 
-// Mouse movement is converted to use bottom left as (0,0) (openGL uses top left)
-void Window::OnMouseMoved(double xpos, double ypos) { cursorMoved.emit(xpos, m_height - ypos); }
+void Window::OnMouseMoved(double xpos, double ypos) { cursorMoved.emit(xpos, ypos); }
 void Window::OnMouseButtonChanged(int button, int action, int mods) { mouseButtonChanged.emit(button, action, mods); }
 void Window::OnMouseScrolled(double xoffset, double yoffset) { mouseScrolled.emit(xoffset, yoffset); }
 void Window::OnKeyChanged(int key, int scancode, int action, int mods) { keyChanged.emit(key, scancode, action, mods); }

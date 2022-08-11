@@ -36,14 +36,31 @@ protected:
     UI *m_ui;
     PixelPreview m_pixelPreview;
 
-    bool isPanningNodegraph = false;
-    bool isPanning = false;
+    Panel *m_panningPanel = nullptr;
     glm::vec2 lastCursorPos;
     float *buffer;
 
     // FPS limiting as vsync does not appear to be working
     double lastFrameTime = 0;
     double fpsLimit = 1.0 / 60.0;
+
+    Panel *panelAtPos(glm::vec2 pos)
+    {
+        if (m_ui->nodegraph()->bounds().contains(pos))
+        {
+            std::cout << "In nodegraph panel" << pos.x << "," << pos.y << std::endl;
+            return m_ui->nodegraph();
+        }
+        else if (m_ui->viewport()->bounds().contains(pos))
+        {
+            std::cout << "In viewport panel: " << pos.x << "," << pos.y << std::endl;
+            return m_ui->viewport();
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
 
     void OnMouseButtonChanged(int button, int action, [[maybe_unused]] int mods)
     {
@@ -52,11 +69,11 @@ protected:
             if (action == GLFW_PRESS)
             {
                 lastCursorPos = m_ui->CursorPos();
-                isPanning = true;
+                m_panningPanel = panelAtPos(lastCursorPos);
             }
             else if (action == GLFW_RELEASE)
             {
-                isPanning = false;
+                m_panningPanel = nullptr;
             }
         }
     }
@@ -79,7 +96,8 @@ protected:
 
     void UpdatePixelPreview(double xpos, double ypos)
     {
-        glm::vec2 worldPos = m_ui->ScreenToWorldPos({xpos, ypos});
+        // Invert the screen y-pos to get world position
+        glm::vec2 worldPos = m_ui->ScreenToWorldPos({xpos, m_ui->Height() - ypos});
         if (worldPos.x >= 0 && worldPos.x < 1 && worldPos.y >= 0 && worldPos.y < 1)
         {
             int x = worldPos.x * m_scene->Width();
@@ -110,12 +128,20 @@ protected:
     {
         UpdatePixelPreview(xpos, ypos);
 
-        if (isPanning)
+        if (m_panningPanel)
         {
             glm::vec2 cursorPos = glm::vec2(xpos, ypos);
-            glm::vec2 offset = m_ui->ScreenToWorldPos(cursorPos) - m_ui->ScreenToWorldPos(lastCursorPos);
-            m_ui->viewport()->camera().view = glm::translate(m_ui->viewport()->camera().view, glm::vec3(2.0f * offset, 0.0f));
-            lastCursorPos = cursorPos;
+            if (m_panningPanel == m_ui->viewport())
+            {
+                // offset will have an inverted y as screenPos uses topleft=(0,0) but world uses botleft=(0,0)
+                glm::vec2 offset = m_ui->ScreenToWorldPos(cursorPos) - m_ui->ScreenToWorldPos(lastCursorPos);
+                m_ui->viewport()->camera().view = glm::translate(m_ui->viewport()->camera().view, glm::vec3(2.0f * offset.x, 2.0f * -offset.y, 0.0f));
+                lastCursorPos = cursorPos;
+            }
+            else if (m_panningPanel == m_ui->nodegraph())
+            {
+                std::cout << "Pan nodegraph" << std::endl;
+            }
         }
     }
 

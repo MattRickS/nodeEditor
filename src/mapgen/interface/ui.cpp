@@ -35,8 +35,6 @@ void UI::OnMouseMoved(double xpos, double ypos)
     if (io.WantCaptureMouse)
         return;
 
-    // Invert the ypos so botleft is (0,0) instead of GL's topleft
-    ypos = m_height - ypos;
     cursorMoved.emit(xpos, ypos);
 }
 
