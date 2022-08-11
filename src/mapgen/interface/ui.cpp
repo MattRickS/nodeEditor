@@ -58,14 +58,20 @@ void UI::OnMouseScrolled(double xoffset, double yoffset)
     mouseScrolled.emit(xoffset, yoffset);
 }
 
-// TODO: Get this working as a virtual override
-void UI::resizeInternals([[maybe_unused]] int width, [[maybe_unused]] int height)
+// TODO: Get this working as a virtual override of OnWindowResized
+void UI::recalculateLayout()
 {
     if (m_nodegraph)
     {
         Bounds bounds = getNodegraphBounds();
         m_nodegraph->setPos(bounds.min);
         m_nodegraph->setSize(bounds.size());
+    }
+    if (m_viewport)
+    {
+        Bounds bounds = getViewportBounds();
+        m_viewport->setPos(bounds.min);
+        m_viewport->setSize(bounds.size());
     }
 }
 
@@ -78,8 +84,6 @@ UI::UI(unsigned int width, unsigned int height, const char *name, Context *share
     ImGui_ImplOpenGL3_Init("#version 330");
 
     m_nodegraph = new Nodegraph(getNodegraphBounds());
-    sizeChanged.connect(this, &UI::resizeInternals);
-
     m_viewport = new Viewport(getViewportBounds());
 }
 UI::~UI()

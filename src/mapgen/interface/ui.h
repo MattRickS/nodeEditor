@@ -40,9 +40,6 @@ protected:
     virtual void OnMouseButtonChanged(int button, int action, int mods);
     virtual void OnMouseScrolled(double xoffset, double yoffset);
 
-    // Overriding OnWindowResized didn't work for some reason
-    void resizeInternals(int width, int height);
-
     void DrawViewportProperties();
     void DrawOperatorProperties();
 
@@ -82,4 +79,7 @@ public:
 
     glm::vec2 ScreenToWorldPos(glm::vec2 screenPos);
     glm::vec2 WorldToScreenPos(glm::vec2 mapPos);
+
+    // Overriding OnWindowResized didn't work for some reason
+    void recalculateLayout();
 };

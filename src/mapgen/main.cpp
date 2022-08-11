@@ -164,6 +164,7 @@ protected:
     void OnResize([[maybe_unused]] int width, [[maybe_unused]] int height)
     {
         UpdateProjection();
+        m_ui->recalculateLayout();
     }
 
     void onLayerChanged(std::string layerName)
@@ -179,7 +180,7 @@ protected:
     void UpdateProjection()
     {
         Bounds viewportBounds = m_ui->getViewportBounds();
-        float hAperture = (float)viewportBounds.size().x / (float)viewportBounds.size().y;
+        float hAperture = viewportBounds.size().x / viewportBounds.size().y;
         static float vAperture = 1.0f;
         Camera &camera = m_ui->viewport()->camera();
         camera.projection = glm::ortho(-hAperture * camera.focal,
