@@ -72,6 +72,15 @@ public:
         }
     }
 
+    ImU32 connColor(const Connector *connector) const
+    {
+        if (connector->hasSelectFlag(SelectFlag_Hover))
+        {
+            return COLOR_HOVER;
+        }
+        return COLOR_CONNECTOR;
+    }
+
     /* GraphElement bounds within the screen window, respecting view transforms */
     Bounds graphElementBounds(GraphElement *el)
     {
@@ -91,23 +100,24 @@ public:
 
         for (size_t i = 0; i < node->numInputs(); ++i)
         {
-            InputConnector *input = node->input(i);
-            Bounds b = graphElementBounds(input);
+            Connector *conn = node->input(i);
+            Bounds b = graphElementBounds(conn);
 
-            for (size_t i = 0; i < input->numConnections(); ++i)
+            for (size_t i = 0; i < conn->numConnections(); ++i)
             {
                 glm::vec2 p1 = b.center();
-                glm::vec2 p2 = graphElementBounds(input->connection(i)).center();
+                glm::vec2 p2 = graphElementBounds(conn->connection(i)).center();
                 drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), COLOR_LINE, m_lineThickness);
             }
 
-            drawList->AddRectFilled(ImVec2(b.min.x, b.min.y), ImVec2(b.max.x, b.max.y), COLOR_CONNECTOR, m_connectorRounding);
+            drawList->AddRectFilled(ImVec2(b.min.x, b.min.y), ImVec2(b.max.x, b.max.y), connColor(conn), m_connectorRounding);
         }
 
         for (size_t i = 0; i < node->numOutputs(); ++i)
         {
-            Bounds b = graphElementBounds(node->output(i));
-            drawList->AddRectFilled(ImVec2(b.min.x, b.min.y), ImVec2(b.max.x, b.max.y), COLOR_CONNECTOR, m_connectorRounding);
+            Connector *conn = node->output(i);
+            Bounds b = graphElementBounds(conn);
+            drawList->AddRectFilled(ImVec2(b.min.x, b.min.y), ImVec2(b.max.x, b.max.y), connColor(conn), m_connectorRounding);
         }
 
         drawList->AddRectFilled(ImVec2(bounds.min.x, bounds.min.y), ImVec2(bounds.max.x, bounds.max.y), nodeColor(node), m_nodeRounding);

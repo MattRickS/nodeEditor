@@ -6,7 +6,7 @@
 
 Connector::Connector(Node *node, Type type, int maxConnections) : m_node(node), m_type(type), m_maxConnections(maxConnections)
 {
-    m_bounds = Bounds(0, 0, 15, 5);
+    m_bounds = Bounds(0, 0, 15, 8);
 }
 
 bool Connector::connect(Connector *connector)
