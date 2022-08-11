@@ -19,7 +19,9 @@ Scene::Scene(unsigned int width, unsigned int height) : m_width(width), m_height
 {
     m_graph.createNode("PerlinNoise");
     NodeID n1 = m_graph.createNode("VoronoiNoise");
+    m_graph.node(n1)->setPos(glm::vec2(200, 100));
     NodeID n2 = m_graph.createNode("InvertOp");
+    m_graph.node(n2)->setPos(glm::vec2(300, 200));
     // TODO: Can't rely on pointers into the graph nodes vector as it may reallocate the memory
     //       What works around that? Using indexes? Not ideal either as nodes could be deleted.
     //       Probably best to use nodeIDs everywhere and a map as storage for quick lookup

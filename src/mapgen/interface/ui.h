@@ -6,6 +6,7 @@
 #include "../renders.h"
 #include "../scene.h"
 #include "../shader.h"
+#include "nodegraph.hpp"
 #include "window.h"
 #include "signal.hpp"
 
@@ -49,16 +50,17 @@ protected:
     Node *m_selectedNode = nullptr;
     std::string m_selectedLayer = DEFAULT_LAYER;
     IsolateChannel m_isolateChannel = ISOLATE_NONE;
+    Nodegraph *m_nodegraph;
 
     // Only emits the signal if the UI didn't capture it
     virtual void OnMouseMoved(double xpos, double ypos);
     virtual void OnMouseButtonChanged(int button, int action, int mods);
     virtual void OnMouseScrolled(double xoffset, double yoffset);
+    virtual void OnWindowResized(int width, int height);
 
     void DrawViewport();
     void DrawViewportProperties();
     void DrawOperatorProperties();
-    void drawNodegraph();
 
     void drawBoolSetting(Node *node, const Setting &setting);
     void drawFloatSetting(Node *node, const Setting &setting);
@@ -79,6 +81,7 @@ public:
     Signal<bool> pauseToggled;
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMakerUI", Context *sharedContext = nullptr);
+    ~UI();
 
     std::string GetCurrentLayer() const;
 

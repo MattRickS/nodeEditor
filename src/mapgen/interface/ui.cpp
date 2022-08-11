@@ -1,8 +1,6 @@
-
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
-#include <imgui_internal.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
@@ -60,6 +58,17 @@ void UI::OnMouseScrolled(double xoffset, double yoffset)
     mouseScrolled.emit(xoffset, yoffset);
 }
 
+void UI::OnWindowResized(int width, int height)
+{
+    Window::OnWindowResized(width, height);
+    if (m_nodegraph)
+    {
+        glm::ivec4 region = getNodegraphRegion();
+        m_nodegraph->setPos(glm::ivec2(region.x, region.y));
+        m_nodegraph->setSize(glm::ivec2(region.z, region.w));
+    }
+}
+
 UI::UI(unsigned int width, unsigned int height, const char *name, Context *sharedContext) : Window(name, width, height, sharedContext),
                                                                                             viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs")
 {
@@ -68,6 +77,16 @@ UI::UI(unsigned int width, unsigned int height, const char *name, Context *share
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
+
+    glm::ivec4 region = getNodegraphRegion();
+    m_nodegraph = new Nodegraph(glm::ivec2(region.x, region.y), glm::ivec2(region.z, region.w));
+}
+UI::~UI()
+{
+    if (m_nodegraph)
+    {
+        delete m_nodegraph;
+    }
 }
 
 std::string UI::GetCurrentLayer() const { return m_selectedLayer; }
@@ -77,7 +96,11 @@ void UI::ToggleIsolateChannel(IsolateChannel channel)
 {
     m_isolateChannel = (m_isolateChannel == channel) ? ISOLATE_NONE : channel;
 }
-void UI::setScene(Scene *scene) { m_scene = scene; }
+void UI::setScene(Scene *scene)
+{
+    m_scene = scene;
+    m_nodegraph->setScene(scene);
+}
 void UI::SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void UI::Draw()
 {
@@ -90,7 +113,10 @@ void UI::Draw()
 
     DrawOperatorProperties();
     DrawViewportProperties();
-    drawNodegraph();
+    if (m_nodegraph)
+    {
+        m_nodegraph->draw();
+    }
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -217,18 +243,16 @@ void UI::DrawOperatorProperties()
     ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
     ImGui::Begin("Mapmaker Properties", &p_open, flags);
 
-    if (!m_scene)
+    if (m_scene)
     {
-        return;
-    }
+        ImGui::Text("Operator Settings");
+        drawNodeSettings(m_selectedNode);
 
-    ImGui::Text("Operator Settings");
-    drawNodeSettings(m_selectedNode);
-
-    bool isPaused = m_scene->isPaused();
-    if (ImGui::Button(isPaused ? "Play" : "Pause"))
-    {
-        pauseToggled.emit(!isPaused);
+        bool isPaused = m_scene->isPaused();
+        if (ImGui::Button(isPaused ? "Play" : "Pause"))
+        {
+            pauseToggled.emit(!isPaused);
+        }
     }
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -326,7 +350,7 @@ glm::ivec4 UI::GetViewportRegion() const
 {
     float panelWidth = m_width * m_opPropertiesWidthPercent;
     float panelHeight = m_height * m_viewPropertiesHeightPercent;
-    // Remember, positions start from (0,0) at top-left
+    // TODO: I think we're mixing dimensions here, should be different to nodegraph region. Likely how we're interpreting it in drawViewport/screenToWorldPos
     return glm::ivec4(panelWidth, m_height * 0.5f, m_width - panelWidth, m_height * 0.5f - panelHeight);
 }
 glm::ivec4 UI::GetViewportPropertiesRegion() const
@@ -344,7 +368,7 @@ glm::ivec4 UI::getNodegraphRegion() const
 {
     float panelWidth = m_width * m_opPropertiesWidthPercent;
     float panelHeight = m_height * 0.5f;
-    return glm::ivec4(panelWidth, 0, m_width - panelWidth, panelHeight);
+    return glm::ivec4(panelWidth, panelHeight, m_width - panelWidth, m_height - panelHeight);
 }
 
 glm::vec2 UI::ScreenToWorldPos(glm::vec2 screenPos)
@@ -365,28 +389,4 @@ glm::vec2 UI::WorldToScreenPos(glm::vec2 mapPos)
     glm::vec2 ndcPos = glm::vec2(mapPos.x / (float)m_width, mapPos.y / (float)m_height);
     // TODO: Convert to actual screen pos
     return ndcPos;
-}
-
-void UI::drawNodegraph()
-{
-    // TODO: Look into how to do this with ImGui. Even nodes should be possible
-    // ImDrawList
-    // drawList->AddRect(m_Bounds.Min, m_Bounds.Max,
-    //     color, m_Rounding, 15, thickness);
-    // drawList->AddRectFilled(
-    //     m_Bounds.Min,
-    //     m_Bounds.Max,
-    //     m_Color, m_Rounding);
-    // It's effectively what I thought, vertices and a draw call for each object.
-    // Clever use of glScissor to minimise affected pixels.
-
-    // glm::ivec4 nodeRegion = getNodegraphRegion();
-    // glViewport(nodeRegion.x, nodeRegion.y, nodeRegion.z, nodeRegion.w);
-    // glClearColor(0.3, 0.3, 0.3, 1.0);
-    // glClear(GL_COLOR_BUFFER_BIT);
-
-    // Try just getting a filled rect drawn on screen...
-    auto drawList = ImGui::GetWindowDrawList();
-    ImRect rect = ImRect(0, 0, 100, 100);
-    drawList->AddRectFilled(rect.Min, rect.Max, 0, 0.0f);
 }

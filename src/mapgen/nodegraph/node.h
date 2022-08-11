@@ -63,7 +63,7 @@ public:
 protected:
     // Drawing properties
     glm::vec2 m_pos = glm::vec2(0);
-    glm::vec2 m_size = glm::vec2(1);
+    glm::vec2 m_size = glm::vec2(100, 25);
 
     // Core properties
     NodeID m_id;
