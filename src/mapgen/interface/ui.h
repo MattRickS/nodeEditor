@@ -56,7 +56,9 @@ protected:
     virtual void OnMouseMoved(double xpos, double ypos);
     virtual void OnMouseButtonChanged(int button, int action, int mods);
     virtual void OnMouseScrolled(double xoffset, double yoffset);
-    virtual void OnWindowResized(int width, int height);
+
+    // Overriding OnWindowResized didn't work for some reason
+    void resizeInternals(int width, int height);
 
     void DrawViewport();
     void DrawViewportProperties();

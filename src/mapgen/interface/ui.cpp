@@ -58,9 +58,8 @@ void UI::OnMouseScrolled(double xoffset, double yoffset)
     mouseScrolled.emit(xoffset, yoffset);
 }
 
-void UI::OnWindowResized(int width, int height)
+void UI::resizeInternals(int width, int height)
 {
-    Window::OnWindowResized(width, height);
     if (m_nodegraph)
     {
         glm::ivec4 region = getNodegraphRegion();
@@ -80,6 +79,7 @@ UI::UI(unsigned int width, unsigned int height, const char *name, Context *share
 
     glm::ivec4 region = getNodegraphRegion();
     m_nodegraph = new Nodegraph(glm::ivec2(region.x, region.y), glm::ivec2(region.z, region.w));
+    sizeChanged.connect(this, &UI::resizeInternals);
 }
 UI::~UI()
 {
