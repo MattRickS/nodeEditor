@@ -210,6 +210,7 @@ bool Node::process()
         setError(m_op->error());
         return false;
     }
+    glFinish();
     return isComplete;
 }
 
