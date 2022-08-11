@@ -9,27 +9,34 @@
 
 #include "../nodegraph/node.h"
 #include "../scene.h"
+#include "panel.hpp"
+#include "signal.hpp"
 
-class Nodegraph
+class Nodegraph : public Panel
 {
 public:
+    Signal<Node *> selectedNodeChanged;
+
     Scene *m_scene;
     float m_viewScale = 1.0f;
     glm::vec2 m_viewOffset{0, 0};
-    glm::ivec2 m_pos;
-    glm::ivec2 m_size;
     float m_nodeRounding = 0.0f;
+    Node *m_selectedNode = nullptr;
 
     const ImU32 COLOR_UNPROCESSED = IM_COL32(100, 100, 100, 255);
     const ImU32 COLOR_PROCESSING = IM_COL32(100, 150, 100, 255);
     const ImU32 COLOR_PROCESSED = IM_COL32(100, 255, 100, 255);
     const ImU32 COLOR_ERROR = IM_COL32(255, 100, 100, 255);
 
-    Nodegraph(glm::ivec2 pos, glm::ivec2 size) : m_pos(pos), m_size(size) {}
+    Nodegraph(glm::ivec2 pos, glm::ivec2 size) : Panel(pos, size) {}
 
+    Node *getSelectedNode() const { return m_selectedNode; }
+    void setSelectedNode(Node *node)
+    {
+        m_selectedNode = node;
+        selectedNodeChanged.emit(node);
+    }
     void setScene(Scene *scene) { m_scene = scene; }
-    void setPos(glm::ivec2 pos) { m_pos = pos; }
-    void setSize(glm::ivec2 size) { m_size = size; }
     void pan(glm::vec2 offset) { m_viewOffset += offset; }
     void zoom(float scale) { m_viewScale *= scale; }
 

@@ -7,6 +7,7 @@
 #include "../scene.h"
 #include "../shader.h"
 #include "nodegraph.hpp"
+#include "viewport.hpp"
 #include "window.h"
 #include "signal.hpp"
 
@@ -14,23 +15,6 @@ struct PixelPreview
 {
     glm::vec4 value = glm::vec4(0);
     glm::ivec2 pos = glm::ivec2(0);
-};
-
-struct Camera
-{
-    glm::mat4 view = glm::mat4(1.0f);
-    glm::mat4 projection = glm::mat4(1.0f);
-    float focal = 1.0f;
-};
-
-enum IsolateChannel
-{
-    ISOLATE_NONE = -1,
-    ISOLATE_RED = 0,
-    ISOLATE_GREEN = 1,
-    ISOLATE_BLUE = 2,
-    ISOLATE_ALPHA = 3,
-    ISOLATE_LAST
 };
 
 const char *getIsolateChannelName(IsolateChannel channel);
@@ -42,15 +26,13 @@ interactive widgets but not for rendering the map.
 class UI : public Window
 {
 protected:
-    Shader viewShader;
     float m_opPropertiesWidthPercent = 0.25f;
     float m_viewPropertiesHeightPercent = 0.05f;
     PixelPreview *m_pixelPreview;
     Scene *m_scene = nullptr;
-    Node *m_selectedNode = nullptr;
     std::string m_selectedLayer = DEFAULT_LAYER;
-    IsolateChannel m_isolateChannel = ISOLATE_NONE;
     Nodegraph *m_nodegraph;
+    Viewport *m_viewport;
 
     // Only emits the signal if the UI didn't capture it
     virtual void OnMouseMoved(double xpos, double ypos);
@@ -60,7 +42,6 @@ protected:
     // Overriding OnWindowResized didn't work for some reason
     void resizeInternals(int width, int height);
 
-    void DrawViewport();
     void DrawViewportProperties();
     void DrawOperatorProperties();
 
@@ -75,20 +56,20 @@ protected:
     void drawNodeSettings(Node *node);
 
 public:
-    Camera camera;
-
     Signal<unsigned int, unsigned int> mapPosChanged;
-    Signal<Node *> selectedNodeChanged;
     Signal<Node *, std::string, SettingValue> opSettingChanged;
     Signal<bool> pauseToggled;
+    Signal<std::string> layerChanged;
+    Signal<IsolateChannel> channelChanged;
 
     UI(unsigned int width, unsigned int height, const char *name = "MapMakerUI", Context *sharedContext = nullptr);
     ~UI();
 
-    std::string GetCurrentLayer() const;
+    Viewport *viewport();
+    Nodegraph *nodegraph();
 
-    void setSelectedNode(Node *node);
-    void ToggleIsolateChannel(IsolateChannel channel);
+    std::string selectedLayer() const;
+
     void setScene(Scene *scene);
     void SetPixelPreview(PixelPreview *preview);
     void Draw();

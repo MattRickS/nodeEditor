@@ -58,7 +58,8 @@ void UI::OnMouseScrolled(double xoffset, double yoffset)
     mouseScrolled.emit(xoffset, yoffset);
 }
 
-void UI::resizeInternals(int width, int height)
+// TODO: Get this working as a virtual override
+void UI::resizeInternals([[maybe_unused]] int width, [[maybe_unused]] int height)
 {
     if (m_nodegraph)
     {
@@ -68,8 +69,7 @@ void UI::resizeInternals(int width, int height)
     }
 }
 
-UI::UI(unsigned int width, unsigned int height, const char *name, Context *sharedContext) : Window(name, width, height, sharedContext),
-                                                                                            viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs")
+UI::UI(unsigned int width, unsigned int height, const char *name, Context *sharedContext) : Window(name, width, height, sharedContext)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -77,9 +77,12 @@ UI::UI(unsigned int width, unsigned int height, const char *name, Context *share
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    glm::ivec4 region = getNodegraphRegion();
-    m_nodegraph = new Nodegraph(glm::ivec2(region.x, region.y), glm::ivec2(region.z, region.w));
+    glm::ivec4 nodegraphRegion = getNodegraphRegion();
+    m_nodegraph = new Nodegraph(glm::ivec2(nodegraphRegion.x, nodegraphRegion.y), glm::ivec2(nodegraphRegion.z, nodegraphRegion.w));
     sizeChanged.connect(this, &UI::resizeInternals);
+
+    glm::ivec4 viewportRegion = GetViewportRegion();
+    m_viewport = new Viewport(glm::ivec2(viewportRegion.x, viewportRegion.y), glm::ivec2(viewportRegion.z, viewportRegion.w));
 }
 UI::~UI()
 {
@@ -87,15 +90,20 @@ UI::~UI()
     {
         delete m_nodegraph;
     }
+    if (m_viewport)
+    {
+        delete m_viewport;
+    }
 }
 
-std::string UI::GetCurrentLayer() const { return m_selectedLayer; }
+Viewport *UI::viewport() { return m_viewport; }
+Nodegraph *UI::nodegraph() { return m_nodegraph; }
 
-void UI::setSelectedNode(Node *node) { m_selectedNode = node; }
-void UI::ToggleIsolateChannel(IsolateChannel channel)
+std::string UI::selectedLayer() const
 {
-    m_isolateChannel = (m_isolateChannel == channel) ? ISOLATE_NONE : channel;
+    return m_selectedLayer;
 }
+
 void UI::setScene(Scene *scene)
 {
     m_scene = scene;
@@ -104,7 +112,10 @@ void UI::setScene(Scene *scene)
 void UI::SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void UI::Draw()
 {
-    DrawViewport();
+    if (m_viewport)
+    {
+        m_viewport->draw();
+    }
 
     // Draws the UI around it
     ImGui_ImplOpenGL3_NewFrame();
@@ -121,42 +132,6 @@ void UI::Draw()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-void UI::DrawViewport()
-{
-    // Draws the texture into the viewport
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glm::ivec4 mapRegion = GetViewportRegion();
-    glViewport(mapRegion.x, mapRegion.y, mapRegion.z, mapRegion.w);
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glActiveTexture(GL_TEXTURE0);
-    IsolateChannel channel = m_isolateChannel;
-    if (m_selectedNode)
-    {
-        // Not binding a texture may result in garbage in the render, but that's fine for now
-        const auto it = m_selectedNode->renderSet()->find(m_selectedLayer);
-        if (it != m_selectedNode->renderSet()->end())
-        {
-            glBindTexture(GL_TEXTURE_2D, it->second->ID);
-            // TODO: Tidy this up
-            if (it->second->numChannels() == 1)
-            {
-                channel = ISOLATE_RED;
-            }
-        }
-        else
-        {
-            std::cout << "No texture to draw" << std::endl;
-        }
-    }
-    viewShader.use();
-    viewShader.setMat4("view", camera.view);
-    viewShader.setMat4("projection", camera.projection);
-    viewShader.setInt("renderTexture", 0);
-    viewShader.setInt("isolateChannel", (int)channel);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
 void UI::DrawViewportProperties()
 {
     static bool p_open = NULL;
@@ -170,18 +145,15 @@ void UI::DrawViewportProperties()
     ImGui::PushItemWidth(150.0f);
     if (ImGui::BeginCombo("##Layer", m_selectedLayer.c_str()))
     {
-        if (m_selectedNode)
+        if (m_nodegraph && m_nodegraph->getSelectedNode())
         {
-            for (auto it = m_selectedNode->renderSet()->cbegin(); it != m_selectedNode->renderSet()->cend(); ++it)
+            const RenderSet *renderSet = m_nodegraph->getSelectedNode()->renderSet();
+            for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
             {
                 bool isSelected = (m_selectedLayer == it->first);
                 if (ImGui::Selectable(it->first.c_str(), isSelected))
                 {
-                    m_selectedLayer = it->first;
-                    if (it->second->numChannels() == 1)
-                    {
-                        m_isolateChannel = ISOLATE_RED;
-                    }
+                    layerChanged.emit(it->first);
                 }
                 if (isSelected)
                 {
@@ -195,15 +167,14 @@ void UI::DrawViewportProperties()
 
     ImGui::SameLine();
     ImGui::PushItemWidth(100.0f);
-    if (ImGui::BeginCombo("##IsolateChannel", getIsolateChannelName(m_isolateChannel)))
+    if (ImGui::BeginCombo("##IsolateChannel", getIsolateChannelName(m_viewport->isolatedChannel())))
     {
-        // TODO: Tidy this up
         for (int channel = ISOLATE_NONE; channel != ISOLATE_LAST; ++channel)
         {
-            bool isSelected = (m_isolateChannel == channel);
+            bool isSelected = (m_viewport->isolatedChannel() == channel);
             if (ImGui::Selectable(getIsolateChannelName(IsolateChannel(channel)), isSelected))
             {
-                m_isolateChannel = IsolateChannel(channel);
+                channelChanged.emit(IsolateChannel(channel));
             }
             if (isSelected)
             {
@@ -246,7 +217,7 @@ void UI::DrawOperatorProperties()
     if (m_scene)
     {
         ImGui::Text("Operator Settings");
-        drawNodeSettings(m_selectedNode);
+        drawNodeSettings(m_nodegraph->getSelectedNode());
 
         bool isPaused = m_scene->isPaused();
         if (ImGui::Button(isPaused ? "Play" : "Pause"))
@@ -380,7 +351,7 @@ glm::vec2 UI::ScreenToWorldPos(glm::vec2 screenPos)
                            2.0f -
                        1.0f;
     // This needs inverse matrices
-    glm::vec4 worldPos = glm::inverse(camera.view) * glm::inverse(camera.projection) * glm::vec4(ndcPos, 0, 1);
+    glm::vec4 worldPos = glm::inverse(m_viewport->camera().view) * glm::inverse(m_viewport->camera().projection) * glm::vec4(ndcPos, 0, 1);
     worldPos /= worldPos.w;
     return glm::vec2(worldPos.x, worldPos.y) * 0.5f + 0.5f;
 }

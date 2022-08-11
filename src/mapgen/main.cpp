@@ -36,6 +36,7 @@ protected:
     UI *m_ui;
     PixelPreview m_pixelPreview;
 
+    bool isPanningNodegraph = false;
     bool isPanning = false;
     glm::vec2 lastCursorPos;
     float *buffer;
@@ -67,7 +68,7 @@ protected:
         {
             return nullptr;
         }
-        std::string layer = m_ui->GetCurrentLayer();
+        std::string layer = m_ui->selectedLayer();
         auto it = node->renderSet()->find(layer);
         if (it == node->renderSet()->end())
         {
@@ -113,14 +114,14 @@ protected:
         {
             glm::vec2 cursorPos = glm::vec2(xpos, ypos);
             glm::vec2 offset = m_ui->ScreenToWorldPos(cursorPos) - m_ui->ScreenToWorldPos(lastCursorPos);
-            m_ui->camera.view = glm::translate(m_ui->camera.view, glm::vec3(2.0f * offset, 0.0f));
+            m_ui->viewport()->camera().view = glm::translate(m_ui->viewport()->camera().view, glm::vec3(2.0f * offset, 0.0f));
             lastCursorPos = cursorPos;
         }
     }
 
     void OnMouseScrolled([[maybe_unused]] double xoffset, double yoffset)
     {
-        m_ui->camera.focal *= (1.0f - yoffset * 0.1f);
+        m_ui->viewport()->camera().focal *= (1.0f - yoffset * 0.1f);
         UpdateProjection();
     }
 
@@ -134,21 +135,21 @@ protected:
                 Close();
                 break;
             case GLFW_KEY_F:
-                m_ui->camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -1));
-                m_ui->camera.focal = 1.0f;
+                m_ui->viewport()->camera().view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -1));
+                m_ui->viewport()->camera().focal = 1.0f;
                 UpdateProjection();
                 break;
             case GLFW_KEY_R:
-                m_ui->ToggleIsolateChannel(ISOLATE_RED);
+                m_ui->viewport()->ToggleIsolateChannel(ISOLATE_RED);
                 break;
             case GLFW_KEY_G:
-                m_ui->ToggleIsolateChannel(ISOLATE_GREEN);
+                m_ui->viewport()->ToggleIsolateChannel(ISOLATE_GREEN);
                 break;
             case GLFW_KEY_B:
-                m_ui->ToggleIsolateChannel(ISOLATE_BLUE);
+                m_ui->viewport()->ToggleIsolateChannel(ISOLATE_BLUE);
                 break;
             case GLFW_KEY_A:
-                m_ui->ToggleIsolateChannel(ISOLATE_ALPHA);
+                m_ui->viewport()->ToggleIsolateChannel(ISOLATE_ALPHA);
                 break;
             case GLFW_KEY_RIGHT:
                 m_scene->processOne();
@@ -165,23 +166,35 @@ protected:
         UpdateProjection();
     }
 
+    void onLayerChanged(std::string layerName)
+    {
+        m_ui->viewport()->setLayer(layerName);
+    }
+
+    void onChannelChanged(IsolateChannel channel)
+    {
+        m_ui->viewport()->ToggleIsolateChannel(channel);
+    }
+
     void UpdateProjection()
     {
         glm::ivec4 viewportRegion = m_ui->GetViewportRegion();
         float hAperture = (float)viewportRegion.z / (float)viewportRegion.w;
         static float vAperture = 1.0f;
-        m_ui->camera.projection = glm::ortho(-hAperture * m_ui->camera.focal,
-                                             hAperture * m_ui->camera.focal,
-                                             -vAperture * m_ui->camera.focal,
-                                             vAperture * m_ui->camera.focal,
-                                             CAM_NEAR,
-                                             CAM_FAR);
+        Camera &camera = m_ui->viewport()->camera();
+        camera.projection = glm::ortho(-hAperture * camera.focal,
+                                       hAperture * camera.focal,
+                                       -vAperture * camera.focal,
+                                       vAperture * camera.focal,
+                                       CAM_NEAR,
+                                       CAM_FAR);
     }
 
     // TODO: This needs to change, difference between selection and view
     void setSelectedNode(Node *node)
     {
         m_scene->setViewNode(node);
+        m_ui->viewport()->setNode(node);
     }
 
     void UpdateSetting(Node *node, std::string key, SettingValue value)
@@ -206,7 +219,8 @@ public:
         m_ui->SetPixelPreview(&m_pixelPreview);
 
         // TODO: I'm being too lazy to work out the actual matrix for the definition
-        m_ui->camera.view = glm::translate(m_ui->camera.view, glm::vec3(0, 0, -1));
+        Camera &camera = m_ui->viewport()->camera();
+        camera.view = glm::translate(camera.view, glm::vec3(0, 0, -1));
         UpdateProjection();
 
         m_ui->cursorMoved.connect(this, &Application::OnMouseMoved);
@@ -215,9 +229,11 @@ public:
         m_ui->closeRequested.connect(this, &Application::Close);
         m_ui->sizeChanged.connect(this, &Application::OnResize);
         m_ui->keyChanged.connect(this, &Application::OnKeyChanged);
-        m_ui->selectedNodeChanged.connect(this, &Application::setSelectedNode);
         m_ui->opSettingChanged.connect(this, &Application::UpdateSetting);
         m_ui->pauseToggled.connect(this, &Application::TogglePause);
+        m_ui->layerChanged.connect(this, &Application::onLayerChanged);
+        m_ui->channelChanged.connect(this, &Application::onChannelChanged);
+        m_ui->nodegraph()->selectedNodeChanged.connect(this, &Application::setSelectedNode);
     }
     ~Application()
     {
@@ -235,7 +251,7 @@ public:
         glEnable(GL_BLEND);
 
         // XXX: Hack to get something rendering until we have an interactive graph
-        m_ui->setSelectedNode(m_scene->getCurrentGraph()->node(2));
+        m_ui->nodegraph()->setSelectedNode(m_scene->getCurrentGraph()->node(2));
 
         while (!m_ui->IsClosed())
         {
