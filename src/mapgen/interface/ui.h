@@ -82,6 +82,7 @@ public:
 
     std::string GetCurrentLayer() const;
 
+    void setSelectedNode(Node *node);
     void ToggleIsolateChannel(IsolateChannel channel);
     void setScene(Scene *scene);
     void SetPixelPreview(PixelPreview *preview);

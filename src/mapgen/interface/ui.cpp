@@ -72,6 +72,7 @@ UI::UI(unsigned int width, unsigned int height, const char *name, Context *share
 
 std::string UI::GetCurrentLayer() const { return m_selectedLayer; }
 
+void UI::setSelectedNode(Node *node) { m_selectedNode = node; }
 void UI::ToggleIsolateChannel(IsolateChannel channel)
 {
     m_isolateChannel = (m_isolateChannel == channel) ? ISOLATE_NONE : channel;
@@ -171,24 +172,16 @@ void UI::DrawViewportProperties()
     if (ImGui::BeginCombo("##IsolateChannel", getIsolateChannelName(m_isolateChannel)))
     {
         // TODO: Tidy this up
-        const auto it = m_selectedNode->renderSet()->find(m_selectedLayer);
-        if (it != m_selectedNode->renderSet()->end() && it->second->numChannels() == 1)
+        for (int channel = ISOLATE_NONE; channel != ISOLATE_LAST; ++channel)
         {
-            ImGui::Selectable(getIsolateChannelName(ISOLATE_RED), true);
-        }
-        else
-        {
-            for (int channel = ISOLATE_NONE; channel != ISOLATE_LAST; ++channel)
+            bool isSelected = (m_isolateChannel == channel);
+            if (ImGui::Selectable(getIsolateChannelName(IsolateChannel(channel)), isSelected))
             {
-                bool isSelected = (m_isolateChannel == channel);
-                if (ImGui::Selectable(getIsolateChannelName(IsolateChannel(channel)), isSelected))
-                {
-                    m_isolateChannel = IsolateChannel(channel);
-                }
-                if (isSelected)
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
+                m_isolateChannel = IsolateChannel(channel);
+            }
+            if (isSelected)
+            {
+                ImGui::SetItemDefaultFocus();
             }
         }
         ImGui::EndCombo();
@@ -229,20 +222,8 @@ void UI::DrawOperatorProperties()
         return;
     }
 
-    ImGui::BeginListBox("##Operators");
-    // TODO: Doesn't need current node, needs selected - tracked separately
-    Node *selectedNode = m_scene->getCurrentNode();
-    // for (size_t i = 0; i < m_scene->operators.size(); ++i)
-    // {
-    //     if (ImGui::Selectable(m_scene->operators[i]->name().c_str(), i == selectedIndex))
-    //     {
-    //         selectedIndex = i;
-    //         activeOperatorChanged.emit(i);
-    //     }
-    // }
-    ImGui::EndListBox();
     ImGui::Text("Operator Settings");
-    drawNodeSettings(selectedNode);
+    drawNodeSettings(m_selectedNode);
 
     bool isPaused = m_scene->isPaused();
     if (ImGui::Button(isPaused ? "Play" : "Pause"))

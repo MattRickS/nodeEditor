@@ -70,7 +70,7 @@ Settings *Node::settings() { return &m_settings; }
 void Node::updateSetting(std::string name, SettingValue value)
 {
     m_settings.get(name)->set(value);
-    setDirty();
+    setDirty(true);
 }
 
 void Node::addInput(std::string name, bool required)

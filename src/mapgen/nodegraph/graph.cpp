@@ -6,7 +6,7 @@
 
 #include "graph.h"
 
-NodeID Graph::lastID = 1;
+NodeID Graph::lastID = 0;
 
 Graph::value_iterator Graph::begin() { return m_nodes.begin(); }
 Graph::value_iterator Graph::end() { return m_nodes.end(); }

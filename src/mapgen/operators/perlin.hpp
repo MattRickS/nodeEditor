@@ -19,7 +19,7 @@ public:
 
     PerlinNoise() : shader("src/mapgen/shaders/compute/perlin.glsl") {}
 
-    std::string name() const override { return "Noise"; }
+    std::string name() const override { return "PerlinNoise"; }
     void defaultSettings(Settings *settings) const override
     {
         settings->registerFloat("frequency", 0.01f);

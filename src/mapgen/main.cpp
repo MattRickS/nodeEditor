@@ -234,6 +234,9 @@ public:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
 
+        // XXX: Hack to get something rendering until we have an interactive graph
+        m_ui->setSelectedNode(m_scene->getCurrentGraph()->node(2));
+
         while (!m_ui->IsClosed())
         {
             glfwPollEvents();

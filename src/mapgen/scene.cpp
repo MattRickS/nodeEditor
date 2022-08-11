@@ -17,8 +17,8 @@
 
 Scene::Scene(unsigned int width, unsigned int height) : m_width(width), m_height(height), context("Scene")
 {
-    m_graph.createNode("VoronoiNoise");
-    NodeID n1 = m_graph.createNode("PerlinNoise");
+    m_graph.createNode("PerlinNoise");
+    NodeID n1 = m_graph.createNode("VoronoiNoise");
     NodeID n2 = m_graph.createNode("InvertOp");
     // TODO: Can't rely on pointers into the graph nodes vector as it may reallocate the memory
     //       What works around that? Using indexes? Not ideal either as nodes could be deleted.
@@ -41,13 +41,18 @@ Graph *Scene::getCurrentGraph() { return &m_graph; }
 Node *Scene::getCurrentNode() { return m_currNode; }
 Node *Scene::getViewNode() { return m_viewNode.load(); }
 
-void Scene::setDirty() { m_isDirty = true; }
+void Scene::setDirty()
+{
+    m_isDirty = true;
+    setAwake(true);
+}
 
 void Scene::setViewNode(Node *node)
 {
     m_viewNode = node;
     // TODO: m_currNode is not thread safe currently
     m_currNode = calculateCurrentNode();
+    std::cout << "View node changed to " << (node ? node->name() : "None") << ", current calculated as: " << (m_currNode ? m_currNode->name() : "None") << std::endl;
     // TODO: Check if actually needs to wake up
     setAwake(true);
 }
@@ -164,6 +169,7 @@ Node *Scene::calculateCurrentNode() const
     // Everything is up to date, nothing to do
     if (m_viewNode.load()->state() == State::Processed)
     {
+        std::cout << "Current view node is fully processed, no new current node" << std::endl;
         return nullptr;
     }
 
@@ -189,10 +195,11 @@ bool Scene::maybeCleanNodes()
         return false;
     }
     m_isDirty = false;
-    for (auto it = m_graph.begin(); it != m_graph.begin(); ++it)
+    for (auto it = m_graph.begin(); it != m_graph.end(); ++it)
     {
         if (it->isDirty())
         {
+            std::cout << "Cleaning node " << it->name() << " and downstream" << std::endl;
             // All nodes after (and including) a dirty node must be reset
             for (DepthIterator it2{&(*it), DOWNSTREAM}; it2 != DepthIterator(); it2++)
             {
