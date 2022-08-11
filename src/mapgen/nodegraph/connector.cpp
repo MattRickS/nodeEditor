@@ -4,7 +4,10 @@
 #include "connector.h"
 #include "node.h"
 
-Connector::Connector(Node *node, Type type, int maxConnections) : m_node(node), m_type(type), m_maxConnections(maxConnections) {}
+Connector::Connector(Node *node, Type type, int maxConnections) : m_node(node), m_type(type), m_maxConnections(maxConnections)
+{
+    m_bounds = Bounds(0, 0, 15, 5);
+}
 
 bool Connector::connect(Connector *connector)
 {
@@ -57,6 +60,33 @@ Node *Connector::node() const { return m_node; }
 bool Connector::isFull() const { return m_maxConnections > 0 && m_connected.size() >= (size_t)m_maxConnections; }
 const std::string &Connector::layer() const { return m_layer; }
 void Connector::setLayer(const std::string &layer) { m_layer = layer; }
+Bounds Connector::bounds() const
+{
+    // Should always be associated with a node, but if not, use the default size
+    if (!m_node)
+    {
+        return m_bounds;
+    }
+
+    // Return the bounds relative to the node
+    Bounds nodeBounds = node()->bounds();
+    if (type() == Connector::INPUT)
+    {
+        size_t numInputs = node()->numInputs();
+        float inputSpacing = (nodeBounds.size().x - numInputs * m_bounds.size().x) / float(numInputs + 1);
+        return {
+            glm::vec2(nodeBounds.min.x + inputSpacing, nodeBounds.min.y - m_bounds.size().y),
+            glm::vec2(nodeBounds.min.x + inputSpacing + m_bounds.size().x, nodeBounds.min.y)};
+    }
+    else
+    {
+        size_t numOutputs = node()->numOutputs();
+        float outputSpacing = (nodeBounds.size().x - numOutputs * m_bounds.size().x) / float(numOutputs + 1);
+        return {
+            glm::vec2(nodeBounds.min.x + outputSpacing, nodeBounds.max.y),
+            glm::vec2(nodeBounds.min.x + outputSpacing + m_bounds.size().x, nodeBounds.max.y + m_bounds.size().y)};
+    }
+}
 
 InputConnector::InputConnector(Node *node, std::string name, bool required) : Connector(node, INPUT, 1), m_name(name), m_required(required) {}
 

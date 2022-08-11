@@ -7,9 +7,9 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include "../bounds.hpp"
 #include "../nodegraph/node.h"
 #include "../scene.h"
-#include "bounds.hpp"
 #include "panel.hpp"
 #include "signal.hpp"
 
@@ -67,34 +67,12 @@ public:
         }
     }
 
-    Bounds nodeBounds(Node *node)
+    /* GraphElement bounds within the screen window, respecting view transforms */
+    Bounds graphElementBounds(GraphElement *el)
     {
         return {
-            glm::vec2(pos()) + node->pos() * m_viewScale + m_viewOffset,
-            glm::vec2(pos()) + (node->pos() + node->size()) * m_viewScale + m_viewOffset};
-    }
-
-    Bounds connBounds(Connector *conn)
-    {
-        glm::vec2 connSize = CONNECTOR_SIZE * m_viewScale;
-        Bounds nodebounds = nodeBounds(conn->node());
-
-        if (conn->type() == Connector::INPUT)
-        {
-            size_t numInputs = conn->node()->numInputs();
-            float inputSpacing = m_viewScale * (conn->node()->size().x - numInputs * CONNECTOR_SIZE.x) / float(numInputs + 1);
-            return {
-                glm::vec2(nodebounds.min.x + inputSpacing, nodebounds.min.y - connSize.y),
-                glm::vec2(nodebounds.min.x + inputSpacing + connSize.x, nodebounds.min.y)};
-        }
-        else
-        {
-            size_t numOutputs = conn->node()->numOutputs();
-            float outputSpacing = m_viewScale * (conn->node()->size().x - numOutputs * CONNECTOR_SIZE.x) / float(numOutputs + 1);
-            return {
-                glm::vec2(nodebounds.min.x + outputSpacing, nodebounds.max.y),
-                glm::vec2(nodebounds.min.x + outputSpacing + connSize.x, nodebounds.max.y + connSize.y)};
-        }
+            glm::vec2(pos()) + el->bounds().min * m_viewScale + m_viewOffset,
+            glm::vec2(pos()) + el->bounds().max * m_viewScale + m_viewOffset};
     }
 
     void drawNode(ImDrawList *drawList, Node *node)
@@ -104,17 +82,17 @@ public:
             return;
         }
 
-        Bounds bounds = nodeBounds(node);
+        Bounds bounds = graphElementBounds(node);
 
         for (size_t i = 0; i < node->numInputs(); ++i)
         {
             InputConnector *input = node->input(i);
-            Bounds b = connBounds(input);
+            Bounds b = graphElementBounds(input);
 
             for (size_t i = 0; i < input->numConnections(); ++i)
             {
                 glm::vec2 p1 = b.center();
-                glm::vec2 p2 = connBounds(input->connection(i)).center();
+                glm::vec2 p2 = graphElementBounds(input->connection(i)).center();
                 drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), COLOR_LINE, m_lineThickness);
             }
 
@@ -123,7 +101,7 @@ public:
 
         for (size_t i = 0; i < node->numOutputs(); ++i)
         {
-            Bounds b = connBounds(node->output(i));
+            Bounds b = graphElementBounds(node->output(i));
             drawList->AddRectFilled(ImVec2(b.min.x, b.min.y), ImVec2(b.max.x, b.max.y), COLOR_CONNECTOR, m_connectorRounding);
         }
 

@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-#include "bounds.hpp"
+#include "../bounds.hpp"
 
 class Panel
 {

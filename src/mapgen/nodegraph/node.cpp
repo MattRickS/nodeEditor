@@ -10,6 +10,7 @@
 
 Node::Node(NodeID id, Operator *op) : m_id(id), m_op(op)
 {
+    m_bounds = Bounds{0, 0, 100, 25};
     if (op)
     {
         m_name = op->name();
@@ -58,11 +59,6 @@ NodeID Node::id() const { return m_id; }
 std::string Node::name() const { return m_name; }
 State Node::state() const { return m_state; }
 const RenderSet *Node::renderSet() const { return &m_renderSet; }
-
-const glm::vec2 Node::pos() const { return m_pos; }
-void Node::setPos(glm::vec2 pos) { m_pos = pos; }
-const glm::vec2 Node::size() const { return m_size; }
-void Node::setSize(glm::vec2 size) { m_size = size; }
 
 // Maybe settings needs a redo so that the register methods are on the node, and the settings object it exposes is immutable
 // This ensures settings are only updated through updateSetting() so that the dirty bit can be set

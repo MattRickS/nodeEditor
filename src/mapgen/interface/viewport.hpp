@@ -4,9 +4,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "../bounds.hpp"
 #include "../renders.h"
 #include "../shader.h"
-#include "bounds.hpp"
 #include "panel.hpp"
 
 enum IsolateChannel

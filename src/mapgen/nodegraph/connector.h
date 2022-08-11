@@ -3,11 +3,12 @@
 #include <vector>
 
 #include "../constants.h"
+#include "graphelement.h"
 
 // Defined in node.h
 class Node;
 
-class Connector
+class Connector : public GraphElement
 {
 public:
     enum Type
@@ -28,6 +29,7 @@ public:
     bool isFull() const;
     const std::string &layer() const;
     void setLayer(const std::string &layer);
+    Bounds bounds() const override;
 
 protected:
     Node *m_node;

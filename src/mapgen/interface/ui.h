@@ -1,12 +1,12 @@
 #pragma once
 #include <glm/glm.hpp>
 
+#include "../bounds.hpp"
 #include "../constants.h"
 #include "../operator.h"
 #include "../renders.h"
 #include "../scene.h"
 #include "../shader.h"
-#include "bounds.hpp"
 #include "nodegraph.hpp"
 #include "viewport.hpp"
 #include "window.h"

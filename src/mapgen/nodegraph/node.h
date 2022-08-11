@@ -2,11 +2,12 @@
 #include <string>
 #include <vector>
 
-#include "connector.h"
 #include "../constants.h"
 #include "../operator.h"
 #include "../renders.h"
 #include "../settings.h"
+#include "connector.h"
+#include "graphelement.h"
 
 typedef unsigned int NodeID;
 
@@ -19,7 +20,7 @@ enum class State
     Error,
 };
 
-class Node
+class Node : public GraphElement
 {
 public:
     Node(NodeID id, Operator *op);
@@ -32,11 +33,6 @@ public:
     std::string name() const;
     State state() const;
     const RenderSet *renderSet() const;
-
-    const glm::vec2 pos() const;
-    void setPos(glm::vec2 pos);
-    const glm::vec2 size() const;
-    void setSize(glm::vec2 size);
 
     // Maybe settings needs a redo so that the register methods are on the node, and the settings object it exposes is immutable
     // This ensures settings are only updated through updateSetting() so that the dirty bit can be set
@@ -61,10 +57,6 @@ public:
     bool process();
 
 protected:
-    // Drawing properties
-    glm::vec2 m_pos = glm::vec2(0);
-    glm::vec2 m_size = glm::vec2(100, 25);
-
     // Core properties
     NodeID m_id;
     std::string m_name;
