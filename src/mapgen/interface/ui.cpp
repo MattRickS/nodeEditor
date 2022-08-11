@@ -336,8 +336,9 @@ glm::vec2 UI::ScreenToWorldPos(glm::vec2 screenPos)
 {
     Bounds viewportBounds = getViewportBounds();
     glm::vec2 ndcPos = glm::vec2(
-                           float(screenPos.x - viewportBounds.min.x) / viewportBounds.max.x,
-                           float(screenPos.y - viewportBounds.min.y) / viewportBounds.max.y) *
+                           float(screenPos.x - viewportBounds.min.x) / viewportBounds.size().x,
+                           // GL uses inverted Y axis
+                           float(screenPos.y - viewportBounds.max.y) / viewportBounds.size().y) *
                            2.0f -
                        1.0f;
     // This needs inverse matrices
