@@ -136,12 +136,12 @@ protected:
                 // offset will have an inverted y as screenPos uses topleft=(0,0) but world uses botleft=(0,0)
                 glm::vec2 offset = m_ui->ScreenToWorldPos(cursorPos) - m_ui->ScreenToWorldPos(lastCursorPos);
                 m_ui->viewport()->camera().view = glm::translate(m_ui->viewport()->camera().view, glm::vec3(2.0f * offset.x, 2.0f * -offset.y, 0.0f));
-                lastCursorPos = cursorPos;
             }
             else if (m_panningPanel == m_ui->nodegraph())
             {
-                std::cout << "Pan nodegraph" << std::endl;
+                m_ui->nodegraph()->pan(cursorPos - lastCursorPos);
             }
+            lastCursorPos = cursorPos;
         }
     }
 

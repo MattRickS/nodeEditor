@@ -32,7 +32,7 @@ const char *getIsolateChannelName(IsolateChannel channel)
 void UI::OnMouseMoved(double xpos, double ypos)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse)
+    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(CursorPos()))
         return;
 
     cursorMoved.emit(xpos, ypos);
@@ -41,7 +41,7 @@ void UI::OnMouseMoved(double xpos, double ypos)
 void UI::OnMouseButtonChanged(int button, int action, int mods)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse)
+    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(CursorPos()))
         return;
 
     mouseButtonChanged.emit(button, action, mods);
@@ -50,7 +50,7 @@ void UI::OnMouseButtonChanged(int button, int action, int mods)
 void UI::OnMouseScrolled(double xoffset, double yoffset)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse)
+    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(CursorPos()))
         return;
 
     mouseScrolled.emit(xoffset, yoffset);
