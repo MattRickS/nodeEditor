@@ -60,9 +60,36 @@ protected:
         }
     }
 
+    GraphElement *getElementAtPos(glm::vec2 pos)
+    {
+        // Elements are drawn from first to last, so iterate backwards to find the first element that's on top
+        for (auto it = m_scene->getCurrentGraph()->rbegin(); it != m_scene->getCurrentGraph()->rend(); ++it)
+        {
+            if (elementContainsPos(&(*it), pos))
+            {
+                return &(*it);
+            }
+            for (size_t i = 0; i < it->numInputs(); ++i)
+            {
+                if (elementContainsPos(it->input(i), pos))
+                {
+                    return it->input(i);
+                }
+            }
+            for (size_t i = 0; i < it->numOutputs(); ++i)
+            {
+                if (elementContainsPos(it->output(i), pos))
+                {
+                    return it->output(i);
+                }
+            }
+        }
+        return nullptr;
+    }
+
     void OnMouseButtonChanged(int button, int action, [[maybe_unused]] int mods)
     {
-        if (button == GLFW_MOUSE_BUTTON_LEFT)
+        if (button == GLFW_MOUSE_BUTTON_MIDDLE)
         {
             if (action == GLFW_PRESS)
             {
@@ -72,6 +99,26 @@ protected:
             else if (action == GLFW_RELEASE)
             {
                 m_panningPanel = nullptr;
+            }
+        }
+        // TODO: Multi-selection dragbox
+        else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        {
+            GraphElement *el = getElementAtPos(m_ui->CursorPos());
+            if (!el)
+            {
+                return;
+            }
+            el->setSelectFlag(SelectFlag_Select);
+            if (Node *node = dynamic_cast<Node *>(el))
+            {
+                // TODO: Start drag movement
+                // Selecting the nodegraph will emit the selection changed signal
+                m_ui->nodegraph()->setSelectedNode(node);
+            }
+            else if (Connector *conn = dynamic_cast<Connector *>(el))
+            {
+                // TODO: Start drag connection
             }
         }
     }
@@ -122,9 +169,14 @@ protected:
         }
     }
 
+    bool elementContainsPos(GraphElement *el, glm::vec2 pos) const
+    {
+        return m_ui->nodegraph()->graphElementBounds(el).contains(pos);
+    }
+
     void setHoverState(GraphElement *el, glm::vec2 cursorPos) const
     {
-        if (m_ui->nodegraph()->graphElementBounds(el).contains(cursorPos))
+        if (elementContainsPos(el, cursorPos))
         {
             el->setSelectFlag(SelectFlag_Hover);
         }
@@ -154,6 +206,7 @@ protected:
             lastCursorPos = cursorPos;
         }
 
+        // TODO: Line hover (tracked via Connection)
         // Hover state
         glm::vec2 cursorPos{xpos, ypos};
         for (auto it = m_scene->getCurrentGraph()->begin(); it != m_scene->getCurrentGraph()->end(); ++it)
@@ -251,7 +304,7 @@ protected:
     }
 
     // TODO: This needs to change, difference between selection and view
-    void setSelectedNode(Node *node)
+    void onNodeSelectionChanged(Node *node)
     {
         m_scene->setViewNode(node);
         m_ui->viewport()->setNode(node);
@@ -293,7 +346,7 @@ public:
         m_ui->pauseToggled.connect(this, &Application::TogglePause);
         m_ui->layerChanged.connect(this, &Application::onLayerChanged);
         m_ui->channelChanged.connect(this, &Application::onChannelChanged);
-        m_ui->nodegraph()->selectedNodeChanged.connect(this, &Application::setSelectedNode);
+        m_ui->nodegraph()->selectedNodeChanged.connect(this, &Application::onNodeSelectionChanged);
     }
     ~Application()
     {

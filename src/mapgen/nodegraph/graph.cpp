@@ -10,6 +10,8 @@ NodeID Graph::lastID = 0;
 
 Graph::value_iterator Graph::begin() { return m_nodes.begin(); }
 Graph::value_iterator Graph::end() { return m_nodes.end(); }
+Graph::reverse_value_iterator Graph::rbegin() { return m_nodes.rbegin(); }
+Graph::reverse_value_iterator Graph::rend() { return m_nodes.rend(); }
 
 NodeID Graph::createNode(std::string name)
 {
