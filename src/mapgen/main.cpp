@@ -63,7 +63,7 @@ protected:
 
     const Texture *currentTexture() const
     {
-        Node *node = m_scene->getCurrentNode();
+        Node *node = m_scene->getViewNode();
         if (!node)
         {
             return nullptr;
