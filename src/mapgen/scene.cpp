@@ -170,8 +170,8 @@ Node *Scene::calculateCurrentNode() const
     // Depth-first search up from target and return the deepest unprocessed node
     // (ie, prev node when the iteration has to move to a sibling or shallower node)
     DepthIterator it{m_viewNode, UPSTREAM, SKIP_PROCESSED};
-    DepthIterator last = it;
-    for (++it; it != DepthIterator(); ++it)
+    DepthIterator last = it++;
+    for (; it != DepthIterator(); last = it++)
     {
         if (it.depth() <= last.depth())
         {

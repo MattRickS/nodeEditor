@@ -52,7 +52,7 @@ protected:
         value_iterator() : pair_iterator() {}
         value_iterator(pair_iterator it) : pair_iterator(it) {}
         Setting *operator->() { return &(pair_iterator::operator->()->second); }
-        const Setting operator*() { return pair_iterator::operator*().second; }
+        Setting &operator*() { return pair_iterator::operator*().second; }
     };
 
     void validateUniqueSetting(const std::string &name) const;

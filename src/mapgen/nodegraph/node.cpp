@@ -264,7 +264,7 @@ void Node::evaluateOutputs()
     unsigned int width = 1024, height = 1024;
     for (size_t i = 0; i < numOutputs(); ++i)
     {
-        if (m_outputTextures.size() < i)
+        if (m_outputTextures.size() <= i)
         {
             m_outputTextures.emplace_back(new Texture(width, height));
         }

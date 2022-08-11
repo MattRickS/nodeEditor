@@ -8,26 +8,21 @@
 
 NodeID Graph::lastID = 1;
 
-Graph::iterator Graph::begin() { return m_nodes.begin(); }
-Graph::iterator Graph::end() { return m_nodes.end(); }
-Graph::const_iterator Graph::cbegin() { return m_nodes.cbegin(); }
-Graph::const_iterator Graph::cend() { return m_nodes.cend(); }
+Graph::value_iterator Graph::begin() { return m_nodes.begin(); }
+Graph::value_iterator Graph::end() { return m_nodes.end(); }
 
 NodeID Graph::createNode(std::string name)
 {
-    m_nodes.emplace_back(++lastID, OperatorRegistry::create(name));
-    // How does the node get initialised with width/height?
-    // Can width height just be a metadata property passed in to process along with the current renderSet?
-    // Textures could then be generated/resized when starting to process
-    return m_nodes.back().id();
+    NodeID nodeID = ++lastID;
+    m_nodes.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(nodeID),
+        std::forward_as_tuple(nodeID, OperatorRegistry::create(name)));
+    return nodeID;
 }
-bool Graph::deleteNode(Node *node)
+bool Graph::deleteNode(NodeID nodeID)
 {
-    if (!node)
-    {
-        return false;
-    }
-    auto it = std::find(m_nodes.cbegin(), m_nodes.cend(), *node);
+    auto it = m_nodes.find(nodeID);
     if (it != m_nodes.end())
     {
         m_nodes.erase(it);
@@ -37,11 +32,10 @@ bool Graph::deleteNode(Node *node)
 }
 Node *Graph::node(NodeID nodeID)
 {
-    auto it = std::find_if(m_nodes.begin(), m_nodes.end(), [&nodeID](const Node &n)
-                           { return n.id() == nodeID; });
+    auto it = m_nodes.find(nodeID);
     if (it != m_nodes.end())
     {
-        return &(*it);
+        return &it->second;
     }
     return nullptr;
 }
