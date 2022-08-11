@@ -23,7 +23,7 @@ public:
     Type type() const;
     size_t numConnections() const;
     int maxConnections() const;
-    const Connector *connection(size_t index) const;
+    Connector *connection(size_t index) const;
     Node *node() const;
     bool isFull() const;
     const std::string &layer() const;

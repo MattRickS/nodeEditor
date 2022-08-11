@@ -52,7 +52,7 @@ bool Connector::disconnect(Connector *connector)
 Connector::Type Connector::type() const { return m_type; }
 size_t Connector::numConnections() const { return m_connected.size(); }
 int Connector::maxConnections() const { return m_maxConnections; }
-const Connector *Connector::connection(size_t index) const { return m_connected[index]; }
+Connector *Connector::connection(size_t index) const { return m_connected[index]; }
 Node *Connector::node() const { return m_node; }
 bool Connector::isFull() const { return m_maxConnections > 0 && m_connected.size() >= (size_t)m_maxConnections; }
 const std::string &Connector::layer() const { return m_layer; }
