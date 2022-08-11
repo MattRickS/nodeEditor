@@ -143,11 +143,12 @@ public:
         ImGui::SetNextWindowSize(ImVec2(size().x, size().y));
         ImGui::Begin("Nodegraph", nullptr, flags);
 
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+
         if (m_scene)
         {
             float fontScale = ImGui::GetCurrentWindow()->FontWindowScale;
             ImGui::SetWindowFontScale(m_viewScale);
-            ImDrawList *drawList = ImGui::GetWindowDrawList();
 
             Graph *graph = m_scene->getCurrentGraph();
             for (auto it = graph->begin(); it != graph->end(); ++it)
@@ -157,6 +158,10 @@ public:
 
             ImGui::SetWindowFontScale(fontScale);
         }
+
+        // There's a 3px horizontal padding for some reason.
+        drawList->AddRect(ImVec2(m_bounds.min.x + 3, m_bounds.min.y), ImVec2(m_bounds.max.x - 3, m_bounds.max.y),
+                          COLOR_LINE, m_nodeRounding, ImDrawFlags_Closed, 2.0f);
 
         ImGui::End();
     }
