@@ -2,20 +2,22 @@
 
 #include <glm/glm.hpp>
 
+#include "bounds.hpp"
+
 class Panel
 {
 public:
-    Panel(glm::ivec2 pos, glm::ivec2 size) : m_pos(pos), m_size(size) {}
+    Panel(Bounds bounds) : m_bounds(bounds) {}
     virtual ~Panel() = default;
 
-    glm::ivec2 pos() const { return m_pos; }
-    glm::ivec2 size() const { return m_size; }
-    void setPos(glm::ivec2 pos) { m_pos = pos; }
-    void setSize(glm::ivec2 size) { m_size = size; }
+    const Bounds &bounds() const { return m_bounds; }
+    glm::ivec2 pos() const { return m_bounds.min; }
+    glm::ivec2 size() const { return m_bounds.size(); }
+    void setPos(glm::ivec2 pos) { m_bounds.min = pos; }
+    void setSize(glm::ivec2 size) { m_bounds.max = m_bounds.min + glm::vec2(size); }
 
     virtual void draw() = 0;
 
 protected:
-    glm::ivec2 m_pos;
-    glm::ivec2 m_size;
+    Bounds m_bounds;
 };

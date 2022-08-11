@@ -6,6 +6,7 @@
 
 #include "../renders.h"
 #include "../shader.h"
+#include "bounds.hpp"
 #include "panel.hpp"
 
 enum IsolateChannel
@@ -28,7 +29,7 @@ struct Camera
 class Viewport : public Panel
 {
 public:
-    Viewport(glm::ivec2 pos, glm::ivec2 size) : Panel(pos, size), m_viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs") {}
+    Viewport(Bounds bounds) : Panel(bounds), m_viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs") {}
 
     Camera &camera() { return m_camera; }
     void setLayer(std::string layer) { m_layer = layer; }
@@ -43,7 +44,8 @@ public:
     {
         // Draws the texture into the viewport
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(m_pos.x, m_pos.y, m_size.x, m_size.y);
+        // GL uses inverted Y axis so use the maximum bound for the starting y pos
+        glViewport(pos().x, bounds().max.y, size().x, size().y);
         glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 

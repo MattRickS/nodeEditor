@@ -6,6 +6,7 @@
 #include "../renders.h"
 #include "../scene.h"
 #include "../shader.h"
+#include "bounds.hpp"
 #include "nodegraph.hpp"
 #include "viewport.hpp"
 #include "window.h"
@@ -74,10 +75,10 @@ public:
     void SetPixelPreview(PixelPreview *preview);
     void Draw();
 
-    glm::ivec4 GetViewportRegion() const;
-    glm::ivec4 GetViewportPropertiesRegion() const;
-    glm::ivec4 GetOperatorPropertiesRegion() const;
-    glm::ivec4 getNodegraphRegion() const;
+    Bounds getViewportBounds() const;
+    Bounds getViewportPropertiesBounds() const;
+    Bounds getOperatorPropertiesBounds() const;
+    Bounds getNodegraphBounds() const;
 
     glm::vec2 ScreenToWorldPos(glm::vec2 screenPos);
     glm::vec2 WorldToScreenPos(glm::vec2 mapPos);

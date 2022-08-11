@@ -178,8 +178,8 @@ protected:
 
     void UpdateProjection()
     {
-        glm::ivec4 viewportRegion = m_ui->GetViewportRegion();
-        float hAperture = (float)viewportRegion.z / (float)viewportRegion.w;
+        Bounds viewportBounds = m_ui->getViewportBounds();
+        float hAperture = (float)viewportBounds.size().x / (float)viewportBounds.size().y;
         static float vAperture = 1.0f;
         Camera &camera = m_ui->viewport()->camera();
         camera.projection = glm::ortho(-hAperture * camera.focal,

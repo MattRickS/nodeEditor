@@ -9,20 +9,9 @@
 
 #include "../nodegraph/node.h"
 #include "../scene.h"
+#include "bounds.hpp"
 #include "panel.hpp"
 #include "signal.hpp"
-
-struct Bounds
-{
-    glm::vec2 min;
-    glm::vec2 max;
-
-    Bounds() : min(0), max(0) {}
-    Bounds(glm::vec2 min, glm::vec2 max) : min(min), max(max) {}
-    Bounds(float minx, float miny, float maxx, float maxy) : min(minx, miny), max(maxx, maxy) {}
-
-    glm::vec2 center() const { return min + (max - min) * 0.5f; }
-};
 
 class Nodegraph : public Panel
 {
@@ -46,7 +35,7 @@ public:
     const ImU32 COLOR_PROCESSED = IM_COL32(100, 255, 100, 255);
     const ImU32 COLOR_ERROR = IM_COL32(255, 100, 100, 255);
 
-    Nodegraph(glm::ivec2 pos, glm::ivec2 size) : Panel(pos, size) {}
+    Nodegraph(Bounds bounds) : Panel(bounds) {}
 
     Node *getSelectedNode() const { return m_selectedNode; }
     void setSelectedNode(Node *node)
@@ -79,8 +68,8 @@ public:
     Bounds nodeBounds(Node *node)
     {
         return {
-            glm::vec2(m_pos) + node->pos() * m_viewScale + m_viewOffset,
-            glm::vec2(m_pos) + (node->pos() + node->size()) * m_viewScale + m_viewOffset};
+            glm::vec2(pos()) + node->pos() * m_viewScale + m_viewOffset,
+            glm::vec2(pos()) + (node->pos() + node->size()) * m_viewScale + m_viewOffset};
     }
 
     Bounds connBounds(Connector *conn)
@@ -150,8 +139,8 @@ public:
     {
         static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
 
-        ImGui::SetNextWindowPos(ImVec2(m_pos.x, m_pos.y));
-        ImGui::SetNextWindowSize(ImVec2(m_size.x, m_size.y));
+        ImGui::SetNextWindowPos(ImVec2(pos().x, pos().y));
+        ImGui::SetNextWindowSize(ImVec2(size().x, size().y));
         ImGui::Begin("Nodegraph", nullptr, flags);
 
         if (m_scene)

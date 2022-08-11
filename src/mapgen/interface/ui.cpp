@@ -63,9 +63,9 @@ void UI::resizeInternals([[maybe_unused]] int width, [[maybe_unused]] int height
 {
     if (m_nodegraph)
     {
-        glm::ivec4 region = getNodegraphRegion();
-        m_nodegraph->setPos(glm::ivec2(region.x, region.y));
-        m_nodegraph->setSize(glm::ivec2(region.z, region.w));
+        Bounds bounds = getNodegraphBounds();
+        m_nodegraph->setPos(bounds.min);
+        m_nodegraph->setSize(bounds.size());
     }
 }
 
@@ -77,12 +77,10 @@ UI::UI(unsigned int width, unsigned int height, const char *name, Context *share
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    glm::ivec4 nodegraphRegion = getNodegraphRegion();
-    m_nodegraph = new Nodegraph(glm::ivec2(nodegraphRegion.x, nodegraphRegion.y), glm::ivec2(nodegraphRegion.z, nodegraphRegion.w));
+    m_nodegraph = new Nodegraph(getNodegraphBounds());
     sizeChanged.connect(this, &UI::resizeInternals);
 
-    glm::ivec4 viewportRegion = GetViewportRegion();
-    m_viewport = new Viewport(glm::ivec2(viewportRegion.x, viewportRegion.y), glm::ivec2(viewportRegion.z, viewportRegion.w));
+    m_viewport = new Viewport(getViewportBounds());
 }
 UI::~UI()
 {
@@ -137,9 +135,9 @@ void UI::DrawViewportProperties()
     static bool p_open = NULL;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
-    glm::ivec4 propertiesRegion = GetViewportPropertiesRegion();
-    ImGui::SetNextWindowPos(ImVec2(propertiesRegion.x, propertiesRegion.y));
-    ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
+    Bounds propertiesBounds = getViewportPropertiesBounds();
+    ImGui::SetNextWindowPos(ImVec2(propertiesBounds.min.x, propertiesBounds.min.y));
+    ImGui::SetNextWindowSize(ImVec2(propertiesBounds.size().x, propertiesBounds.size().y));
     ImGui::Begin("Viewport Properties", &p_open, flags);
 
     ImGui::PushItemWidth(150.0f);
@@ -209,9 +207,9 @@ void UI::DrawOperatorProperties()
     static bool p_open = NULL;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
-    glm::ivec4 propertiesRegion = GetOperatorPropertiesRegion();
-    ImGui::SetNextWindowPos(ImVec2(propertiesRegion.x, propertiesRegion.y));
-    ImGui::SetNextWindowSize(ImVec2(propertiesRegion.z, propertiesRegion.w));
+    Bounds propertiesBounds = getOperatorPropertiesBounds();
+    ImGui::SetNextWindowPos(ImVec2(propertiesBounds.min.x, propertiesBounds.min.y));
+    ImGui::SetNextWindowSize(ImVec2(propertiesBounds.size().x, propertiesBounds.size().y));
     ImGui::Begin("Mapmaker Properties", &p_open, flags);
 
     if (m_scene)
@@ -317,37 +315,29 @@ void UI::drawNodeSettings(Node *node)
     }
 }
 
-glm::ivec4 UI::GetViewportRegion() const
+Bounds UI::getViewportBounds() const
 {
-    float panelWidth = m_width * m_opPropertiesWidthPercent;
-    float panelHeight = m_height * m_viewPropertiesHeightPercent;
-    // TODO: I think we're mixing dimensions here, should be different to nodegraph region. Likely how we're interpreting it in drawViewport/screenToWorldPos
-    return glm::ivec4(panelWidth, m_height * 0.5f, m_width - panelWidth, m_height * 0.5f - panelHeight);
+    return Bounds(m_width * m_opPropertiesWidthPercent, m_height * m_viewPropertiesHeightPercent, m_width, m_height * 0.5f);
 }
-glm::ivec4 UI::GetViewportPropertiesRegion() const
+Bounds UI::getViewportPropertiesBounds() const
 {
-    float panelHeight = m_height * m_viewPropertiesHeightPercent;
-    float panelWidth = m_width * m_opPropertiesWidthPercent;
-    // Remember, positions start from (0,0) at top-left
-    return glm::ivec4(panelWidth, 0, m_width - panelWidth, panelHeight);
+    return Bounds(m_width * m_opPropertiesWidthPercent, 0, m_width, m_height * m_viewPropertiesHeightPercent);
 }
-glm::ivec4 UI::GetOperatorPropertiesRegion() const
+Bounds UI::getOperatorPropertiesBounds() const
 {
-    return glm::ivec4(0, 0, m_width * m_opPropertiesWidthPercent, m_height);
+    return Bounds(0, 0, m_width * m_opPropertiesWidthPercent, m_height);
 }
-glm::ivec4 UI::getNodegraphRegion() const
+Bounds UI::getNodegraphBounds() const
 {
-    float panelWidth = m_width * m_opPropertiesWidthPercent;
-    float panelHeight = m_height * 0.5f;
-    return glm::ivec4(panelWidth, panelHeight, m_width - panelWidth, m_height - panelHeight);
+    return Bounds(m_width * m_opPropertiesWidthPercent, m_height * 0.5f, m_width, m_height);
 }
 
 glm::vec2 UI::ScreenToWorldPos(glm::vec2 screenPos)
 {
-    glm::ivec4 viewportRegion = GetViewportRegion();
+    Bounds viewportBounds = getViewportBounds();
     glm::vec2 ndcPos = glm::vec2(
-                           float(screenPos.x - viewportRegion.x) / viewportRegion.z,
-                           float(screenPos.y - viewportRegion.y) / viewportRegion.w) *
+                           float(screenPos.x - viewportBounds.min.x) / viewportBounds.max.x,
+                           float(screenPos.y - viewportBounds.min.y) / viewportBounds.max.y) *
                            2.0f -
                        1.0f;
     // This needs inverse matrices
