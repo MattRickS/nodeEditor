@@ -48,12 +48,10 @@ protected:
     {
         if (m_ui->nodegraph()->bounds().contains(pos))
         {
-            std::cout << "In nodegraph panel" << pos.x << "," << pos.y << std::endl;
             return m_ui->nodegraph();
         }
         else if (m_ui->viewport()->bounds().contains(pos))
         {
-            std::cout << "In viewport panel: " << pos.x << "," << pos.y << std::endl;
             return m_ui->viewport();
         }
         else
@@ -147,7 +145,15 @@ protected:
 
     void OnMouseScrolled([[maybe_unused]] double xoffset, double yoffset)
     {
-        m_ui->viewport()->camera().focal *= (1.0f - yoffset * 0.1f);
+        Panel *panel = panelAtPos(m_ui->CursorPos());
+        if (panel == m_ui->nodegraph())
+        {
+            m_ui->nodegraph()->zoom(1.0f + yoffset * 0.1f);
+        }
+        else if (panel == m_ui->viewport())
+        {
+            m_ui->viewport()->camera().focal *= (1.0f - yoffset * 0.1f);
+        }
         UpdateProjection();
     }
 

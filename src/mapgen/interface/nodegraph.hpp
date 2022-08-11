@@ -27,6 +27,8 @@ public:
     float m_selectionThickness = 1.0f;
     float m_lineThickness = 2.0f;
 
+    const glm::vec2 CONNECTOR_SIZE = glm::vec2(15, 10);
+
     const ImU32 COLOR_LINE = IM_COL32(255, 255, 255, 255);
     const ImU32 COLOR_SELECTED = IM_COL32(255, 255, 0, 255);
     const ImU32 COLOR_CONNECTOR = IM_COL32(150, 150, 150, 255);
@@ -74,13 +76,13 @@ public:
 
     Bounds connBounds(Connector *conn)
     {
-        static glm::vec2 connSize = glm::vec2(15, 10);
+        glm::vec2 connSize = CONNECTOR_SIZE * m_viewScale;
         Bounds nodebounds = nodeBounds(conn->node());
 
         if (conn->type() == Connector::INPUT)
         {
             size_t numInputs = conn->node()->numInputs();
-            float inputSpacing = (conn->node()->size().x - numInputs * connSize.x) / float(numInputs + 1);
+            float inputSpacing = m_viewScale * (conn->node()->size().x - numInputs * CONNECTOR_SIZE.x) / float(numInputs + 1);
             return {
                 glm::vec2(nodebounds.min.x + inputSpacing, nodebounds.min.y - connSize.y),
                 glm::vec2(nodebounds.min.x + inputSpacing + connSize.x, nodebounds.min.y)};
@@ -88,7 +90,7 @@ public:
         else
         {
             size_t numOutputs = conn->node()->numOutputs();
-            float outputSpacing = (conn->node()->size().x - numOutputs * connSize.x) / float(numOutputs + 1);
+            float outputSpacing = m_viewScale * (conn->node()->size().x - numOutputs * CONNECTOR_SIZE.x) / float(numOutputs + 1);
             return {
                 glm::vec2(nodebounds.min.x + outputSpacing, nodebounds.max.y),
                 glm::vec2(nodebounds.min.x + outputSpacing + connSize.x, nodebounds.max.y + connSize.y)};
