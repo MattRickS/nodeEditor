@@ -122,6 +122,18 @@ protected:
         }
     }
 
+    void setHoverState(GraphElement *el, glm::vec2 cursorPos) const
+    {
+        if (m_ui->nodegraph()->graphElementBounds(el).contains(cursorPos))
+        {
+            el->setSelectFlag(SelectFlag_Hover);
+        }
+        else
+        {
+            el->clearSelectFlag(SelectFlag_Hover);
+        }
+    }
+
     void OnMouseMoved(double xpos, double ypos)
     {
         UpdatePixelPreview(xpos, ypos);
@@ -140,6 +152,21 @@ protected:
                 m_ui->nodegraph()->pan(cursorPos - lastCursorPos);
             }
             lastCursorPos = cursorPos;
+        }
+
+        // Hover state
+        glm::vec2 cursorPos{xpos, ypos};
+        for (auto it = m_scene->getCurrentGraph()->begin(); it != m_scene->getCurrentGraph()->end(); ++it)
+        {
+            setHoverState(&(*it), cursorPos);
+            for (size_t i = 0; i < it->numInputs(); ++i)
+            {
+                setHoverState(it->input(i), cursorPos);
+            }
+            for (size_t i = 0; i < it->numOutputs(); ++i)
+            {
+                setHoverState(it->output(i), cursorPos);
+            }
         }
     }
 

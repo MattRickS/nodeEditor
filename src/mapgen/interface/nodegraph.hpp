@@ -29,6 +29,7 @@ public:
 
     const glm::vec2 CONNECTOR_SIZE = glm::vec2(15, 10);
 
+    const ImU32 COLOR_HOVER = IM_COL32(100, 255, 255, 255);
     const ImU32 COLOR_LINE = IM_COL32(255, 255, 255, 255);
     const ImU32 COLOR_SELECTED = IM_COL32(255, 255, 0, 255);
     const ImU32 COLOR_CONNECTOR = IM_COL32(150, 150, 150, 255);
@@ -51,6 +52,10 @@ public:
 
     ImU32 nodeColor(const Node *node) const
     {
+        if (node->hasSelectFlag(SelectFlag_Hover))
+        {
+            return COLOR_HOVER;
+        }
         switch (node->state())
         {
         case State::Unprocessed:
