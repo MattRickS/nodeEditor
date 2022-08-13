@@ -12,6 +12,7 @@
 
 #include "renders.h"
 #include "settings.h"
+#include "shader.h"
 
 struct Input
 {
@@ -78,6 +79,45 @@ public:
 
 protected:
     std::string m_error;
+};
+
+/*
+Base Compute shader operator which binds all input textures sequentially from 0
+followed by a single output
+*/
+class BaseComputeShaderOp : public Operator
+{
+public:
+    Shader shader;
+
+    BaseComputeShaderOp(const char *computeShader) : shader(computeShader) {}
+    bool process(const std::vector<Texture *> &inputs,
+                 const std::vector<Texture *> &outputs,
+                 [[maybe_unused]] const Settings *settings) override
+    {
+        // Setup shader
+        shader.use();
+
+        size_t i = 0;
+        for (; i < inputs.size(); ++i)
+        {
+            auto inTex = inputs[i];
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, inTex->ID);
+            glBindImageTexture(i, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
+        }
+
+        auto outTex = outputs[0];
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, outTex->ID);
+        glBindImageTexture(i, outTex->ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
+
+        // Render
+        glDispatchCompute(ceil(outTex->width / 8), ceil(outTex->height / 4), 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+        return true;
+    }
 };
 
 class OperatorRegistry
