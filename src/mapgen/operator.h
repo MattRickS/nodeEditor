@@ -12,6 +12,7 @@
 
 #include "renders.h"
 #include "settings.h"
+#include "shader.h"
 
 struct Input
 {
@@ -78,6 +79,84 @@ public:
 
 protected:
     std::string m_error;
+};
+
+/*
+Base compute shader operator which binds all input textures sequentially from 0
+followed by a single output, and sets all settings using the same name.
+*/
+class BaseComputeShaderOp : public Operator
+{
+public:
+    Shader shader;
+
+    BaseComputeShaderOp(const char *computeShader) : shader(computeShader) {}
+    bool process(const std::vector<Texture *> &inputs,
+                 const std::vector<Texture *> &outputs,
+                 const Settings *settings) override
+    {
+        // Setup shader
+        shader.use();
+        for (auto it = settings->cbegin(); it != settings->cend(); ++it)
+        {
+            switch (it->type())
+            {
+            case S_BOOL:
+                shader.setBool(it->name(), it->value<bool>());
+                break;
+            case S_FLOAT:
+                shader.setFloat(it->name(), it->value<float>());
+                break;
+            case S_FLOAT2:
+                shader.setVec2(it->name(), it->value<glm::vec2>());
+                break;
+            case S_FLOAT3:
+                shader.setVec3(it->name(), it->value<glm::vec3>());
+                break;
+            case S_FLOAT4:
+                shader.setVec4(it->name(), it->value<glm::vec4>());
+                break;
+            case S_INT:
+                shader.setInt(it->name(), it->value<int>());
+                break;
+            case S_INT2:
+                shader.setIVec2(it->name(), it->value<glm::ivec2>());
+                break;
+            case S_UINT:
+                shader.setUInt(it->name(), it->value<unsigned int>());
+                break;
+            }
+        }
+
+        size_t i = 0;
+        for (; i < inputs.size(); ++i)
+        {
+            auto inTex = inputs[i];
+            // Optional inputs might be a nullptr
+            if (inTex)
+            {
+                glActiveTexture(GL_TEXTURE0 + i);
+                glBindTexture(GL_TEXTURE_2D, inTex->ID);
+                glBindImageTexture(i, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
+            }
+            else
+            {
+                // Internal naming convention for disabling optional inputs
+                shader.setBool("_ignoreImage" + std::to_string(i), true);
+            }
+        }
+
+        auto outTex = outputs[0];
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, outTex->ID);
+        glBindImageTexture(i, outTex->ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
+
+        // Render
+        glDispatchCompute(ceil(outTex->width / 8), ceil(outTex->height / 4), 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+        return true;
+    }
 };
 
 class OperatorRegistry

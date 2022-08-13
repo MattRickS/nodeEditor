@@ -42,6 +42,8 @@ void Settings::validateKeyExists(const std::string &name) const
 
 Settings::value_iterator Settings::begin() { return m_settings.begin(); }
 Settings::value_iterator Settings::end() { return m_settings.end(); }
+Settings::const_value_iterator Settings::cbegin() const { return m_settings.cbegin(); }
+Settings::const_value_iterator Settings::cend() const { return m_settings.cend(); }
 
 Setting *Settings::get(const std::string key)
 {

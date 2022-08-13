@@ -7,19 +7,19 @@
 #include "../settings.h"
 #include "../shader.h"
 
-class AddOp : public BaseComputeShaderOp
+class MultiplyOp : public BaseComputeShaderOp
 {
 public:
-    static AddOp *create()
+    static MultiplyOp *create()
     {
-        return new AddOp();
+        return new MultiplyOp();
     }
 
-    AddOp() : BaseComputeShaderOp("src/mapgen/shaders/compute/add.glsl") {}
-    std::string name() const override { return "Add"; }
+    MultiplyOp() : BaseComputeShaderOp("src/mapgen/shaders/compute/multiply.glsl") {}
+    std::string name() const override { return "Multiply"; }
     std::vector<Input> inputs() const override
     {
-        return {{}, {}};
+        return {{}, {"Multiplier", false}};
     }
     void defaultSettings(Settings *settings) const override
     {
@@ -27,7 +27,8 @@ public:
         settings->registerBool("green", true);
         settings->registerBool("blue", true);
         settings->registerBool("alpha", false);
+        settings->registerFloat("multiplier", 1.0f);
     }
 };
 
-REGISTER_OPERATOR(AddOp, AddOp::create);
+REGISTER_OPERATOR(MultiplyOp, MultiplyOp::create);

@@ -121,6 +121,12 @@ void Shader::setBool(const std::string &name, bool value) const
     glUniform1i(location, (int)value);
 }
 
+void Shader::setUInt(const std::string &name, unsigned int value) const
+{
+    GLuint location = getLocation(name);
+    glUniform1ui(location, value);
+}
+
 void Shader::setInt(const std::string &name, int value) const
 {
     GLuint location = getLocation(name);

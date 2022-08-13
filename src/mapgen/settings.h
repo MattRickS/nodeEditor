@@ -46,6 +46,8 @@ class Settings
 protected:
     std::map<std::string, Setting> m_settings;
     typedef std::map<std::string, Setting>::iterator pair_iterator;
+    typedef std::map<std::string, Setting>::const_iterator const_pair_iterator;
+
     class value_iterator : public pair_iterator
     {
     public:
@@ -54,6 +56,14 @@ protected:
         Setting *operator->() { return &(pair_iterator::operator->()->second); }
         Setting &operator*() { return pair_iterator::operator*().second; }
     };
+    class const_value_iterator : public const_pair_iterator
+    {
+    public:
+        const_value_iterator() : const_pair_iterator() {}
+        const_value_iterator(const_pair_iterator it) : const_pair_iterator(it) {}
+        const Setting *operator->() { return &(const_pair_iterator::operator->()->second); }
+        const Setting &operator*() { return const_pair_iterator::operator*().second; }
+    };
 
     void validateUniqueSetting(const std::string &name) const;
     void validateKeyExists(const std::string &name) const;
@@ -61,6 +71,8 @@ protected:
 public:
     value_iterator begin();
     value_iterator end();
+    const_value_iterator cbegin() const;
+    const_value_iterator cend() const;
 
     Setting *get(const std::string key);
 
