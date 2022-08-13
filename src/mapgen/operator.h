@@ -132,9 +132,18 @@ public:
         for (; i < inputs.size(); ++i)
         {
             auto inTex = inputs[i];
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, inTex->ID);
-            glBindImageTexture(i, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
+            // Optional inputs might be a nullptr
+            if (inTex)
+            {
+                glActiveTexture(GL_TEXTURE0 + i);
+                glBindTexture(GL_TEXTURE_2D, inTex->ID);
+                glBindImageTexture(i, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
+            }
+            else
+            {
+                // Internal naming convention for disabling optional inputs
+                shader.setBool("_ignoreImage" + std::to_string(i), true);
+            }
         }
 
         auto outTex = outputs[0];

@@ -12,21 +12,13 @@
 #include "operators/perlin.hpp"
 #include "operators/voronoi.hpp"
 #include "operators/add.hpp"
+#include "operators/multiply.hpp"
 #include "renders.h"
 #include "scene.h"
 #include "util.hpp"
 
 Scene::Scene(unsigned int width, unsigned int height) : m_width(width), m_height(height), context("Scene")
 {
-    m_graph.createNode("PerlinNoise");
-    NodeID n1 = m_graph.createNode("VoronoiNoise");
-    m_graph.node(n1)->setPos(glm::vec2(200, 100));
-    NodeID n2 = m_graph.createNode("InvertOp");
-    m_graph.node(n2)->setPos(glm::vec2(300, 200));
-    // TODO: Can't rely on pointers into the graph nodes vector as it may reallocate the memory
-    //       What works around that? Using indexes? Not ideal either as nodes could be deleted.
-    //       Probably best to use nodeIDs everywhere and a map as storage for quick lookup
-    m_graph.node(n2)->input(0)->connect(m_graph.node(n1)->output(0));
 }
 Scene::~Scene()
 {
