@@ -119,6 +119,11 @@ protected:
                     }
                     else if (Connector *conn = dynamic_cast<Connector *>(el))
                     {
+                        if (conn->type() == Connector::INPUT && conn->numConnections() > 0)
+                        {
+                            conn->disconnectAll();
+                            m_scene->setDirty();
+                        }
                         m_ui->nodegraph()->startConnection(conn);
                     }
                 }

@@ -21,6 +21,7 @@ public:
 
     bool connect(Connector *connector);
     bool disconnect(Connector *connector);
+    void disconnectAll();
     Type type() const;
     size_t numConnections() const;
     int maxConnections() const;
@@ -37,6 +38,8 @@ protected:
     int m_maxConnections = -1;
     std::vector<Connector *> m_connected;
     std::string m_layer = DEFAULT_LAYER;
+
+    bool disconnectConnection(std::vector<Connector *>::reverse_iterator it);
 };
 
 class InputConnector : public Connector

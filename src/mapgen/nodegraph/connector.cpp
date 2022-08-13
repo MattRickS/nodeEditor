@@ -29,15 +29,14 @@ bool Connector::connect(Connector *connector)
     }
     return true;
 }
-bool Connector::disconnect(Connector *connector)
+bool Connector::disconnectConnection(std::vector<Connector *>::reverse_iterator it)
 {
-    if (!m_node || !connector->node())
-        return false;
-
-    auto it = std::find(m_connected.begin(), m_connected.end(), connector);
-    if (it != m_connected.end())
+    if (it != m_connected.rend())
     {
-        m_connected.erase(it);
+        Connector *connector = *it;
+        // TODO: Check if this returns a copy or if we're modifying the underlying
+        //       base - the latter would break disconnectAll
+        m_connected.erase(it.base() - 1);
         // Connections connect output->input. If disconnected, the output is
         // unaffected but the input has lost data and must be reevaluated
         if (m_type == INPUT)
@@ -51,6 +50,26 @@ bool Connector::disconnect(Connector *connector)
         return connector->disconnect(this);
     }
     return false;
+}
+bool Connector::disconnect(Connector *connector)
+{
+    if (!m_node || !connector->node())
+        return false;
+
+    auto it = std::find(m_connected.rbegin(), m_connected.rend(), connector);
+    return disconnectConnection(it);
+}
+void Connector::disconnectAll()
+{
+    if (!m_node)
+    {
+        return;
+    }
+
+    for (auto it = m_connected.rbegin(); it != m_connected.rend(); ++it)
+    {
+        disconnectConnection(it);
+    }
 }
 Connector::Type Connector::type() const { return m_type; }
 size_t Connector::numConnections() const { return m_connected.size(); }
