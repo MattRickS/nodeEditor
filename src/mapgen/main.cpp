@@ -108,26 +108,37 @@ protected:
             if (action == GLFW_PRESS)
             {
                 GraphElement *el = getElementAtPos(m_ui->CursorPos());
-                if (!el)
+                if (el)
                 {
-                    return;
-                }
-                el->setSelectFlag(SelectFlag_Select);
-                if (Node *node = dynamic_cast<Node *>(el))
-                {
-                    // TODO: Start drag movement
-                    // Selecting the nodegraph will emit the selection changed signal
-                    m_ui->nodegraph()->setSelectedNode(node);
-                    m_isDragging = true;
-                }
-                else if (Connector *conn = dynamic_cast<Connector *>(el))
-                {
-                    // TODO: Start drag connection
+                    el->setSelectFlag(SelectFlag_Select);
+                    if (Node *node = dynamic_cast<Node *>(el))
+                    {
+                        // Selecting the nodegraph will emit the selection changed signal
+                        m_ui->nodegraph()->setSelectedNode(node);
+                        m_isDragging = true;
+                    }
+                    else if (Connector *conn = dynamic_cast<Connector *>(el))
+                    {
+                        m_ui->nodegraph()->startConnection(conn);
+                    }
                 }
             }
             else if (action == GLFW_RELEASE)
             {
                 m_isDragging = false;
+                if (m_ui->nodegraph()->activeConnection())
+                {
+                    GraphElement *el = getElementAtPos(m_ui->CursorPos());
+                    if (Connector *conn = dynamic_cast<Connector *>(el))
+                    {
+                        if (!m_ui->nodegraph()->activeConnection()->connect(conn))
+                        {
+                            // Eg, same conncector, not output to input, connection is full, etc...
+                            std::cout << "Connectors found but failed to connect" << std::endl;
+                        }
+                    }
+                    m_ui->nodegraph()->finishConnection();
+                }
             }
         }
     }
@@ -221,6 +232,11 @@ protected:
             {
                 node->move(cursorPos - lastCursorPos);
             }
+        }
+
+        if (m_ui->nodegraph()->activeConnection())
+        {
+            m_ui->nodegraph()->updateConnection(m_ui->CursorPos());
         }
 
         // TODO: Line hover (tracked via Connection)

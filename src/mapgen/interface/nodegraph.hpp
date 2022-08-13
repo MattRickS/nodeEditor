@@ -27,6 +27,11 @@ public:
     float m_selectionThickness = 1.0f;
     float m_lineThickness = 2.0f;
 
+    // Drawing a new connection
+    Connector *m_startConnector = nullptr;
+    glm::vec2 m_currentLineStart;
+    glm::vec2 m_currentLineEnd;
+
     const glm::vec2 CONNECTOR_SIZE = glm::vec2(15, 10);
 
     const ImU32 COLOR_HOVER = IM_COL32(100, 255, 255, 255);
@@ -49,6 +54,25 @@ public:
     void setScene(Scene *scene) { m_scene = scene; }
     void pan(glm::vec2 offset) { m_viewOffset += offset; }
     void zoom(float scale) { m_viewScale *= scale; }
+
+    void startConnection(Connector *conn)
+    {
+        m_startConnector = conn;
+        m_currentLineStart = graphElementBounds(conn).center();
+        m_currentLineEnd = m_currentLineStart;
+    }
+    void updateConnection(glm::vec2 pos)
+    {
+        m_currentLineEnd = pos;
+    }
+    void finishConnection()
+    {
+        m_startConnector = nullptr;
+    }
+    Connector *activeConnection()
+    {
+        return m_startConnector;
+    }
 
     ImU32 nodeColor(const Node *node) const
     {
@@ -144,6 +168,14 @@ public:
         {
             float fontScale = ImGui::GetCurrentWindow()->FontWindowScale;
             ImGui::SetWindowFontScale(m_viewScale);
+
+            if (m_startConnector)
+            {
+                drawList->AddLine(ImVec2(m_currentLineStart.x, m_currentLineStart.y),
+                                  ImVec2(m_currentLineEnd.x, m_currentLineEnd.y),
+                                  COLOR_LINE,
+                                  m_lineThickness);
+            }
 
             Graph *graph = m_scene->getCurrentGraph();
             for (auto it = graph->begin(); it != graph->end(); ++it)
