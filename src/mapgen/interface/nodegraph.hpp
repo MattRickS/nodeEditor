@@ -161,10 +161,10 @@ public:
             Connector *conn = node->input(i);
             Bounds b = graphElementBounds(conn);
 
-            for (size_t i = 0; i < conn->numConnections(); ++i)
+            for (size_t j = 0; j < conn->numConnections(); ++j)
             {
                 glm::vec2 p1 = b.center();
-                glm::vec2 p2 = graphElementBounds(conn->connection(i)).center();
+                glm::vec2 p2 = graphElementBounds(conn->connection(j)).center();
                 drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), COLOR_LINE, m_lineThickness);
             }
 

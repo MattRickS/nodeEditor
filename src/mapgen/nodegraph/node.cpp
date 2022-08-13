@@ -75,7 +75,7 @@ void Node::addInput(std::string name, bool required)
     {
         name = "input_" + std::to_string(numInputs());
     }
-    m_inputs.emplace_back(this, name, required);
+    m_inputs.emplace_back(this, numInputs(), name, required);
 }
 size_t Node::numInputs() const { return m_inputs.size(); }
 InputConnector *Node::input(size_t index)
@@ -92,7 +92,7 @@ bool Node::addOutput(std::string layerName)
             return false;
         }
     }
-    m_outputs.emplace_back(this, layerName);
+    m_outputs.emplace_back(this, numOutputs(), layerName);
     return true;
 }
 size_t Node::numOutputs() const { return m_outputs.size(); }

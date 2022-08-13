@@ -4,7 +4,7 @@
 #include "connector.h"
 #include "node.h"
 
-Connector::Connector(Node *node, Type type, int maxConnections) : m_node(node), m_type(type), m_maxConnections(maxConnections)
+Connector::Connector(Node *node, Type type, size_t index, int maxConnections) : m_node(node), m_type(type), m_index(index), m_maxConnections(maxConnections)
 {
     m_bounds = Bounds(0, 0, 15, 8);
 }
@@ -72,6 +72,7 @@ void Connector::disconnectAll()
     }
 }
 Connector::Type Connector::type() const { return m_type; }
+size_t Connector::index() const { return m_index; }
 size_t Connector::numConnections() const { return m_connected.size(); }
 int Connector::maxConnections() const { return m_maxConnections; }
 Connector *Connector::connection(size_t index) const { return m_connected[index]; }
@@ -92,7 +93,7 @@ Bounds Connector::bounds() const
     if (type() == Connector::INPUT)
     {
         size_t numInputs = node()->numInputs();
-        float inputSpacing = (nodeBounds.size().x - numInputs * m_bounds.size().x) / float(numInputs + 1);
+        float inputSpacing = (index() + 1) * nodeBounds.size().x / float(numInputs + 1) - m_bounds.size().x * 0.5f;
         return {
             glm::vec2(nodeBounds.min.x + inputSpacing, nodeBounds.min.y - m_bounds.size().y),
             glm::vec2(nodeBounds.min.x + inputSpacing + m_bounds.size().x, nodeBounds.min.y)};
@@ -107,12 +108,12 @@ Bounds Connector::bounds() const
     }
 }
 
-InputConnector::InputConnector(Node *node, std::string name, bool required) : Connector(node, INPUT, 1), m_name(name), m_required(required) {}
+InputConnector::InputConnector(Node *node, size_t index, std::string name, bool required) : Connector(node, INPUT, index, 1), m_name(name), m_required(required) {}
 
 const std::string &InputConnector::name() const { return m_name; }
 bool InputConnector::isRequired() const { return m_required; }
 
-OutputConnector::OutputConnector(Node *node, std::string layerName) : Connector(node, OUTPUT)
+OutputConnector::OutputConnector(Node *node, size_t index, std::string layerName) : Connector(node, OUTPUT, index)
 {
     m_layer = layerName;
 }

@@ -17,12 +17,13 @@ public:
         OUTPUT
     };
 
-    Connector(Node *node, Type type, int maxConnections = -1);
+    Connector(Node *node, Type type, size_t index, int maxConnections = -1);
 
     bool connect(Connector *connector);
     bool disconnect(Connector *connector);
     void disconnectAll();
     Type type() const;
+    size_t index() const;
     size_t numConnections() const;
     int maxConnections() const;
     Connector *connection(size_t index) const;
@@ -35,6 +36,7 @@ public:
 protected:
     Node *m_node;
     Type m_type;
+    size_t m_index;
     int m_maxConnections = -1;
     std::vector<Connector *> m_connected;
     std::string m_layer = DEFAULT_LAYER;
@@ -45,7 +47,7 @@ protected:
 class InputConnector : public Connector
 {
 public:
-    InputConnector(Node *node, std::string name, bool required = true);
+    InputConnector(Node *node, size_t index, std::string name, bool required = true);
 
     const std::string &name() const;
     bool isRequired() const;
@@ -58,7 +60,7 @@ protected:
 class OutputConnector : public Connector
 {
 public:
-    OutputConnector(Node *node, std::string layerName);
+    OutputConnector(Node *node, size_t index, std::string layerName);
 };
 
 struct Connection
