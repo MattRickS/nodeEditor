@@ -11,6 +11,7 @@
 #include "operators/invert.hpp" // Not used, directly, but must be included to be added to registry
 #include "operators/perlin.hpp"
 #include "operators/voronoi.hpp"
+#include "operators/add.hpp"
 #include "renders.h"
 #include "scene.h"
 #include "util.hpp"
