@@ -26,3 +26,8 @@ void GraphElement::setSize(glm::vec2 size)
 {
     m_bounds.max = m_bounds.min + size;
 }
+void GraphElement::move(glm::vec2 offset)
+{
+    m_bounds.min += offset;
+    m_bounds.max += offset;
+}

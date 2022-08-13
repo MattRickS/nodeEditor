@@ -38,6 +38,7 @@ protected:
 
     Panel *m_panningPanel = nullptr;
     glm::vec2 lastCursorPos;
+    bool m_isDragging = false;
     float *buffer;
 
     // FPS limiting as vsync does not appear to be working
@@ -102,23 +103,31 @@ protected:
             }
         }
         // TODO: Multi-selection dragbox
-        else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        else if (button == GLFW_MOUSE_BUTTON_LEFT)
         {
-            GraphElement *el = getElementAtPos(m_ui->CursorPos());
-            if (!el)
+            if (action == GLFW_PRESS)
             {
-                return;
+                GraphElement *el = getElementAtPos(m_ui->CursorPos());
+                if (!el)
+                {
+                    return;
+                }
+                el->setSelectFlag(SelectFlag_Select);
+                if (Node *node = dynamic_cast<Node *>(el))
+                {
+                    // TODO: Start drag movement
+                    // Selecting the nodegraph will emit the selection changed signal
+                    m_ui->nodegraph()->setSelectedNode(node);
+                    m_isDragging = true;
+                }
+                else if (Connector *conn = dynamic_cast<Connector *>(el))
+                {
+                    // TODO: Start drag connection
+                }
             }
-            el->setSelectFlag(SelectFlag_Select);
-            if (Node *node = dynamic_cast<Node *>(el))
+            else if (action == GLFW_RELEASE)
             {
-                // TODO: Start drag movement
-                // Selecting the nodegraph will emit the selection changed signal
-                m_ui->nodegraph()->setSelectedNode(node);
-            }
-            else if (Connector *conn = dynamic_cast<Connector *>(el))
-            {
-                // TODO: Start drag connection
+                m_isDragging = false;
             }
         }
     }
@@ -190,9 +199,9 @@ protected:
     {
         UpdatePixelPreview(xpos, ypos);
 
+        glm::vec2 cursorPos = glm::vec2(xpos, ypos);
         if (m_panningPanel)
         {
-            glm::vec2 cursorPos = glm::vec2(xpos, ypos);
             if (m_panningPanel == m_ui->viewport())
             {
                 // offset will have an inverted y as screenPos uses topleft=(0,0) but world uses botleft=(0,0)
@@ -203,12 +212,19 @@ protected:
             {
                 m_ui->nodegraph()->pan(cursorPos - lastCursorPos);
             }
-            lastCursorPos = cursorPos;
+        }
+
+        if (m_isDragging)
+        {
+            Node *node = m_ui->nodegraph()->getSelectedNode();
+            if (node)
+            {
+                node->move(cursorPos - lastCursorPos);
+            }
         }
 
         // TODO: Line hover (tracked via Connection)
         // Hover state
-        glm::vec2 cursorPos{xpos, ypos};
         for (auto it = m_scene->getCurrentGraph()->begin(); it != m_scene->getCurrentGraph()->end(); ++it)
         {
             setHoverState(&(*it), cursorPos);
@@ -221,6 +237,7 @@ protected:
                 setHoverState(it->output(i), cursorPos);
             }
         }
+        lastCursorPos = cursorPos;
     }
 
     void OnMouseScrolled([[maybe_unused]] double xoffset, double yoffset)

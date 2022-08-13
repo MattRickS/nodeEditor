@@ -20,6 +20,7 @@ public:
     // Allows modifying the bounds of the object
     void setPos(glm::vec2 pos);
     void setSize(glm::vec2 size);
+    void move(glm::vec2 offset);
 
 protected:
     SelectFlag m_selectState = SelectFlag_None;
