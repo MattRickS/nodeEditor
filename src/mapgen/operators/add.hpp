@@ -21,6 +21,13 @@ public:
     {
         return {{}, {}};
     }
+    void defaultSettings(Settings *settings) const override
+    {
+        settings->registerBool("red", true);
+        settings->registerBool("green", true);
+        settings->registerBool("blue", true);
+        settings->registerBool("alpha", false);
+    }
 };
 
 REGISTER_OPERATOR(AddOp, AddOp::create);

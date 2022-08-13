@@ -1,6 +1,6 @@
 #version 430 core
 layout(local_size_x = 8, local_size_y = 4) in;
-layout(r32f, binding=0) uniform image2D heightmap;
+layout(rgba32f, binding=0) uniform image2D heightmap;
 
 uniform ivec2 offset = ivec2(0);
 uniform float size = 100.0f;

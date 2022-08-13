@@ -82,8 +82,8 @@ protected:
 };
 
 /*
-Base Compute shader operator which binds all input textures sequentially from 0
-followed by a single output
+Base compute shader operator which binds all input textures sequentially from 0
+followed by a single output, and sets all settings using the same name.
 */
 class BaseComputeShaderOp : public Operator
 {
@@ -93,10 +93,40 @@ public:
     BaseComputeShaderOp(const char *computeShader) : shader(computeShader) {}
     bool process(const std::vector<Texture *> &inputs,
                  const std::vector<Texture *> &outputs,
-                 [[maybe_unused]] const Settings *settings) override
+                 const Settings *settings) override
     {
         // Setup shader
         shader.use();
+        for (auto it = settings->cbegin(); it != settings->cend(); ++it)
+        {
+            switch (it->type())
+            {
+            case S_BOOL:
+                shader.setBool(it->name(), it->value<bool>());
+                break;
+            case S_FLOAT:
+                shader.setFloat(it->name(), it->value<float>());
+                break;
+            case S_FLOAT2:
+                shader.setVec2(it->name(), it->value<glm::vec2>());
+                break;
+            case S_FLOAT3:
+                shader.setVec3(it->name(), it->value<glm::vec3>());
+                break;
+            case S_FLOAT4:
+                shader.setVec4(it->name(), it->value<glm::vec4>());
+                break;
+            case S_INT:
+                shader.setInt(it->name(), it->value<int>());
+                break;
+            case S_INT2:
+                shader.setIVec2(it->name(), it->value<glm::ivec2>());
+                break;
+            case S_UINT:
+                shader.setUInt(it->name(), it->value<unsigned int>());
+                break;
+            }
+        }
 
         size_t i = 0;
         for (; i < inputs.size(); ++i)
