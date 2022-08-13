@@ -131,7 +131,12 @@ protected:
                     GraphElement *el = getElementAtPos(m_ui->CursorPos());
                     if (Connector *conn = dynamic_cast<Connector *>(el))
                     {
-                        if (!m_ui->nodegraph()->activeConnection()->connect(conn))
+                        if (m_ui->nodegraph()->activeConnection()->connect(conn))
+                        {
+                            // A state has changed, so let it reevaluate
+                            m_scene->setDirty();
+                        }
+                        else
                         {
                             // Eg, same conncector, not output to input, connection is full, etc...
                             std::cout << "Connectors found but failed to connect" << std::endl;
