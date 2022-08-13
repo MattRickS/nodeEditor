@@ -319,6 +319,13 @@ protected:
             case GLFW_KEY_SPACE:
                 TogglePause(!m_scene->isPaused());
                 break;
+            case GLFW_KEY_TAB:
+                glm::vec2 cursorPos = m_ui->CursorPos();
+                if (m_ui->nodegraph()->bounds().contains(cursorPos))
+                {
+                    m_ui->nodegraph()->startTextInput(cursorPos);
+                }
+                break;
             }
         }
     }
@@ -372,6 +379,14 @@ protected:
         m_scene->setPaused(pause);
     }
 
+    void createNode(std::string nodeType)
+    {
+        std::cout << "Creating: " << nodeType << std::endl;
+        NodeID nodeID = m_scene->getCurrentGraph()->createNode(nodeType);
+        // TODO: Need to be able to map screen to world
+        m_scene->getCurrentGraph()->node(nodeID)->setPos(m_ui->CursorPos());
+    }
+
 public:
     Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     {
@@ -396,6 +411,7 @@ public:
         m_ui->pauseToggled.connect(this, &Application::TogglePause);
         m_ui->layerChanged.connect(this, &Application::onLayerChanged);
         m_ui->channelChanged.connect(this, &Application::onChannelChanged);
+        m_ui->nodegraph()->newNodeRequested.connect(this, &Application::createNode);
     }
     ~Application()
     {

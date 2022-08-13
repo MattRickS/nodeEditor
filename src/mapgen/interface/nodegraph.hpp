@@ -17,6 +17,7 @@ class Nodegraph : public Panel
 {
 public:
     Signal<Node *> selectedNodeChanged;
+    Signal<std::string> newNodeRequested;
 
     Scene *m_scene;
     float m_viewScale = 1.0f;
@@ -32,6 +33,11 @@ public:
     Connector *m_startConnector = nullptr;
     glm::vec2 m_currentLineStart;
     glm::vec2 m_currentLineEnd;
+
+    // New node input
+    bool m_shouldDrawTextbox = false;
+    ImVec2 m_inputTextboxPos;
+    std::string m_inputText;
 
     const glm::vec2 CONNECTOR_SIZE = glm::vec2(15, 10);
 
@@ -74,6 +80,18 @@ public:
     Connector *activeConnection()
     {
         return m_startConnector;
+    }
+
+    void startTextInput(glm::vec2 pos)
+    {
+        m_shouldDrawTextbox = true;
+        m_inputText = "";
+        glm::vec2 panelPos = pos - bounds().pos();
+        m_inputTextboxPos = ImVec2(panelPos.x, panelPos.y);
+    }
+    void finishTextInput()
+    {
+        m_shouldDrawTextbox = false;
     }
 
     ImU32 nodeColor(const Node *node) const
@@ -162,6 +180,31 @@ public:
         }
     }
 
+    void drawTextBox()
+    {
+        ImGui::SetCursorPos(m_inputTextboxPos);
+        ImGui::PushItemWidth(150.0f);
+        // TODO: allow inputting text to filter options
+        if (ImGui::BeginCombo("##NewNodeInput", m_inputText.c_str()))
+        {
+            for (auto it = OperatorRegistry::begin(); it != OperatorRegistry::end(); ++it)
+            {
+                bool isSelected = (m_inputText == *it);
+                if (ImGui::Selectable(it->c_str(), isSelected))
+                {
+                    newNodeRequested.emit(*it);
+                    finishTextInput();
+                }
+                if (isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::PopItemWidth();
+    }
+
     void draw()
     {
         static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
@@ -189,6 +232,11 @@ public:
             for (auto it = graph->begin(); it != graph->end(); ++it)
             {
                 drawNode(drawList, &(*it));
+            }
+
+            if (m_shouldDrawTextbox)
+            {
+                drawTextBox();
             }
 
             ImGui::SetWindowFontScale(fontScale);

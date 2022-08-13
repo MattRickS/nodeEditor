@@ -107,6 +107,27 @@ public:
         return (*map)[name]();
     }
 
+    class key_iterator : public FactoryMap::iterator
+    {
+    public:
+        key_iterator() : FactoryMap::iterator() {}
+        key_iterator(FactoryMap::iterator it) : FactoryMap::iterator(it) {}
+        const std::string *operator->() { return &(FactoryMap::iterator::operator->()->first); }
+        const std::string &operator*() { return FactoryMap::iterator::operator*().first; }
+    };
+
+    static key_iterator begin()
+    {
+        FactoryMap *map = getFactoryMap();
+        return map->begin();
+    }
+
+    static key_iterator end()
+    {
+        FactoryMap *map = getFactoryMap();
+        return map->end();
+    }
+
 private:
     static FactoryMap *getFactoryMap()
     {
