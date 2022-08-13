@@ -55,6 +55,10 @@ void Scene::setViewNode(Node *node)
         m_viewNode.load()->clearSelectFlag(SelectFlag_View);
     }
     m_viewNode = node;
+    if (!node)
+    {
+        return;
+    }
     node->setSelectFlag(SelectFlag_View);
 
     // TODO: m_currNode is not thread safe currently
@@ -142,7 +146,7 @@ void Scene::process()
         }
 
         // If the current node is invalid or doesn't need processing, wait for changes
-        if (!m_currNode || m_currNode->state() == State::Error || (m_currNode == m_viewNode && m_currNode->state() == State::Processed))
+        if (!m_currNode || m_currNode->state() == State::Error || (m_currNode == m_viewNode.load() && m_currNode->state() == State::Processed))
         {
             setAwake(false);
             continue;
@@ -174,7 +178,7 @@ void Scene::setAwake(bool idle)
 Node *Scene::calculateCurrentNode() const
 {
     // Everything is up to date, nothing to do
-    if (m_viewNode.load()->state() == State::Processed)
+    if (!m_viewNode.load() || m_viewNode.load()->state() == State::Processed)
     {
         std::cout << "Current view node is fully processed, no new current node" << std::endl;
         return nullptr;
@@ -182,7 +186,7 @@ Node *Scene::calculateCurrentNode() const
 
     // Depth-first search up from target and return the deepest unprocessed node
     // (ie, prev node when the iteration has to move to a sibling or shallower node)
-    DepthIterator it{m_viewNode, UPSTREAM, SKIP_PROCESSED};
+    DepthIterator it{m_viewNode.load(), UPSTREAM, SKIP_PROCESSED};
     DepthIterator last = it++;
     for (; it != DepthIterator(); last = it++)
     {
