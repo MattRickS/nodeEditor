@@ -321,13 +321,27 @@ protected:
                 TogglePause(!m_scene->isPaused());
                 break;
             case GLFW_KEY_TAB:
-                glm::vec2 cursorPos = m_ui->CursorPos();
-                if (m_ui->nodegraph()->bounds().contains(cursorPos))
+                if (m_ui->nodegraph()->bounds().contains(m_ui->CursorPos()))
                 {
-                    m_ui->nodegraph()->startTextInput(cursorPos);
+                    m_ui->nodegraph()->startTextInput(m_ui->CursorPos());
                 }
                 break;
+            case GLFW_KEY_DELETE:
+                deleteSelectedNode();
+                break;
             }
+        }
+    }
+
+    void deleteSelectedNode()
+    {
+        if (m_ui->nodegraph()->getSelectedNode())
+        {
+            NodeID nodeID = m_ui->nodegraph()->getSelectedNode()->id();
+            // Reset the selected node or it will crash once the node is deleted
+            m_ui->nodegraph()->setSelectedNode(nullptr);
+            m_scene->getCurrentGraph()->deleteNode(nodeID);
+            m_scene->setDirty();
         }
     }
 
