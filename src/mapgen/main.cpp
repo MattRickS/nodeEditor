@@ -247,7 +247,8 @@ protected:
             Node *node = m_ui->nodegraph()->getSelectedNode();
             if (node)
             {
-                node->move(cursorPos - lastCursorPos);
+                glm::vec2 worldOffset = m_ui->nodegraph()->screenToWorldPos(cursorPos) - m_ui->nodegraph()->screenToWorldPos(lastCursorPos);
+                node->move(worldOffset);
             }
         }
 
@@ -384,7 +385,8 @@ protected:
         std::cout << "Creating: " << nodeType << std::endl;
         NodeID nodeID = m_scene->getCurrentGraph()->createNode(nodeType);
         // TODO: Need to be able to map screen to world
-        m_scene->getCurrentGraph()->node(nodeID)->setPos(m_ui->CursorPos());
+        glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(m_ui->CursorPos());
+        m_scene->getCurrentGraph()->node(nodeID)->setPos(worldPos);
     }
 
 public:

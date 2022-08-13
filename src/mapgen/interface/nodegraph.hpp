@@ -94,6 +94,16 @@ public:
         m_shouldDrawTextbox = false;
     }
 
+    glm::vec2 screenToWorldPos(glm::vec2 screenPos)
+    {
+        return (screenPos - glm::vec2(pos()) - m_viewOffset) / m_viewScale;
+    }
+
+    glm::vec2 worldToScreenPos(glm::vec2 worldPos)
+    {
+        return glm::vec2(pos()) + worldPos * m_viewScale + m_viewOffset;
+    }
+
     ImU32 nodeColor(const Node *node) const
     {
         if (node->hasSelectFlag(SelectFlag_Hover))
@@ -128,9 +138,7 @@ public:
     /* GraphElement bounds within the screen window, respecting view transforms */
     Bounds graphElementBounds(GraphElement *el)
     {
-        return {
-            glm::vec2(pos()) + el->bounds().min * m_viewScale + m_viewOffset,
-            glm::vec2(pos()) + el->bounds().max * m_viewScale + m_viewOffset};
+        return {worldToScreenPos(el->bounds().min), worldToScreenPos(el->bounds().max)};
     }
 
     void drawNode(ImDrawList *drawList, Node *node)
