@@ -113,9 +113,16 @@ protected:
                     el->setSelectFlag(SelectFlag_Select);
                     if (Node *node = dynamic_cast<Node *>(el))
                     {
-                        // Selecting the nodegraph will emit the selection changed signal
-                        m_ui->nodegraph()->setSelectedNode(node);
-                        m_isDragging = true;
+                        if (mods & GLFW_MOD_CONTROL)
+                        {
+                            setViewNode(node);
+                        }
+                        else
+                        {
+                            // Selecting the nodegraph will emit the selection changed signal
+                            m_ui->nodegraph()->setSelectedNode(node);
+                            m_isDragging = true;
+                        }
                     }
                     else if (Connector *conn = dynamic_cast<Connector *>(el))
                     {
@@ -347,7 +354,7 @@ protected:
     }
 
     // TODO: This needs to change, difference between selection and view
-    void onNodeSelectionChanged(Node *node)
+    void setViewNode(Node *node)
     {
         m_scene->setViewNode(node);
         m_ui->viewport()->setNode(node);
@@ -389,7 +396,6 @@ public:
         m_ui->pauseToggled.connect(this, &Application::TogglePause);
         m_ui->layerChanged.connect(this, &Application::onLayerChanged);
         m_ui->channelChanged.connect(this, &Application::onChannelChanged);
-        m_ui->nodegraph()->selectedNodeChanged.connect(this, &Application::onNodeSelectionChanged);
     }
     ~Application()
     {

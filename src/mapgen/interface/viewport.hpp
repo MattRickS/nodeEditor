@@ -73,6 +73,6 @@ protected:
     Shader m_viewShader;
     Camera m_camera;
     IsolateChannel m_isolateChannel = ISOLATE_NONE;
-    Node *m_node;
+    Node *m_node = nullptr;
     std::string m_layer = DEFAULT_LAYER;
 };

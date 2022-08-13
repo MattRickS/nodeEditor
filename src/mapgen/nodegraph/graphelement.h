@@ -7,6 +7,7 @@ enum SelectFlag
     SelectFlag_None = 0,
     SelectFlag_Hover = 1 << 0,
     SelectFlag_Select = 1 << 1,
+    SelectFlag_View = 1 << 2,
 };
 
 class GraphElement

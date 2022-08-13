@@ -26,7 +26,6 @@ Scene::Scene(unsigned int width, unsigned int height) : m_width(width), m_height
     //       What works around that? Using indexes? Not ideal either as nodes could be deleted.
     //       Probably best to use nodeIDs everywhere and a map as storage for quick lookup
     m_graph.node(n2)->input(0)->connect(m_graph.node(n1)->output(0));
-    setViewNode(m_graph.node(n2));
 }
 Scene::~Scene()
 {
@@ -51,7 +50,13 @@ void Scene::setDirty()
 
 void Scene::setViewNode(Node *node)
 {
+    if (m_viewNode.load())
+    {
+        m_viewNode.load()->clearSelectFlag(SelectFlag_View);
+    }
     m_viewNode = node;
+    node->setSelectFlag(SelectFlag_View);
+
     // TODO: m_currNode is not thread safe currently
     m_currNode = calculateCurrentNode();
     std::cout << "View node changed to " << (node ? node->name() : "None") << ", current calculated as: " << (m_currNode ? m_currNode->name() : "None") << std::endl;

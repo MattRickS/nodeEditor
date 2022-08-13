@@ -25,7 +25,8 @@ public:
     float m_connectorRounding = 0.0f;
     Node *m_selectedNode = nullptr;
     float m_selectionThickness = 1.0f;
-    float m_lineThickness = 2.0f;
+    float m_lineThickness = 3.0f;
+    float m_viewThickness = 8.0f;
 
     // Drawing a new connection
     Connector *m_startConnector = nullptr;
@@ -37,6 +38,7 @@ public:
     const ImU32 COLOR_HOVER = IM_COL32(100, 255, 255, 255);
     const ImU32 COLOR_LINE = IM_COL32(255, 255, 255, 255);
     const ImU32 COLOR_SELECTED = IM_COL32(255, 255, 0, 255);
+    const ImU32 COLOR_VIEW = IM_COL32(255, 0, 255, 255);
     const ImU32 COLOR_CONNECTOR = IM_COL32(150, 150, 150, 255);
     const ImU32 COLOR_UNPROCESSED = IM_COL32(100, 100, 100, 255);
     const ImU32 COLOR_PROCESSING = IM_COL32(100, 150, 100, 255);
@@ -121,6 +123,12 @@ public:
         }
 
         Bounds bounds = graphElementBounds(node);
+
+        if (node->hasSelectFlag(SelectFlag_View))
+        {
+            drawList->AddRect(ImVec2(bounds.min.x, bounds.min.y), ImVec2(bounds.max.x, bounds.max.y),
+                              COLOR_VIEW, m_nodeRounding, ImDrawFlags_Closed, m_viewThickness);
+        }
 
         for (size_t i = 0; i < node->numInputs(); ++i)
         {
