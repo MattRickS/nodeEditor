@@ -1,5 +1,6 @@
 #include <memory>
 
+#include "../constants.h"
 #include "node.h"
 #include "iterators.h"
 
@@ -75,11 +76,11 @@ bool DepthIterator::advance()
     }
 
     // Increment through connections / connectors until a node is found
-    size_t numConnectors = m_direction == UPSTREAM ? m_node->numInputs() : m_node->numOutputs();
+    size_t numConnectors = m_direction == GraphDirection_Upstream ? m_node->numInputs() : m_node->numOutputs();
     while ((size_t)m_connectorIndex < numConnectors)
     {
         Connector *conn;
-        if (m_direction == UPSTREAM)
+        if (m_direction == GraphDirection_Upstream)
         {
             conn = m_node->input(m_connectorIndex);
         }
@@ -91,7 +92,7 @@ bool DepthIterator::advance()
         {
             // Found a connection, wrap in an iterator and report success
             Node *node = conn->connection(m_connectionIndex)->node();
-            if (m_flags & SKIP_PROCESSED && node->state() == State::Processed)
+            if (m_flags & IteratorFlags_SkipProcessed && node->state() == State::Processed)
             {
                 continue;
             }

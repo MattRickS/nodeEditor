@@ -10,13 +10,9 @@ A display is still required, in future this may use an EGL device for headless r
 */
 class Context
 {
-protected:
-    GLFWwindow *m_window;
-    bool m_glew_init = false;
-
 public:
     Context(const char *name, Context *sharedContext = nullptr) : Context(name, 1, 1, sharedContext, false) {}
-    Context(const char *name, unsigned int width, unsigned int height, Context *sharedContext = nullptr, bool visible = true)
+    Context(const char *name, unsigned int width, unsigned int height, const Context *sharedContext = nullptr, bool visible = true)
     {
         glfwWindowHint(GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -47,6 +43,10 @@ public:
         if (m_window)
             glfwDestroyWindow(m_window);
     }
-    bool IsInitialised() const { return bool(m_window) && m_glew_init; }
+    bool isInitialised() const { return bool(m_window) && m_glew_init; }
     void use() { glfwMakeContextCurrent(m_window); }
+
+protected:
+    GLFWwindow *m_window;
+    bool m_glew_init = false;
 };

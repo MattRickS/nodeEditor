@@ -1,7 +1,9 @@
-#pragma once
 #include <GL/glew.h>
 
-inline void makeQuad(GLuint *VAO)
+#include "constants.h"
+#include "util.h"
+
+void makeQuad(GLuint *VAO)
 {
     static const GLfloat vertexData[] = {
         // positions          // texture coords
@@ -33,4 +35,23 @@ inline void makeQuad(GLuint *VAO)
 
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+}
+
+const char *getChannelName(Channel channel)
+{
+    switch (channel)
+    {
+    case Channel_All:
+        return "RGBA";
+    case Channel_Red:
+        return "Red";
+    case Channel_Green:
+        return "Green";
+    case Channel_Blue:
+        return "Blue";
+    case Channel_Alpha:
+        return "Alpha";
+    default:
+        return "";
+    }
 }

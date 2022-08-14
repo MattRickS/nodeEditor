@@ -9,6 +9,9 @@ Heightmap using DLA: http://voxels.blogspot.com/2014/01/procedural-terrain-heigh
 Always comes back to weigert and his SoilMachine: https://github.com/weigert/SoilMachine
 Weigerts blog: https://nickmcd.me/2022/04/15/soilmachine/
 Sebastian League's unity compute shader: https://github.com/SebLague/Hydraulic-Erosion/blob/master/Assets/Scripts/ComputeShaders/Erosion.compute
+Jonathan Hill's Undiscovered Worlds blog: https://undiscoveredworlds.blogspot.com
+..and his code: https://github.com/JonathanCRH/Undiscovered_Worlds
+Scott Turner's Here Dragon's Abound: https://heredragonsabound.blogspot.com/
 
 # Offscreen Rendering
 GLFW off screen rendering: https://www.glfw.org/docs/latest/context.html#context_offscreen

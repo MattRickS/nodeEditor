@@ -18,16 +18,13 @@ Bounds GraphElement::bounds() const
 }
 void GraphElement::setPos(glm::vec2 pos)
 {
-    glm::vec2 offset = pos - m_bounds.min;
-    m_bounds.min = pos;
-    m_bounds.max += offset;
+    m_bounds.setPos(pos);
 }
 void GraphElement::setSize(glm::vec2 size)
 {
-    m_bounds.max = m_bounds.min + size;
+    m_bounds.setSize(size);
 }
 void GraphElement::move(glm::vec2 offset)
 {
-    m_bounds.min += offset;
-    m_bounds.max += offset;
+    m_bounds.move(offset);
 }

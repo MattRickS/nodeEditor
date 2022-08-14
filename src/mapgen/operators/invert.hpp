@@ -7,45 +7,48 @@
 #include "../settings.h"
 #include "../shader.h"
 
-class InvertOp : public Operator
+namespace Op
 {
-public:
-    Shader shader;
-
-    static InvertOp *create()
+    class Invert : public Operator
     {
-        return new InvertOp();
-    }
+    public:
+        Shader shader;
 
-    InvertOp() : shader("src/mapgen/shaders/compute/invert.glsl") {}
-    std::string name() const override { return "Invert"; }
-    std::vector<Input> inputs() const override
-    {
-        return {{}};
-    }
-    bool process(const std::vector<Texture *> &inputs,
-                 const std::vector<Texture *> &outputs,
-                 [[maybe_unused]] const Settings *settings) override
-    {
-        // Setup shader
-        shader.use();
+        static Invert *create()
+        {
+            return new Invert();
+        }
 
-        auto inTex = inputs[0];
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, inTex->ID);
-        glBindImageTexture(0, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
+        Invert() : shader("src/mapgen/shaders/compute/invert.glsl") {}
+        std::string name() const override { return "Invert"; }
+        std::vector<Input> inputs() const override
+        {
+            return {{}};
+        }
+        bool process(const std::vector<Texture *> &inputs,
+                     const std::vector<Texture *> &outputs,
+                     [[maybe_unused]] const Settings *settings) override
+        {
+            // Setup shader
+            shader.use();
 
-        auto outTex = outputs[0];
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, outTex->ID);
-        glBindImageTexture(1, outTex->ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
+            auto inTex = inputs[0];
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, inTex->ID);
+            glBindImageTexture(0, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
 
-        // Render
-        glDispatchCompute(ceil(outTex->width / 8), ceil(outTex->height / 4), 1);
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            auto outTex = outputs[0];
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, outTex->ID);
+            glBindImageTexture(1, outTex->ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
 
-        return true;
-    }
-};
+            // Render
+            glDispatchCompute(ceil(outTex->width / 8), ceil(outTex->height / 4), 1);
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-REGISTER_OPERATOR(InvertOp, InvertOp::create);
+            return true;
+        }
+    };
+
+    REGISTER_OPERATOR(Invert, Invert::create);
+}

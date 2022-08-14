@@ -11,10 +11,10 @@ public:
     virtual ~Panel() = default;
 
     const Bounds &bounds() const { return m_bounds; }
-    glm::ivec2 pos() const { return m_bounds.min; }
+    glm::ivec2 pos() const { return m_bounds.pos(); }
     glm::ivec2 size() const { return m_bounds.size(); }
-    void setPos(glm::ivec2 pos) { m_bounds.min = pos; }
-    void setSize(glm::ivec2 size) { m_bounds.max = m_bounds.min + glm::vec2(size); }
+    void setPos(glm::ivec2 pos) { m_bounds.setPos(pos); }
+    void setSize(glm::ivec2 size) { m_bounds.setSize(glm::vec2(size)); }
 
     virtual void draw() = 0;
 

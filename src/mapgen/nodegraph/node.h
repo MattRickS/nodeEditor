@@ -11,19 +11,10 @@
 
 typedef unsigned int NodeID;
 
-enum class State
-{
-    Unprocessed,
-    Preprocessing,
-    Processing,
-    Processed,
-    Error,
-};
-
 class Node : public GraphElement
 {
 public:
-    Node(NodeID id, Operator *op);
+    Node(NodeID id, Op::Operator *op);
     ~Node();
 
     friend bool operator==(const Node &a, const Node &b);
@@ -60,7 +51,7 @@ protected:
     // Core properties
     NodeID m_id;
     std::string m_name;
-    Operator *m_op;
+    Op::Operator *m_op;
     Settings m_settings;
     std::vector<InputConnector> m_inputs;
     std::vector<OutputConnector> m_outputs;

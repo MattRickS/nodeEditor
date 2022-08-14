@@ -16,31 +16,31 @@ public:
     Signal<int, int> sizeChanged;
     Signal<> closeRequested;
 
-    Window(const char *name, unsigned int width, unsigned int height, Context *sharedContext = nullptr);
+    Window(const char *name, unsigned int width, unsigned int height, const Context *sharedContext = nullptr);
     ~Window();
 
-    void Display();
+    void display();
 
-    void Close();
-    bool IsClosed() const;
+    void close();
+    bool isClosed() const;
 
-    void Resize(unsigned int width, unsigned int height);
-    unsigned int Height() const;
-    unsigned int Width() const;
+    void resize(unsigned int width, unsigned int height);
+    unsigned int height() const;
+    unsigned int width() const;
 
-    glm::vec2 CursorPos() const;
+    glm::vec2 cursorPos() const;
 
-    virtual void OnMouseMoved(double xpos, double ypos);
-    virtual void OnMouseButtonChanged(int button, int action, int mods);
-    virtual void OnMouseScrolled(double xoffset, double yoffset);
-    virtual void OnKeyChanged(int key, int scancode, int action, int mods);
-    virtual void OnWindowResized(int width, int height);
-    virtual void OnCloseRequested();
+    virtual void onMouseMoved(double xpos, double ypos);
+    virtual void onMouseButtonChanged(int button, int action, int mods);
+    virtual void onMouseScrolled(double xoffset, double yoffset);
+    virtual void onKeyChanged(int key, int scancode, int action, int mods);
+    virtual void onWindowResized(int width, int height);
+    virtual void onCloseRequested();
 
 protected:
     unsigned int m_width, m_height;
 
-    void ConnectSignals();
-    void DisconnectSignals();
-    bool HasKeyPressed(int key);
+    void connectSignals();
+    void disconnectSignals();
+    bool hasKeyPressed(int key);
 };

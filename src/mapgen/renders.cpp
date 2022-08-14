@@ -24,7 +24,16 @@ Texture::~Texture()
 // Copy constructor
 Texture::Texture(const Texture &other)
 {
-    // TODO
+    this->format = other.format;
+    this->width = other.width;
+    this->height = other.height;
+    // Generate a new image
+    glGenTextures(1, &ID);
+    glBindTexture(GL_TEXTURE_2D, ID);
+    // Copy the image data
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat(format), width, height, 0, format, GL_FLOAT, 0);
+    glCopyImageSubData(other.ID, GL_TEXTURE_2D, 0, 0, 0, 0,
+                       ID, GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
 }
 
 // Move constructor
@@ -40,7 +49,16 @@ Texture::Texture(Texture &&other) noexcept
 // Copy Assignment
 Texture &Texture::operator=(const Texture &other)
 {
-    // TODO
+    this->format = other.format;
+    this->width = other.width;
+    this->height = other.height;
+    // Generate a new image
+    glGenTextures(1, &ID);
+    glBindTexture(GL_TEXTURE_2D, ID);
+    // Copy the image data
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat(format), width, height, 0, format, GL_FLOAT, 0);
+    glCopyImageSubData(other.ID, GL_TEXTURE_2D, 0, 0, 0, 0,
+                       ID, GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
     return *this;
 }
 
@@ -60,9 +78,7 @@ void Texture::resize(unsigned int width, unsigned int height)
     this->width = width;
     this->height = height;
     glBindTexture(GL_TEXTURE_2D, ID);
-    // TODO: Should probably just restructure the data so it's in the same pixel
-    // positions, but either truncate or pad with black. For purposes of this tool,
-    // deleting it should be fine.
+    // Data is intentionally not restructured
     glTexImage2D(GL_TEXTURE_2D, 0, internalFormat(format), width, height, 0, format, GL_FLOAT, 0);
 }
 

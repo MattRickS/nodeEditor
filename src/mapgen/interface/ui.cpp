@@ -4,76 +4,59 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include "../constants.h"
 #include "../operator.h"
 #include "../renders.h"
 #include "../shader.h"
+#include "../util.h"
 #include "window.h"
 #include "ui.h"
 
-const char *getIsolateChannelName(IsolateChannel channel)
-{
-    switch (channel)
-    {
-    case ISOLATE_NONE:
-        return "RGBA";
-    case ISOLATE_RED:
-        return "Red";
-    case ISOLATE_GREEN:
-        return "Green";
-    case ISOLATE_BLUE:
-        return "Blue";
-    case ISOLATE_ALPHA:
-        return "Alpha";
-    default:
-        return "";
-    }
-}
-
-void UI::OnMouseMoved(double xpos, double ypos)
+void UI::onMouseMoved(double xpos, double ypos)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(CursorPos()))
+    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(cursorPos()))
         return;
 
     cursorMoved.emit(xpos, ypos);
 }
 
-void UI::OnMouseButtonChanged(int button, int action, int mods)
+void UI::onMouseButtonChanged(int button, int action, int mods)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(CursorPos()))
+    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(cursorPos()))
         return;
 
     mouseButtonChanged.emit(button, action, mods);
 }
 
-void UI::OnMouseScrolled(double xoffset, double yoffset)
+void UI::onMouseScrolled(double xoffset, double yoffset)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(CursorPos()))
+    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(cursorPos()))
         return;
 
     mouseScrolled.emit(xoffset, yoffset);
 }
 
-// TODO: Get this working as a virtual override of OnWindowResized
+// TODO: Get this working as a virtual override of onWindowResized
 void UI::recalculateLayout()
 {
     if (m_nodegraph)
     {
         Bounds bounds = getNodegraphBounds();
-        m_nodegraph->setPos(bounds.min);
+        m_nodegraph->setPos(bounds.pos());
         m_nodegraph->setSize(bounds.size());
     }
     if (m_viewport)
     {
         Bounds bounds = getViewportBounds();
-        m_viewport->setPos(bounds.min);
+        m_viewport->setPos(bounds.pos());
         m_viewport->setSize(bounds.size());
     }
 }
 
-UI::UI(unsigned int width, unsigned int height, const char *name, Context *sharedContext) : Window(name, width, height, sharedContext)
+UI::UI(unsigned int width, unsigned int height, const char *name, const Context *sharedContext) : Window(name, width, height, sharedContext)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -109,8 +92,8 @@ void UI::setScene(Scene *scene)
     m_scene = scene;
     m_nodegraph->setScene(scene);
 }
-void UI::SetPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
-void UI::Draw()
+void UI::setPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
+void UI::draw()
 {
     if (m_viewport)
     {
@@ -122,8 +105,8 @@ void UI::Draw()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    DrawOperatorProperties();
-    DrawViewportProperties();
+    drawOperatorProperties();
+    drawViewportProperties();
     if (m_nodegraph)
     {
         m_nodegraph->draw();
@@ -132,13 +115,13 @@ void UI::Draw()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-void UI::DrawViewportProperties()
+void UI::drawViewportProperties()
 {
     static bool p_open = NULL;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
     Bounds propertiesBounds = getViewportPropertiesBounds();
-    ImGui::SetNextWindowPos(ImVec2(propertiesBounds.min.x, propertiesBounds.min.y));
+    ImGui::SetNextWindowPos(ImVec2(propertiesBounds.pos().x, propertiesBounds.pos().y));
     ImGui::SetNextWindowSize(ImVec2(propertiesBounds.size().x, propertiesBounds.size().y));
     ImGui::Begin("Viewport Properties", &p_open, flags);
 
@@ -167,14 +150,14 @@ void UI::DrawViewportProperties()
 
     ImGui::SameLine();
     ImGui::PushItemWidth(100.0f);
-    if (ImGui::BeginCombo("##IsolateChannel", getIsolateChannelName(m_viewport->isolatedChannel())))
+    if (ImGui::BeginCombo("##Channel", getChannelName(m_viewport->isolatedChannel())))
     {
-        for (int channel = ISOLATE_NONE; channel != ISOLATE_LAST; ++channel)
+        for (int channel = Channel_All; channel != Channel_Last; ++channel)
         {
             bool isSelected = (m_viewport->isolatedChannel() == channel);
-            if (ImGui::Selectable(getIsolateChannelName(IsolateChannel(channel)), isSelected))
+            if (ImGui::Selectable(getChannelName(Channel(channel)), isSelected))
             {
-                channelChanged.emit(IsolateChannel(channel));
+                channelChanged.emit(Channel(channel));
             }
             if (isSelected)
             {
@@ -204,13 +187,13 @@ void UI::DrawViewportProperties()
 
     ImGui::End();
 }
-void UI::DrawOperatorProperties()
+void UI::drawOperatorProperties()
 {
     static bool p_open = NULL;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
     Bounds propertiesBounds = getOperatorPropertiesBounds();
-    ImGui::SetNextWindowPos(ImVec2(propertiesBounds.min.x, propertiesBounds.min.y));
+    ImGui::SetNextWindowPos(ImVec2(propertiesBounds.pos().x, propertiesBounds.pos().y));
     ImGui::SetNextWindowSize(ImVec2(propertiesBounds.size().x, propertiesBounds.size().y));
     ImGui::Begin("Mapmaker Properties", &p_open, flags);
 
@@ -289,28 +272,28 @@ void UI::drawNodeSettings(Node *node)
     {
         switch (it->type())
         {
-        case S_BOOL:
+        case SettingType_Bool:
             drawBoolSetting(node, *it);
             break;
-        case S_FLOAT:
+        case SettingType_Float:
             drawFloatSetting(node, *it);
             break;
-        case S_FLOAT2:
+        case SettingType_Float2:
             drawFloat2Setting(node, *it);
             break;
-        case S_FLOAT3:
+        case SettingType_Float3:
             drawFloat3Setting(node, *it);
             break;
-        case S_FLOAT4:
+        case SettingType_Float4:
             drawFloat4Setting(node, *it);
             break;
-        case S_INT:
+        case SettingType_Int:
             drawIntSetting(node, *it);
             break;
-        case S_INT2:
+        case SettingType_Int2:
             drawInt2Setting(node, *it);
             break;
-        case S_UINT:
+        case SettingType_UInt:
             drawUIntSetting(node, *it);
             break;
         }
@@ -334,13 +317,13 @@ Bounds UI::getNodegraphBounds() const
     return Bounds(m_width * m_opPropertiesWidthPercent, m_height * 0.5f, m_width, m_height);
 }
 
-glm::vec2 UI::ScreenToWorldPos(glm::vec2 screenPos)
+glm::vec2 UI::screenToWorldPos(glm::vec2 screenPos)
 {
     Bounds viewportBounds = getViewportBounds();
     glm::vec2 ndcPos = glm::vec2(
-                           float(screenPos.x - viewportBounds.min.x) / viewportBounds.size().x,
+                           float(screenPos.x - viewportBounds.min().x) / viewportBounds.size().x,
                            // GL uses inverted Y axis
-                           float(screenPos.y - viewportBounds.max.y) / viewportBounds.size().y) *
+                           float(screenPos.y - viewportBounds.max().y) / viewportBounds.size().y) *
                            2.0f -
                        1.0f;
     // This needs inverse matrices
@@ -348,7 +331,7 @@ glm::vec2 UI::ScreenToWorldPos(glm::vec2 screenPos)
     worldPos /= worldPos.w;
     return glm::vec2(worldPos.x, worldPos.y) * 0.5f + 0.5f;
 }
-glm::vec2 UI::WorldToScreenPos(glm::vec2 mapPos)
+glm::vec2 UI::worldToScreenPos(glm::vec2 mapPos)
 {
     glm::vec2 ndcPos = glm::vec2(mapPos.x / (float)m_width, mapPos.y / (float)m_height);
     // TODO: Convert to actual screen pos

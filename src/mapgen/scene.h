@@ -17,10 +17,59 @@ Scene owns no textures, each node owns the textures it generates.
 */
 class Scene
 {
+public:
+    Scene(unsigned int width, unsigned int height);
+    ~Scene();
+
+    const Context *context() const;
+    unsigned int Width() const;
+    unsigned int Height() const;
+
+    Graph *getCurrentGraph();
+    Node *getCurrentNode();
+    Node *getViewNode();
+
+    void setDirty();
+    /*
+    Sets what operator the thread will process up to.
+    If the target is already processed, no new processing is performed.
+    */
+    void setViewNode(Node *node);
+    /*
+    Starts the thread processing. Returns false if thread is already started.
+    */
+    bool startProcessing();
+    /*
+    Terminates the thread.
+    */
+    void stopProcessing();
+    /*
+    Sets the thread state to pause once it has completed it's current operation
+    */
+    void setPaused(bool paused);
+    /*
+    Whether or not the thread is marked as paused.
+    The thread might still be processing it's last operation.
+    */
+    bool isPaused();
+    /*
+    Processes the current/next operator once.
+
+    If already active, has no effect.
+    If paused, thread is awoken for one step, then remains paused.
+    If not paused but already processed to the target operator, advances to the
+    next operator (if any) and fully processes it. If only one step of the next
+    operator is required, pause first.
+
+    Returns true if there is anything to process, otherwise false.
+    */
+    bool processOne();
+
 protected:
+    Context m_context;
     std::atomic<unsigned int> m_width;
     std::atomic<unsigned int> m_height;
-    GLuint quadVAO;
+    GLuint m_quadVAO;
     Graph m_graph;
 
     // Thread variables. Lock is required for non-atomic states and the `stopped`
@@ -70,53 +119,4 @@ protected:
     Checks scene state and resets any nodes marked as dirty (or downstream of a dirty node)
     */
     bool maybeCleanNodes();
-
-public:
-    Context context;
-
-    Scene(unsigned int width, unsigned int height);
-    ~Scene();
-
-    unsigned int Width() const;
-    unsigned int Height() const;
-
-    Graph *getCurrentGraph();
-    Node *getCurrentNode();
-    Node *getViewNode();
-
-    void setDirty();
-    /*
-    Sets what operator the thread will process up to.
-    If the target is already processed, no new processing is performed.
-    */
-    void setViewNode(Node *node);
-    /*
-    Starts the thread processing. Returns false if thread is already started.
-    */
-    bool startProcessing();
-    /*
-    Terminates the thread.
-    */
-    void stopProcessing();
-    /*
-    Sets the thread state to pause once it has completed it's current operation
-    */
-    void setPaused(bool paused);
-    /*
-    Whether or not the thread is marked as paused.
-    The thread might still be processing it's last operation.
-    */
-    bool isPaused();
-    /*
-    Processes the current/next operator once.
-
-    If already active, has no effect.
-    If paused, thread is awoken for one step, then remains paused.
-    If not paused but already processed to the target operator, advances to the
-    next operator (if any) and fully processes it. If only one step of the next
-    operator is required, pause first.
-
-    Returns true if there is anything to process, otherwise false.
-    */
-    bool processOne();
 };

@@ -2,13 +2,14 @@
 #include <string>
 #include <vector>
 
-#include "connector.h"
+#include "../constants.h"
 #include "../operator.h"
 #include "../renders.h"
 #include "../settings.h"
+#include "connector.h"
 #include "node.h"
 
-Node::Node(NodeID id, Operator *op) : m_id(id), m_op(op)
+Node::Node(NodeID id, Op::Operator *op) : m_id(id), m_op(op)
 {
     m_bounds = Bounds{0, 0, 100, 25};
     if (op)

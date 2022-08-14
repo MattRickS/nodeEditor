@@ -6,18 +6,14 @@
 #include <thread>
 #include <vector>
 
+#include "constants.h"
 #include "nodegraph/iterators.h"
 #include "nodegraph/node.h"
-#include "operators/invert.hpp" // Not used, directly, but must be included to be added to registry
-#include "operators/perlin.hpp"
-#include "operators/voronoi.hpp"
-#include "operators/add.hpp"
-#include "operators/multiply.hpp"
 #include "renders.h"
 #include "scene.h"
-#include "util.hpp"
+#include "util.h"
 
-Scene::Scene(unsigned int width, unsigned int height) : m_width(width), m_height(height), context("Scene")
+Scene::Scene(unsigned int width, unsigned int height) : m_context("Scene"), m_width(width), m_height(height)
 {
 }
 Scene::~Scene()
@@ -28,6 +24,7 @@ Scene::~Scene()
     }
 }
 
+const Context *Scene::context() const { return &m_context; }
 unsigned int Scene::Width() const { return m_width.load(); }
 unsigned int Scene::Height() const { return m_height.load(); }
 
@@ -117,14 +114,11 @@ bool Scene::waitToProcess()
 
 void Scene::process()
 {
-    // TODO: Tidy up this thread initialisation
-    // TODO: Switch to smart pointers
-    context.use();
-    std::cout << "Initialising thread" << std::endl;
-
-    makeQuad(&quadVAO);
-
     std::cout << "Starting process" << std::endl;
+
+    m_context.use();
+    makeQuad(&m_quadVAO);
+
     // Ensure the main thread hasn't requested the thread be paused
     // m_stopped is checked last so that a request to stop the thread is
     // immediate when it wakes up
@@ -179,7 +173,7 @@ Node *Scene::calculateCurrentNode() const
 
     // Depth-first search up from target and return the deepest unprocessed node
     // (ie, prev node when the iteration has to move to a sibling or shallower node)
-    DepthIterator it{m_viewNode.load(), UPSTREAM, SKIP_PROCESSED};
+    DepthIterator it{m_viewNode.load(), GraphDirection_Upstream, IteratorFlags_SkipProcessed};
     DepthIterator last = it++;
     for (; it != DepthIterator(); last = it++)
     {
@@ -205,7 +199,7 @@ bool Scene::maybeCleanNodes()
         {
             std::cout << "Cleaning node " << it->name() << " and downstream" << std::endl;
             // All nodes after (and including) a dirty node must be reset
-            for (DepthIterator it2{&(*it), DOWNSTREAM}; it2 != DepthIterator(); it2++)
+            for (DepthIterator it2{&(*it), GraphDirection_Downstream}; it2 != DepthIterator(); it2++)
             {
                 it2->reset();
             }

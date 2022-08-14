@@ -13,8 +13,8 @@ class Connector : public GraphElement
 public:
     enum Type
     {
-        INPUT,
-        OUTPUT
+        Input,
+        Output
     };
 
     Connector(Node *node, Type type, size_t index, int maxConnections = -1);

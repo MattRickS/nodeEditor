@@ -19,7 +19,7 @@ NodeID Graph::createNode(std::string name)
     m_nodes.emplace(
         std::piecewise_construct,
         std::forward_as_tuple(nodeID),
-        std::forward_as_tuple(nodeID, OperatorRegistry::create(name)));
+        std::forward_as_tuple(nodeID, Op::OperatorRegistry::create(name)));
     return nodeID;
 }
 bool Graph::deleteNode(NodeID nodeID)

@@ -5,21 +5,21 @@
 
 enum GraphDirection
 {
-    UPSTREAM,
-    DOWNSTREAM,
+    GraphDirection_Upstream,
+    GraphDirection_Downstream,
 };
 
 enum IteratorFlags
 {
-    NO_FLAGS = 0,
-    SKIP_PROCESSED = 1 << 0,
+    IteratorFlags_None = 0,
+    IteratorFlags_SkipProcessed = 1 << 0,
 };
 
 class DepthIterator
 {
 public:
     DepthIterator();
-    DepthIterator(Node *node, GraphDirection direction = UPSTREAM, IteratorFlags flags = NO_FLAGS, int depth = 0);
+    DepthIterator(Node *node, GraphDirection direction = GraphDirection_Upstream, IteratorFlags flags = IteratorFlags_None, int depth = 0);
 
     int depth() const;
     GraphDirection direction() const;
@@ -35,8 +35,8 @@ public:
 
 private:
     Node *m_node = nullptr;
-    GraphDirection m_direction = UPSTREAM;
-    IteratorFlags m_flags = NO_FLAGS;
+    GraphDirection m_direction = GraphDirection_Upstream;
+    IteratorFlags m_flags = IteratorFlags_None;
     int m_depth = 0;
     // Using a shared ptr to handle the lifetime of recursive iterators when an iterator
     // in the chain is copied - such as some monster using it++ instead of ++it

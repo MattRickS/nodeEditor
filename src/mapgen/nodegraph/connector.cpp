@@ -19,7 +19,7 @@ bool Connector::connect(Connector *connector)
 
     // Connections connect output->input. If connected, the output is
     // unaffected but the input has gained data and must be reevaluated
-    if (m_type == INPUT)
+    if (m_type == Input)
     {
         m_node->setDirty();
     }
@@ -39,7 +39,7 @@ bool Connector::disconnectConnection(std::vector<Connector *>::reverse_iterator 
         m_connected.erase(it.base() - 1);
         // Connections connect output->input. If disconnected, the output is
         // unaffected but the input has lost data and must be reevaluated
-        if (m_type == INPUT)
+        if (m_type == Input)
         {
             m_node->setDirty();
         }
@@ -90,30 +90,30 @@ Bounds Connector::bounds() const
 
     // Return the bounds relative to the node
     Bounds nodeBounds = node()->bounds();
-    if (type() == Connector::INPUT)
+    if (type() == Connector::Input)
     {
         size_t numInputs = node()->numInputs();
         float inputSpacing = (index() + 1) * nodeBounds.size().x / float(numInputs + 1) - m_bounds.size().x * 0.5f;
         return {
-            glm::vec2(nodeBounds.min.x + inputSpacing, nodeBounds.min.y - m_bounds.size().y),
-            glm::vec2(nodeBounds.min.x + inputSpacing + m_bounds.size().x, nodeBounds.min.y)};
+            glm::vec2(nodeBounds.min().x + inputSpacing, nodeBounds.min().y - m_bounds.size().y),
+            glm::vec2(nodeBounds.min().x + inputSpacing + m_bounds.size().x, nodeBounds.min().y)};
     }
     else
     {
         size_t numOutputs = node()->numOutputs();
         float outputSpacing = (nodeBounds.size().x - numOutputs * m_bounds.size().x) / float(numOutputs + 1);
         return {
-            glm::vec2(nodeBounds.min.x + outputSpacing, nodeBounds.max.y),
-            glm::vec2(nodeBounds.min.x + outputSpacing + m_bounds.size().x, nodeBounds.max.y + m_bounds.size().y)};
+            glm::vec2(nodeBounds.min().x + outputSpacing, nodeBounds.max().y),
+            glm::vec2(nodeBounds.min().x + outputSpacing + m_bounds.size().x, nodeBounds.max().y + m_bounds.size().y)};
     }
 }
 
-InputConnector::InputConnector(Node *node, size_t index, std::string name, bool required) : Connector(node, INPUT, index, 1), m_name(name), m_required(required) {}
+InputConnector::InputConnector(Node *node, size_t index, std::string name, bool required) : Connector(node, Input, index, 1), m_name(name), m_required(required) {}
 
 const std::string &InputConnector::name() const { return m_name; }
 bool InputConnector::isRequired() const { return m_required; }
 
-OutputConnector::OutputConnector(Node *node, size_t index, std::string layerName) : Connector(node, OUTPUT, index)
+OutputConnector::OutputConnector(Node *node, size_t index, std::string layerName) : Connector(node, Output, index)
 {
     m_layer = layerName;
 }

@@ -4,9 +4,9 @@
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 
-std::string LoadFile(const char *filename);
-GLuint CompileShader(const char *source, GLenum shaderType);
-GLuint CompileProgram(size_t numShaders, GLuint *shaders);
+std::string loadFile(const char *filename);
+GLuint compileShader(const char *source, GLenum shaderType);
+GLuint compileProgram(size_t numShaders, GLuint *shaders);
 
 class Shader
 {

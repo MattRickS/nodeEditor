@@ -9,23 +9,18 @@ typedef std::variant<bool, unsigned int, int, float, glm::vec2, glm::vec3, glm::
 
 enum SettingType
 {
-    S_BOOL,
-    S_FLOAT,
-    S_FLOAT2,
-    S_FLOAT3,
-    S_FLOAT4,
-    S_INT,
-    S_INT2,
-    S_UINT,
+    SettingType_Bool,
+    SettingType_Float,
+    SettingType_Float2,
+    SettingType_Float3,
+    SettingType_Float4,
+    SettingType_Int,
+    SettingType_Int2,
+    SettingType_UInt,
 };
 
 class Setting
 {
-private:
-    std::string m_name;
-    SettingType m_type;
-    SettingValue m_value;
-
 public:
     Setting();
     Setting(const std::string name, const SettingType type, SettingValue value);
@@ -39,12 +34,16 @@ public:
     void setValue(T value);
 
     void set(SettingValue value);
+
+private:
+    std::string m_name;
+    SettingType m_type;
+    SettingValue m_value;
 };
 
 class Settings
 {
-protected:
-    std::map<std::string, Setting> m_settings;
+public:
     typedef std::map<std::string, Setting>::iterator pair_iterator;
     typedef std::map<std::string, Setting>::const_iterator const_pair_iterator;
 
@@ -65,10 +64,6 @@ protected:
         const Setting &operator*() { return const_pair_iterator::operator*().second; }
     };
 
-    void validateUniqueSetting(const std::string &name) const;
-    void validateKeyExists(const std::string &name) const;
-
-public:
     value_iterator begin();
     value_iterator end();
     const_value_iterator cbegin() const;
@@ -76,7 +71,7 @@ public:
 
     Setting *get(const std::string key);
 
-    // TODO: Rename to set, remove name checks
+    // TODO: Add additional registration options and separate set methods
     void registerBool(const std::string name, bool value);
     void registerUInt(const std::string name, unsigned int value);
     void registerInt(const std::string name, int value);
@@ -94,4 +89,11 @@ public:
     glm::vec3 getFloat3(const std::string key) const;
     glm::vec4 getFloat4(const std::string key) const;
     glm::ivec2 getInt2(const std::string key) const;
+
+protected:
+    // TODO: Use a vector so settings are ordered
+    std::map<std::string, Setting> m_settings;
+
+    void validateUniqueSetting(const std::string &name) const;
+    void validateKeyExists(const std::string &name) const;
 };

@@ -12,73 +12,77 @@
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     Window *window_ = (Window *)glfwGetWindowUserPointer(window);
-    window_->Resize(width, height);
+    window_->resize(width, height);
 }
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
     Window *window_ = (Window *)glfwGetWindowUserPointer(window);
-    window_->OnMouseMoved(xpos, ypos);
+    window_->onMouseMoved(xpos, ypos);
 }
 
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
     Window *window_ = (Window *)glfwGetWindowUserPointer(window);
-    window_->OnMouseButtonChanged(button, action, mods);
+    window_->onMouseButtonChanged(button, action, mods);
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
     Window *window_ = (Window *)glfwGetWindowUserPointer(window);
-    window_->OnMouseScrolled(xoffset, yoffset);
+    window_->onMouseScrolled(xoffset, yoffset);
 }
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     Window *window_ = (Window *)glfwGetWindowUserPointer(window);
-    window_->OnKeyChanged(key, scancode, action, mods);
+    window_->onKeyChanged(key, scancode, action, mods);
 }
 
 void close_callback(GLFWwindow *window)
 {
     Window *window_ = (Window *)glfwGetWindowUserPointer(window);
-    window_->OnCloseRequested();
+    window_->onCloseRequested();
 }
 
 // =============================================================================
 // Public
 
-Window::Window(const char *name, unsigned int width, unsigned int height, Context *sharedContext) : Context(name, width, height, sharedContext), m_width(width), m_height(height)
+Window::Window(const char *name, unsigned int width, unsigned int height, const Context *sharedContext) : Context(name, width, height, sharedContext), m_width(width), m_height(height)
 {
-    if (!IsInitialised())
+    if (!isInitialised())
+    {
         return;
+    }
     glfwSwapInterval(1); // Enable vsync
-    ConnectSignals();
+    connectSignals();
 }
 
 Window::~Window()
 {
-    DisconnectSignals();
+    disconnectSignals();
     if (m_window)
+    {
         glfwDestroyWindow(m_window);
+    }
 }
 
-void Window::Display() { glfwSwapBuffers(m_window); }
+void Window::display() { glfwSwapBuffers(m_window); }
 
-void Window::Close() { glfwSetWindowShouldClose(m_window, true); }
-bool Window::IsClosed() const { return glfwWindowShouldClose(m_window); }
+void Window::close() { glfwSetWindowShouldClose(m_window, true); }
+bool Window::isClosed() const { return glfwWindowShouldClose(m_window); }
 
-void Window::Resize(unsigned int width, unsigned int height)
+void Window::resize(unsigned int width, unsigned int height)
 {
     m_width = width;
     m_height = height;
     sizeChanged.emit(m_width, m_height);
 }
 
-unsigned int Window::Height() const { return m_height; }
-unsigned int Window::Width() const { return m_width; }
+unsigned int Window::height() const { return m_height; }
+unsigned int Window::width() const { return m_width; }
 
-glm::vec2 Window::CursorPos() const
+glm::vec2 Window::cursorPos() const
 {
     double xpos, ypos;
     glfwGetCursorPos(m_window, &xpos, &ypos);
@@ -88,7 +92,7 @@ glm::vec2 Window::CursorPos() const
 // =============================================================================
 // Protected
 
-void Window::ConnectSignals()
+void Window::connectSignals()
 {
     glfwSetWindowUserPointer(m_window, this);
     glfwSetFramebufferSizeCallback(m_window, framebuffer_size_callback);
@@ -99,7 +103,7 @@ void Window::ConnectSignals()
     glfwSetWindowCloseCallback(m_window, close_callback);
 }
 
-void Window::DisconnectSignals()
+void Window::disconnectSignals()
 {
     cursorMoved.disconnect();
     mouseButtonChanged.disconnect();
@@ -108,21 +112,21 @@ void Window::DisconnectSignals()
     sizeChanged.disconnect();
 }
 
-bool Window::HasKeyPressed(int key) { return glfwGetKey(m_window, key) == GLFW_PRESS; }
+bool Window::hasKeyPressed(int key) { return glfwGetKey(m_window, key) == GLFW_PRESS; }
 
 // =============================================================================
 // Callbacks
 
-void Window::OnMouseMoved(double xpos, double ypos) { cursorMoved.emit(xpos, ypos); }
-void Window::OnMouseButtonChanged(int button, int action, int mods) { mouseButtonChanged.emit(button, action, mods); }
-void Window::OnMouseScrolled(double xoffset, double yoffset) { mouseScrolled.emit(xoffset, yoffset); }
-void Window::OnKeyChanged(int key, int scancode, int action, int mods) { keyChanged.emit(key, scancode, action, mods); }
-void Window::OnWindowResized(int width, int height)
+void Window::onMouseMoved(double xpos, double ypos) { cursorMoved.emit(xpos, ypos); }
+void Window::onMouseButtonChanged(int button, int action, int mods) { mouseButtonChanged.emit(button, action, mods); }
+void Window::onMouseScrolled(double xoffset, double yoffset) { mouseScrolled.emit(xoffset, yoffset); }
+void Window::onKeyChanged(int key, int scancode, int action, int mods) { keyChanged.emit(key, scancode, action, mods); }
+void Window::onWindowResized(int width, int height)
 {
-    Resize(width, height);
+    resize(width, height);
     sizeChanged.emit(width, height);
 }
-void Window::OnCloseRequested()
+void Window::onCloseRequested()
 {
     // Reset the close state and propagate the decision to a Controller
     glfwSetWindowShouldClose(m_window, GLFW_FALSE);

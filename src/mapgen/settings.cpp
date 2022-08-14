@@ -56,42 +56,42 @@ Setting *Settings::get(const std::string key)
 void Settings::registerBool(const std::string name, bool value)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, S_BOOL, value);
+    m_settings[name] = Setting(name, SettingType_Bool, value);
 }
 void Settings::registerUInt(const std::string name, unsigned int value)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, S_UINT, value);
+    m_settings[name] = Setting(name, SettingType_UInt, value);
 }
 void Settings::registerInt(const std::string name, int value)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, S_INT, value);
+    m_settings[name] = Setting(name, SettingType_Int, value);
 }
 void Settings::registerFloat(const std::string name, float value)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, S_FLOAT, value);
+    m_settings[name] = Setting(name, SettingType_Float, value);
 }
 void Settings::registerFloat2(const std::string name, glm::vec2 value)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, S_FLOAT2, value);
+    m_settings[name] = Setting(name, SettingType_Float2, value);
 }
 void Settings::registerFloat3(const std::string name, glm::vec3 value)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, S_FLOAT3, value);
+    m_settings[name] = Setting(name, SettingType_Float3, value);
 }
 void Settings::registerFloat4(const std::string name, glm::vec4 value)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, S_FLOAT4, value);
+    m_settings[name] = Setting(name, SettingType_Float4, value);
 }
 void Settings::registerInt2(const std::string name, glm::ivec2 value)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, S_INT2, value);
+    m_settings[name] = Setting(name, SettingType_Int2, value);
 }
 bool Settings::getBool(const std::string key) const
 {

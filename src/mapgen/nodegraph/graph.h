@@ -6,18 +6,11 @@
 
 class Graph
 {
-protected:
-    static NodeID lastID;
-    std::map<NodeID, Node> m_nodes;
-
+public:
     // TODO: make this templated so can be reused for settings/graph
     typedef std::map<NodeID, Node>::iterator pair_iterator;
     typedef std::map<NodeID, Node>::reverse_iterator reverse_iterator;
 
-    void validateUniqueSetting(const std::string &name) const;
-    void validateKeyExists(const std::string &name) const;
-
-public:
     class value_iterator : public pair_iterator
     {
     public:
@@ -48,4 +41,11 @@ public:
     bool deleteNode(NodeID nodeID);
     Node *node(NodeID nodeID);
     size_t numNodes() const;
+
+protected:
+    static NodeID lastID;
+    std::map<NodeID, Node> m_nodes;
+
+    void validateUniqueSetting(const std::string &name) const;
+    void validateKeyExists(const std::string &name) const;
 };
