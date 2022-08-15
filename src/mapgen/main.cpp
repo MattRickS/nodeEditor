@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 
 // Not used, directly, but must be included to be added to registry
+#include "operators/constant.hpp"
 #include "operators/invert.hpp"
 #include "operators/perlin.hpp"
 #include "operators/voronoi.hpp"
