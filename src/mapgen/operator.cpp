@@ -29,43 +29,41 @@ namespace Op
         shader.use();
         for (auto it = settings->cbegin(); it != settings->cend(); ++it)
         {
-            std::cout << "DEBUG: Setting " << it->name() << " to ";
             switch (it->type())
             {
             case SettingType_Bool:
                 shader.setBool(it->name(), it->value<bool>());
-                std::cout << it->value<bool>();
+                DEBUG_LOG("Setting %s to %s\n", it->name().c_str(), it->value<bool>() ? "true" : "false");
                 break;
             case SettingType_Float:
                 shader.setFloat(it->name(), it->value<float>());
-                std::cout << it->value<float>();
+                DEBUG_LOG("Setting %s to %.3f\n", it->name().c_str(), it->value<float>());
                 break;
             case SettingType_Float2:
                 shader.setVec2(it->name(), it->value<glm::vec2>());
-                std::cout << "(" << it->value<glm::vec2>().x << ", " << it->value<glm::vec2>().y << ")";
+                DEBUG_LOG("Setting %s to (%.3f, %.3f)\n", it->name().c_str(), it->value<glm::vec2>().x, it->value<glm::vec2>().y);
                 break;
             case SettingType_Float3:
                 shader.setVec3(it->name(), it->value<glm::vec3>());
-                std::cout << "(" << it->value<glm::vec3>().x << ", " << it->value<glm::vec3>().y << ", " << it->value<glm::vec3>().z << ")";
+                DEBUG_LOG("Setting %s to (%.3f, %.3f, %.3f)\n", it->name().c_str(), it->value<glm::vec3>().x, it->value<glm::vec3>().y, it->value<glm::vec3>().z);
                 break;
             case SettingType_Float4:
                 shader.setVec4(it->name(), it->value<glm::vec4>());
-                std::cout << "(" << it->value<glm::vec4>().x << ", " << it->value<glm::vec4>().y << ", " << it->value<glm::vec4>().z << ", " << it->value<glm::vec4>().w << ")";
+                DEBUG_LOG("Setting %s to (%.3f, %.3f, %.3f, %.3f)\n", it->name().c_str(), it->value<glm::vec4>().x, it->value<glm::vec4>().y, it->value<glm::vec4>().z, it->value<glm::vec4>().w);
                 break;
             case SettingType_Int:
                 shader.setInt(it->name(), it->value<int>());
-                std::cout << it->value<int>();
+                DEBUG_LOG("Setting %s to %d\n", it->name().c_str(), it->value<int>());
                 break;
             case SettingType_Int2:
                 shader.setIVec2(it->name(), it->value<glm::ivec2>());
-                std::cout << "(" << it->value<glm::ivec2>().x << ", " << it->value<glm::ivec2>().x << ")";
+                DEBUG_LOG("Setting %s to (%d, %d)\n", it->name().c_str(), it->value<glm::ivec2>().x, it->value<glm::ivec2>().y);
                 break;
             case SettingType_UInt:
                 shader.setUInt(it->name(), it->value<unsigned int>());
-                std::cout << it->value<unsigned int>();
+                DEBUG_LOG("Setting %s to %u\n", it->name().c_str(), it->value<unsigned int>());
                 break;
             }
-            std::cout << std::endl;
         }
 
         size_t i = 0;
@@ -75,7 +73,7 @@ namespace Op
             // Optional inputs might be a nullptr
             if (inTex)
             {
-                std::cout << "DEBUG: Binding input " << i << " to ID: " << inTex->ID << std::endl;
+                DEBUG_LOG("Binding input %lu to ID: %u\n", i, inTex->ID);
                 glActiveTexture(GL_TEXTURE0 + i);
                 glBindTexture(GL_TEXTURE_2D, inTex->ID);
                 glBindImageTexture(i, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
@@ -85,14 +83,14 @@ namespace Op
             }
             else
             {
-                std::cout << "DEBUG: Ignoring input: " << i << std::endl;
+                DEBUG_LOG("Ignoring input %lu\n", i);
                 // Internal naming convention for disabling optional inputs
                 shader.setBool("_ignoreImage" + std::to_string(i), true);
             }
         }
 
         auto outTex = outputs[0];
-        std::cout << "DEBUG: Binding output " << i << " to ID: " << outTex->ID << std::endl;
+        DEBUG_LOG("Binding output %lu to ID: %u\n", i, outTex->ID);
         glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(GL_TEXTURE_2D, outTex->ID);
         glBindImageTexture(i, outTex->ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());

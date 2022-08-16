@@ -205,7 +205,7 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
                     else
                     {
                         // Eg, same conncector, not output to input, connection is full, etc...
-                        std::cout << "Connectors found but failed to connect" << std::endl;
+                        DEBUG_LOG("Connectors found but failed to connect\n");
                     }
                 }
                 m_ui->nodegraph()->finishConnection();
@@ -414,7 +414,7 @@ void Application::setHoverState(GraphElement *el, glm::vec2 cursorPos) const
 // Scene
 void Application::createNode(std::string nodeType)
 {
-    std::cout << "Creating: " << nodeType << std::endl;
+    DEBUG_LOG("Creating: %s\n", nodeType.c_str());
     NodeID nodeID = m_scene->getCurrentGraph()->createNode(nodeType);
     glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(m_ui->cursorPos());
     m_scene->getCurrentGraph()->node(nodeID)->setPos(worldPos);

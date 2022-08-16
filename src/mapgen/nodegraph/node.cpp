@@ -6,6 +6,7 @@
 #include "../operator.h"
 #include "../renders.h"
 #include "../settings.h"
+#include "../util.h"
 #include "connector.h"
 #include "node.h"
 
@@ -106,14 +107,14 @@ void Node::setError(std::string errorMsg)
 {
     m_error = errorMsg;
     m_state = State::Error;
-    std::cout << "Node " << name() << " has error: " << m_error << std::endl;
+    DEBUG_LOG("Node %s has error: %s\n", name().c_str(), m_error.c_str());
 }
 bool Node::isDirty() const { return m_dirty; }
 void Node::setDirty(bool dirty) { m_dirty = dirty; }
 
 void Node::reset()
 {
-    std::cout << "Resetting " << name() << std::endl;
+    DEBUG_LOG("Resetting %s\n", name().c_str());
     m_renderSet.clear();
     m_error.clear();
     setDirty(false);
@@ -134,7 +135,7 @@ bool Node::processStep()
     case State::Unprocessed:
     case State::Preprocessing:
         m_state = State::Preprocessing;
-        std::cout << "Preprocessing " << name() << std::endl;
+        DEBUG_LOG("Preprocessing %s\n", name().c_str());
         preprocess();
         // In case state changed during preprocessing (shouldn't be possible), discard result
         if (m_state == State::Preprocessing)
@@ -143,7 +144,7 @@ bool Node::processStep()
         }
         break;
     case State::Processing:
-        std::cout << "Processing " << name() << std::endl;
+        DEBUG_LOG("Processing %s\n", name().c_str());
         isComplete = process();
         if (m_state == State::Processing)
         {
@@ -273,6 +274,6 @@ void Node::evaluateOutputs()
             m_outputTextures[i]->resize(width, height);
         }
         auto it = m_renderSet.insert_or_assign(m_outputs[i].layer(), m_outputTextures[i]);
-        std::cout << "DEBUG: " << (it.second ? "Inserted" : "Assigned") << " output ID " << m_outputTextures[i]->ID << " to index " << m_outputs[i].layer() << std::endl;
+        DEBUG_LOG("%s output ID %u to layer %s\n", (it.second ? "Inserted" : "Assigned"), m_outputTextures[i]->ID, m_outputs[i].layer().c_str());
     }
 }
