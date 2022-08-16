@@ -106,12 +106,14 @@ void Node::setError(std::string errorMsg)
 {
     m_error = errorMsg;
     m_state = State::Error;
+    std::cout << "Node " << name() << " has error: " << m_error << std::endl;
 }
 bool Node::isDirty() const { return m_dirty; }
 void Node::setDirty(bool dirty) { m_dirty = dirty; }
 
 void Node::reset()
 {
+    std::cout << "Resetting " << name() << std::endl;
     m_renderSet.clear();
     m_error.clear();
     setDirty(false);
@@ -221,7 +223,7 @@ const RenderSet *Node::evaluateInputs()
             Node *inNode = conn.connection(0)->node();
             if (inNode->state() != State::Processed)
             {
-                setError("Input has not been processed");
+                setError("Input node '" + inNode->name() + "' has not been processed");
                 return nullptr;
             }
 
@@ -235,7 +237,7 @@ const RenderSet *Node::evaluateInputs()
 
             if (rs->find(conn.layer()) == rs->end())
             {
-                setError("Requested input layer does not exist");
+                setError("Requested input layer '" + conn.layer() + "' does not exist");
                 return nullptr;
             }
 
@@ -243,7 +245,7 @@ const RenderSet *Node::evaluateInputs()
         }
         else if (conn.isRequired())
         {
-            setError("Missing required input");
+            setError("Missing required input: " + std::to_string(conn.index()));
             return nullptr;
         }
         else
@@ -270,6 +272,7 @@ void Node::evaluateOutputs()
         {
             m_outputTextures[i]->resize(width, height);
         }
-        m_renderSet[m_outputs[i].layer()] = m_outputTextures[i];
+        auto it = m_renderSet.insert_or_assign(m_outputs[i].layer(), m_outputTextures[i]);
+        std::cout << "DEBUG: " << (it.second ? "Inserted" : "Assigned") << " output ID " << m_outputTextures[i]->ID << " to index " << m_outputs[i].layer() << std::endl;
     }
 }
