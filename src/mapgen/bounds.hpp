@@ -28,6 +28,12 @@ public:
         m_max += offset;
     }
 
+    void expand(const Bounds &bounds)
+    {
+        m_min = glm::min(m_min, bounds.m_min);
+        m_max = glm::max(m_max, bounds.m_max);
+    }
+
 protected:
     glm::vec2 m_min;
     glm::vec2 m_max;

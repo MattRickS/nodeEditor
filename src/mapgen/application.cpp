@@ -107,9 +107,17 @@ void Application::onKeyChanged(int key, [[maybe_unused]] int scancode, int actio
             close();
             break;
         case GLFW_KEY_F:
-            m_ui->viewport()->camera().view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -1));
-            m_ui->viewport()->camera().focal = 1.0f;
-            updateProjection();
+            if (m_ui->viewport()->bounds().contains(m_ui->cursorPos()))
+            {
+                m_ui->viewport()->camera().view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -1));
+                m_ui->viewport()->camera().focal = 1.0f;
+                updateProjection();
+            }
+            else if (m_ui->nodegraph()->bounds().contains(m_ui->cursorPos()))
+            {
+                Bounds b = m_scene->getCurrentGraph()->bounds();
+                LOG_INFO("(%f, %f, %f, %f)", b.min().x, b.min().y, b.max().x, b.max().y);
+            }
             break;
         case GLFW_KEY_R:
             m_ui->viewport()->toggleIsolateChannel(Channel_Red);
