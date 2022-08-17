@@ -25,6 +25,7 @@ public:
 
     void pan(glm::vec2 offset);
     void zoom(float scale);
+    void fitBounds(const Bounds &worldBounds);
 
     void startConnection(Connector *conn);
     void updateConnection(glm::vec2 pos);

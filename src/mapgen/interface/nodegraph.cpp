@@ -37,8 +37,15 @@ void Nodegraph::setSelectedNode(Node *node)
     selectedNodeChanged.emit(node);
 }
 void Nodegraph::setScene(Scene *scene) { m_scene = scene; }
+
 void Nodegraph::pan(glm::vec2 offset) { m_viewOffset += offset; }
 void Nodegraph::zoom(float scale) { m_viewScale *= scale; }
+void Nodegraph::fitBounds(const Bounds &worldBounds)
+{
+    glm::vec2 scale = bounds().size() / worldBounds.size();
+    m_viewScale = std::min(scale.x, scale.y); // Needs is a scaling factor to remain a little zoomed out
+    m_viewOffset = -worldBounds.pos() * m_viewScale;
+}
 
 void Nodegraph::startConnection(Connector *conn)
 {
