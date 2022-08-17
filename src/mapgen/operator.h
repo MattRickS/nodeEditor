@@ -4,7 +4,7 @@
 
 #include <functional>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -102,7 +102,7 @@ namespace Op
     {
     public:
         typedef std::function<Operator *()> FactoryFunction;
-        typedef std::unordered_map<std::string, FactoryFunction> FactoryMap;
+        typedef std::map<std::string, FactoryFunction> FactoryMap;
 
         static bool registerOperator(const std::string &name, FactoryFunction func)
         {
