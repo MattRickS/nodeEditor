@@ -2,9 +2,7 @@
 #include <string>
 
 #include "../operator.h"
-#include "../renders.h"
 #include "../settings.h"
-#include "../shader.h"
 
 namespace Op
 {
