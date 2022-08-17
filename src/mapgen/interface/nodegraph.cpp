@@ -16,6 +16,7 @@
 
 const glm::vec2 CONNECTOR_SIZE = glm::vec2(15, 10);
 
+const ImU32 COLOR_TEXT = IM_COL32(125, 125, 125, 255);
 const ImU32 COLOR_HOVER = IM_COL32(100, 255, 255, 255);
 const ImU32 COLOR_LINE = IM_COL32(255, 255, 255, 255);
 const ImU32 COLOR_SELECTED = IM_COL32(255, 255, 0, 255);
@@ -108,12 +109,9 @@ ImU32 Nodegraph::connColor(const Connector *connector) const
     {
         return COLOR_HOVER;
     }
-    if (auto conn = dynamic_cast<const InputConnector *>(connector))
+    if (connector->type() == Connector::Input && !static_cast<const InputConnector *>(connector)->isRequired())
     {
-        if (!conn->isRequired())
-        {
-            return COLOR_CONNECTOR_OPTIONAL;
-        }
+        return COLOR_CONNECTOR_OPTIONAL;
     }
     return COLOR_CONNECTOR;
 }
@@ -139,9 +137,13 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
                           COLOR_VIEW, m_nodeRounding, ImDrawFlags_Closed, m_viewThickness);
     }
 
+    // Connectors text is half size
+    float fontScale = ImGui::GetCurrentWindow()->FontWindowScale;
+    ImGui::SetWindowFontScale(fontScale * 0.5f);
+
     for (size_t i = 0; i < node->numInputs(); ++i)
     {
-        Connector *conn = node->input(i);
+        InputConnector *conn = node->input(i);
         Bounds b = graphElementBounds(conn);
 
         for (size_t j = 0; j < conn->numConnections(); ++j)
@@ -152,6 +154,7 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
         }
 
         drawList->AddRectFilled(ImVec2(b.min().x, b.min().y), ImVec2(b.max().x, b.max().y), connColor(conn), m_connectorRounding);
+        drawList->AddText(ImVec2(b.min().x, b.min().y - 10 * m_viewScale), COLOR_TEXT, conn->name().c_str());
     }
 
     for (size_t i = 0; i < node->numOutputs(); ++i)
@@ -161,8 +164,10 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
         drawList->AddRectFilled(ImVec2(b.min().x, b.min().y), ImVec2(b.max().x, b.max().y), connColor(conn), m_connectorRounding);
     }
 
+    ImGui::SetWindowFontScale(fontScale);
+
     drawList->AddRectFilled(ImVec2(bounds.min().x, bounds.min().y), ImVec2(bounds.max().x, bounds.max().y), nodeColor(node), m_nodeRounding);
-    drawList->AddText(ImVec2(bounds.min().x, bounds.min().y), ImColor(0, 0, 0, 255), node->name().c_str());
+    drawList->AddText(ImVec2(bounds.min().x, bounds.min().y), COLOR_TEXT, node->name().c_str());
 
     if (node == m_selectedNode)
     {
