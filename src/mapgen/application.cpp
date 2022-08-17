@@ -277,7 +277,7 @@ void Application::onMouseScrolled([[maybe_unused]] double xoffset, double yoffse
     Panel *panel = panelAtPos(m_ui->cursorPos());
     if (panel == m_ui->nodegraph())
     {
-        m_ui->nodegraph()->zoom(1.0f + yoffset * 0.1f);
+        m_ui->nodegraph()->scaleFromPos(m_ui->cursorPos(), 1.0f + yoffset * 0.1f);
     }
     else if (panel == m_ui->viewport())
     {

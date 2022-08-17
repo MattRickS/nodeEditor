@@ -39,7 +39,12 @@ void Nodegraph::setSelectedNode(Node *node)
 void Nodegraph::setScene(Scene *scene) { m_scene = scene; }
 
 void Nodegraph::pan(glm::vec2 offset) { m_viewOffset += offset; }
-void Nodegraph::zoom(float scale) { m_viewScale *= scale; }
+void Nodegraph::scaleFromPos(const glm::vec2 screenPos, float scale)
+{
+    glm::vec2 worldPos = screenToWorldPos(screenPos);
+    m_viewScale *= scale;
+    m_viewOffset += screenPos - worldToScreenPos(worldPos);
+}
 void Nodegraph::fitBounds(const Bounds &worldBounds)
 {
     glm::vec2 scale = bounds().size() / worldBounds.size();

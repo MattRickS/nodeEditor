@@ -24,7 +24,7 @@ public:
     void setScene(Scene *scene);
 
     void pan(glm::vec2 offset);
-    void zoom(float scale);
+    void scaleFromPos(const glm::vec2 screenPos, float scale);
     void fitBounds(const Bounds &worldBounds);
 
     void startConnection(Connector *conn);
