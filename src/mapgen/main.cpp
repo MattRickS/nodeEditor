@@ -8,6 +8,7 @@
 #include "operators/constant.hpp"
 #include "operators/invert.hpp"
 #include "operators/multiply.hpp"
+#include "operators/normals.hpp"
 #include "operators/offset.hpp"
 #include "operators/perlin.hpp"
 #include "operators/voronoi.hpp"
