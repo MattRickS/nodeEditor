@@ -47,9 +47,11 @@ void Nodegraph::scaleFromPos(const glm::vec2 screenPos, float scale)
 }
 void Nodegraph::fitBounds(const Bounds &worldBounds)
 {
-    glm::vec2 scale = bounds().size() / worldBounds.size();
-    m_viewScale = std::min(scale.x, scale.y); // Needs is a scaling factor to remain a little zoomed out
-    m_viewOffset = -worldBounds.pos() * m_viewScale;
+    // Pad the screen space to keep slightly zoomed out, and pad the offset so it's an even spacing
+    static float screenPadding = 100.0f;
+    glm::vec2 scale = (bounds().size() - screenPadding) / worldBounds.size();
+    m_viewScale = std::min(scale.x, scale.y);
+    m_viewOffset = -worldBounds.pos() * m_viewScale + screenPadding * 0.5f;
 }
 
 void Nodegraph::startConnection(Connector *conn)
