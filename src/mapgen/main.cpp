@@ -4,12 +4,13 @@
 #include <GLFW/glfw3.h>
 
 // Not used, directly, but must be included to be added to registry
+#include "operators/add.hpp"
 #include "operators/constant.hpp"
 #include "operators/invert.hpp"
+#include "operators/multiply.hpp"
+#include "operators/offset.hpp"
 #include "operators/perlin.hpp"
 #include "operators/voronoi.hpp"
-#include "operators/add.hpp"
-#include "operators/multiply.hpp"
 
 #include "application.h"
 #include "interface/ui.h"
