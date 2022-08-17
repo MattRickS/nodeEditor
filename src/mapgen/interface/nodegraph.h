@@ -15,7 +15,7 @@ class Nodegraph : public Panel
 {
 public:
     Signal<Node *> selectedNodeChanged;
-    Signal<std::string> newNodeRequested;
+    Signal<glm::ivec2, std::string> newNodeRequested;
 
     Nodegraph(Bounds bounds);
 

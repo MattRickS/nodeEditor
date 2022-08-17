@@ -202,7 +202,7 @@ void Nodegraph::drawTextBox()
             bool isSelected = (m_inputText == *it);
             if (ImGui::Selectable(it->c_str(), isSelected))
             {
-                newNodeRequested.emit(*it);
+                newNodeRequested.emit(pos() + glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
                 finishTextInput();
             }
             if (isSelected)

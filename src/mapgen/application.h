@@ -58,7 +58,7 @@ protected:
     void setHoverState(GraphElement *el, glm::vec2 cursorPos) const;
 
     // Scene
-    void createNode(std::string nodeType);
+    void createNode(glm::ivec2 screenPos, std::string nodeType);
     void deleteSelectedNode();
     void setViewNode(Node *node);
     void updateSetting(Node *node, std::string key, SettingValue value);
