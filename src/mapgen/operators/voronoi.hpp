@@ -16,7 +16,7 @@ namespace Op
             return new VoronoiNoise();
         }
 
-        VoronoiNoise() : BaseComputeShaderOp("src/mapgen/shaders/compute/voronoi.glsl") {}
+        VoronoiNoise() : BaseComputeShaderOp("src/mapgen/operators/voronoi.glsl") {}
         std::string name() const override { return "Voronoi"; }
         void defaultSettings(Settings *settings) const override
         {

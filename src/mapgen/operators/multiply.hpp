@@ -17,7 +17,7 @@ namespace Op
             return new Multiply();
         }
 
-        Multiply() : BaseComputeShaderOp("src/mapgen/shaders/compute/multiply.glsl") {}
+        Multiply() : BaseComputeShaderOp("src/mapgen/operators/multiply.glsl") {}
         std::string name() const override { return "Multiply"; }
         std::vector<Input> inputs() const override
         {

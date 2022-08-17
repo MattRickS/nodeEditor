@@ -18,7 +18,7 @@ namespace Op
             return new Erosion();
         }
 
-        Erosion() : erosionShader("src/mapgen/shaders/compute/erosion.glsl") //, reductionShader("src/mapgen/shaders/compute/erosion.glsl")
+        Erosion() : erosionShader("src/mapgen/operators/erosion.glsl") //, reductionShader("src/mapgen/shaders/compute/erosion.glsl")
         {
         }
         std::string name() const override { return "Erosion"; }

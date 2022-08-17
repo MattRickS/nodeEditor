@@ -16,7 +16,7 @@ namespace Op
             return new PerlinNoise();
         }
 
-        PerlinNoise() : BaseComputeShaderOp("src/mapgen/shaders/compute/perlin.glsl") {}
+        PerlinNoise() : BaseComputeShaderOp("src/mapgen/operators/perlin.glsl") {}
 
         std::string name() const override { return "PerlinNoise"; }
         void defaultSettings(Settings *settings) const override

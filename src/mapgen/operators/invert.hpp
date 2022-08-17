@@ -19,7 +19,7 @@ namespace Op
             return new Invert();
         }
 
-        Invert() : shader("src/mapgen/shaders/compute/invert.glsl") {}
+        Invert() : shader("src/mapgen/operators/invert.glsl") {}
         std::string name() const override { return "Invert"; }
         std::vector<Input> inputs() const override
         {

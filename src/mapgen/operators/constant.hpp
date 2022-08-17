@@ -17,7 +17,7 @@ namespace Op
             return new Constant();
         }
 
-        Constant() : BaseComputeShaderOp("src/mapgen/shaders/compute/constant.glsl") {}
+        Constant() : BaseComputeShaderOp("src/mapgen/operators/constant.glsl") {}
         std::string name() const override { return "Constant"; }
         void defaultSettings(Settings *settings) const override
         {
