@@ -21,10 +21,10 @@ void main(){
     if (!_ignoreImage1)
     {
         vec4 in2 = imageLoad(imgIn2, pixel_coords);
-        if (red)   in1.r = in2.r;
-        if (green) in1.g = in2.g;
-        if (blue)  in1.b = in2.b;
-        if (alpha) in1.a = in2.a;
+        if (red)   in1.r += in2.r;
+        if (green) in1.g += in2.g;
+        if (blue)  in1.b += in2.b;
+        if (alpha) in1.a += in2.a;
     }
     imageStore(imgOut, pixel_coords, in1);
 }
