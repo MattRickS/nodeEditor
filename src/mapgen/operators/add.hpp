@@ -3,9 +3,7 @@
 #include <vector>
 
 #include "../operator.h"
-#include "../renders.h"
 #include "../settings.h"
-#include "../shader.h"
 
 namespace Op
 {
@@ -17,11 +15,11 @@ namespace Op
             return new Add();
         }
 
-        Add() : BaseComputeShaderOp("src/mapgen/shaders/compute/add.glsl") {}
+        Add() : BaseComputeShaderOp("src/mapgen/operators/add.glsl") {}
         std::string name() const override { return "Add"; }
         std::vector<Input> inputs() const override
         {
-            return {{}, {}};
+            return {{}, {"Add", false}};
         }
         void defaultSettings(Settings *settings) const override
         {
@@ -29,6 +27,7 @@ namespace Op
             settings->registerBool("green", true);
             settings->registerBool("blue", true);
             settings->registerBool("alpha", false);
+            settings->registerFloat("value", 0.0f);
         }
     };
 

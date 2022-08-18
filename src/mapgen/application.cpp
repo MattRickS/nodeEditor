@@ -107,9 +107,17 @@ void Application::onKeyChanged(int key, [[maybe_unused]] int scancode, int actio
             close();
             break;
         case GLFW_KEY_F:
-            m_ui->viewport()->camera().view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -1));
-            m_ui->viewport()->camera().focal = 1.0f;
-            updateProjection();
+            if (m_ui->viewport()->bounds().contains(m_ui->cursorPos()))
+            {
+                m_ui->viewport()->camera().view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -1));
+                m_ui->viewport()->camera().focal = 1.0f;
+                updateProjection();
+            }
+            else if (m_ui->nodegraph()->bounds().contains(m_ui->cursorPos()))
+            {
+                Bounds b = m_scene->getCurrentGraph()->bounds();
+                m_ui->nodegraph()->fitBounds(b);
+            }
             break;
         case GLFW_KEY_R:
             m_ui->viewport()->toggleIsolateChannel(Channel_Red);
@@ -205,7 +213,7 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
                     else
                     {
                         // Eg, same conncector, not output to input, connection is full, etc...
-                        std::cout << "Connectors found but failed to connect" << std::endl;
+                        LOG_DEBUG("Connectors found but failed to connect");
                     }
                 }
                 m_ui->nodegraph()->finishConnection();
@@ -269,7 +277,7 @@ void Application::onMouseScrolled([[maybe_unused]] double xoffset, double yoffse
     Panel *panel = panelAtPos(m_ui->cursorPos());
     if (panel == m_ui->nodegraph())
     {
-        m_ui->nodegraph()->zoom(1.0f + yoffset * 0.1f);
+        m_ui->nodegraph()->scaleFromPos(m_ui->cursorPos(), 1.0f + yoffset * 0.1f);
     }
     else if (panel == m_ui->viewport())
     {
@@ -412,11 +420,11 @@ void Application::setHoverState(GraphElement *el, glm::vec2 cursorPos) const
 }
 
 // Scene
-void Application::createNode(std::string nodeType)
+void Application::createNode(glm::ivec2 screenPos, std::string nodeType)
 {
-    std::cout << "Creating: " << nodeType << std::endl;
+    LOG_INFO("Creating: %s", nodeType.c_str());
     NodeID nodeID = m_scene->getCurrentGraph()->createNode(nodeType);
-    glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(m_ui->cursorPos());
+    glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(screenPos);
     m_scene->getCurrentGraph()->node(nodeID)->setPos(worldPos);
 }
 

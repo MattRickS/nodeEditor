@@ -6,6 +6,7 @@
 #include "../operator.h"
 #include "../renders.h"
 #include "../settings.h"
+#include "../util.h"
 #include "connector.h"
 #include "node.h"
 
@@ -106,12 +107,14 @@ void Node::setError(std::string errorMsg)
 {
     m_error = errorMsg;
     m_state = State::Error;
+    LOG_ERROR("Node %s has error: %s", name().c_str(), m_error.c_str());
 }
 bool Node::isDirty() const { return m_dirty; }
 void Node::setDirty(bool dirty) { m_dirty = dirty; }
 
 void Node::reset()
 {
+    LOG_DEBUG("Resetting %s", name().c_str());
     m_renderSet.clear();
     m_error.clear();
     setDirty(false);
@@ -132,7 +135,7 @@ bool Node::processStep()
     case State::Unprocessed:
     case State::Preprocessing:
         m_state = State::Preprocessing;
-        std::cout << "Preprocessing " << name() << std::endl;
+        LOG_DEBUG("Preprocessing %s", name().c_str());
         preprocess();
         // In case state changed during preprocessing (shouldn't be possible), discard result
         if (m_state == State::Preprocessing)
@@ -141,7 +144,7 @@ bool Node::processStep()
         }
         break;
     case State::Processing:
-        std::cout << "Processing " << name() << std::endl;
+        LOG_DEBUG("Processing %s", name().c_str());
         isComplete = process();
         if (m_state == State::Processing)
         {
@@ -221,7 +224,7 @@ const RenderSet *Node::evaluateInputs()
             Node *inNode = conn.connection(0)->node();
             if (inNode->state() != State::Processed)
             {
-                setError("Input has not been processed");
+                setError("Input node '" + inNode->name() + "' has not been processed");
                 return nullptr;
             }
 
@@ -235,7 +238,7 @@ const RenderSet *Node::evaluateInputs()
 
             if (rs->find(conn.layer()) == rs->end())
             {
-                setError("Requested input layer does not exist");
+                setError("Requested input layer '" + conn.layer() + "' does not exist");
                 return nullptr;
             }
 
@@ -243,7 +246,7 @@ const RenderSet *Node::evaluateInputs()
         }
         else if (conn.isRequired())
         {
-            setError("Missing required input");
+            setError("Missing required input: " + std::to_string(conn.index()));
             return nullptr;
         }
         else
@@ -270,6 +273,7 @@ void Node::evaluateOutputs()
         {
             m_outputTextures[i]->resize(width, height);
         }
-        m_renderSet[m_outputs[i].layer()] = m_outputTextures[i];
+        auto it = m_renderSet.insert_or_assign(m_outputs[i].layer(), m_outputTextures[i]);
+        LOG_DEBUG("%s output ID %u to layer %s", (it.second ? "Inserted" : "Assigned"), m_outputTextures[i]->ID, m_outputs[i].layer().c_str());
     }
 }

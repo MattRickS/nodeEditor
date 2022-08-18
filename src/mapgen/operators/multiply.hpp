@@ -3,9 +3,7 @@
 #include <vector>
 
 #include "../operator.h"
-#include "../renders.h"
 #include "../settings.h"
-#include "../shader.h"
 
 namespace Op
 {
@@ -17,7 +15,7 @@ namespace Op
             return new Multiply();
         }
 
-        Multiply() : BaseComputeShaderOp("src/mapgen/shaders/compute/multiply.glsl") {}
+        Multiply() : BaseComputeShaderOp("src/mapgen/operators/multiply.glsl") {}
         std::string name() const override { return "Multiply"; }
         std::vector<Input> inputs() const override
         {

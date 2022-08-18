@@ -10,6 +10,8 @@ NodeID Graph::lastID = 0;
 
 Graph::value_iterator Graph::begin() { return m_nodes.begin(); }
 Graph::value_iterator Graph::end() { return m_nodes.end(); }
+Graph::const_value_iterator Graph::cbegin() const { return m_nodes.cbegin(); }
+Graph::const_value_iterator Graph::cend() const { return m_nodes.cend(); }
 Graph::reverse_value_iterator Graph::rbegin() { return m_nodes.rbegin(); }
 Graph::reverse_value_iterator Graph::rend() { return m_nodes.rend(); }
 
@@ -42,3 +44,18 @@ Node *Graph::node(NodeID nodeID)
     return nullptr;
 }
 size_t Graph::numNodes() const { return m_nodes.size(); }
+
+Bounds Graph::bounds() const
+{
+    if (numNodes() == 0)
+    {
+        return {};
+    }
+    auto it = cbegin();
+    Bounds bounds = it->bounds();
+    for (it++; it != cend(); ++it)
+    {
+        bounds.expand(it->bounds());
+    }
+    return bounds;
+}

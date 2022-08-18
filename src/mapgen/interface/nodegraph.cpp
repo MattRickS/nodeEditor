@@ -14,6 +14,20 @@
 
 #include "nodegraph.h"
 
+const glm::vec2 CONNECTOR_SIZE = glm::vec2(15, 10);
+
+const ImU32 COLOR_TEXT = IM_COL32(125, 125, 125, 255);
+const ImU32 COLOR_HOVER = IM_COL32(100, 255, 255, 255);
+const ImU32 COLOR_LINE = IM_COL32(255, 255, 255, 255);
+const ImU32 COLOR_SELECTED = IM_COL32(255, 255, 0, 255);
+const ImU32 COLOR_VIEW = IM_COL32(255, 0, 255, 255);
+const ImU32 COLOR_CONNECTOR = IM_COL32(150, 150, 150, 255);
+const ImU32 COLOR_CONNECTOR_OPTIONAL = IM_COL32(100, 100, 100, 255);
+const ImU32 COLOR_UNPROCESSED = IM_COL32(80, 80, 80, 255);
+const ImU32 COLOR_PROCESSING = IM_COL32(100, 150, 100, 255);
+const ImU32 COLOR_PROCESSED = IM_COL32(100, 255, 100, 255);
+const ImU32 COLOR_ERROR = IM_COL32(255, 100, 100, 255);
+
 Nodegraph::Nodegraph(Bounds bounds) : Panel(bounds) {}
 
 Node *Nodegraph::getSelectedNode() const { return m_selectedNode; }
@@ -23,8 +37,22 @@ void Nodegraph::setSelectedNode(Node *node)
     selectedNodeChanged.emit(node);
 }
 void Nodegraph::setScene(Scene *scene) { m_scene = scene; }
+
 void Nodegraph::pan(glm::vec2 offset) { m_viewOffset += offset; }
-void Nodegraph::zoom(float scale) { m_viewScale *= scale; }
+void Nodegraph::scaleFromPos(const glm::vec2 screenPos, float scale)
+{
+    glm::vec2 worldPos = screenToWorldPos(screenPos);
+    m_viewScale *= scale;
+    m_viewOffset += screenPos - worldToScreenPos(worldPos);
+}
+void Nodegraph::fitBounds(const Bounds &worldBounds)
+{
+    // Pad the screen space to keep slightly zoomed out, and pad the offset so it's an even spacing
+    static float screenPadding = 100.0f;
+    glm::vec2 scale = (bounds().size() - screenPadding) / worldBounds.size();
+    m_viewScale = std::min(scale.x, scale.y);
+    m_viewOffset = -worldBounds.pos() * m_viewScale + screenPadding * 0.5f;
+}
 
 void Nodegraph::startConnection(Connector *conn)
 {
@@ -95,6 +123,10 @@ ImU32 Nodegraph::connColor(const Connector *connector) const
     {
         return COLOR_HOVER;
     }
+    if (connector->type() == Connector::Input && !static_cast<const InputConnector *>(connector)->isRequired())
+    {
+        return COLOR_CONNECTOR_OPTIONAL;
+    }
     return COLOR_CONNECTOR;
 }
 
@@ -119,9 +151,13 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
                           COLOR_VIEW, m_nodeRounding, ImDrawFlags_Closed, m_viewThickness);
     }
 
+    // Connectors text is half size
+    float fontScale = ImGui::GetCurrentWindow()->FontWindowScale;
+    ImGui::SetWindowFontScale(fontScale * 0.5f);
+
     for (size_t i = 0; i < node->numInputs(); ++i)
     {
-        Connector *conn = node->input(i);
+        InputConnector *conn = node->input(i);
         Bounds b = graphElementBounds(conn);
 
         for (size_t j = 0; j < conn->numConnections(); ++j)
@@ -132,6 +168,7 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
         }
 
         drawList->AddRectFilled(ImVec2(b.min().x, b.min().y), ImVec2(b.max().x, b.max().y), connColor(conn), m_connectorRounding);
+        drawList->AddText(ImVec2(b.min().x, b.min().y - 10 * m_viewScale), COLOR_TEXT, conn->name().c_str());
     }
 
     for (size_t i = 0; i < node->numOutputs(); ++i)
@@ -141,8 +178,10 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
         drawList->AddRectFilled(ImVec2(b.min().x, b.min().y), ImVec2(b.max().x, b.max().y), connColor(conn), m_connectorRounding);
     }
 
+    ImGui::SetWindowFontScale(fontScale);
+
     drawList->AddRectFilled(ImVec2(bounds.min().x, bounds.min().y), ImVec2(bounds.max().x, bounds.max().y), nodeColor(node), m_nodeRounding);
-    drawList->AddText(ImVec2(bounds.min().x, bounds.min().y), ImColor(0, 0, 0, 255), node->name().c_str());
+    drawList->AddText(ImVec2(bounds.min().x, bounds.min().y), COLOR_TEXT, node->name().c_str());
 
     if (node == m_selectedNode)
     {
@@ -163,7 +202,7 @@ void Nodegraph::drawTextBox()
             bool isSelected = (m_inputText == *it);
             if (ImGui::Selectable(it->c_str(), isSelected))
             {
-                newNodeRequested.emit(*it);
+                newNodeRequested.emit(pos() + glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
                 finishTextInput();
             }
             if (isSelected)

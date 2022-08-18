@@ -9,6 +9,7 @@ class Graph
 public:
     // TODO: make this templated so can be reused for settings/graph
     typedef std::map<NodeID, Node>::iterator pair_iterator;
+    typedef std::map<NodeID, Node>::const_iterator const_iterator;
     typedef std::map<NodeID, Node>::reverse_iterator reverse_iterator;
 
     class value_iterator : public pair_iterator
@@ -20,6 +21,15 @@ public:
         Node &operator*() { return pair_iterator::operator*().second; }
     };
 
+    class const_value_iterator : public const_iterator
+    {
+    public:
+        const_value_iterator() : const_iterator() {}
+        const_value_iterator(const_iterator it) : const_iterator(it) {}
+        const Node *operator->() const { return &(const_iterator::operator->()->second); }
+        const Node &operator*() const { return const_iterator::operator*().second; }
+    };
+
     class reverse_value_iterator : public reverse_iterator
     {
     public:
@@ -29,11 +39,10 @@ public:
         Node &operator*() { return reverse_iterator::operator*().second; }
     };
 
-    typedef std::vector<Node>::iterator iterator;
-    typedef std::vector<Node>::const_iterator const_iterator;
-
     value_iterator begin();
     value_iterator end();
+    const_value_iterator cbegin() const;
+    const_value_iterator cend() const;
     reverse_value_iterator rbegin();
     reverse_value_iterator rend();
 
@@ -41,6 +50,7 @@ public:
     bool deleteNode(NodeID nodeID);
     Node *node(NodeID nodeID);
     size_t numNodes() const;
+    Bounds bounds() const;
 
 protected:
     static NodeID lastID;

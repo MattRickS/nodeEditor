@@ -15,7 +15,7 @@ class Nodegraph : public Panel
 {
 public:
     Signal<Node *> selectedNodeChanged;
-    Signal<std::string> newNodeRequested;
+    Signal<glm::ivec2, std::string> newNodeRequested;
 
     Nodegraph(Bounds bounds);
 
@@ -24,7 +24,8 @@ public:
     void setScene(Scene *scene);
 
     void pan(glm::vec2 offset);
-    void zoom(float scale);
+    void scaleFromPos(const glm::vec2 screenPos, float scale);
+    void fitBounds(const Bounds &worldBounds);
 
     void startConnection(Connector *conn);
     void updateConnection(glm::vec2 pos);
@@ -62,18 +63,6 @@ protected:
     bool m_shouldDrawTextbox = false;
     ImVec2 m_inputTextboxPos;
     std::string m_inputText;
-
-    const glm::vec2 CONNECTOR_SIZE = glm::vec2(15, 10);
-
-    const ImU32 COLOR_HOVER = IM_COL32(100, 255, 255, 255);
-    const ImU32 COLOR_LINE = IM_COL32(255, 255, 255, 255);
-    const ImU32 COLOR_SELECTED = IM_COL32(255, 255, 0, 255);
-    const ImU32 COLOR_VIEW = IM_COL32(255, 0, 255, 255);
-    const ImU32 COLOR_CONNECTOR = IM_COL32(150, 150, 150, 255);
-    const ImU32 COLOR_UNPROCESSED = IM_COL32(100, 100, 100, 255);
-    const ImU32 COLOR_PROCESSING = IM_COL32(100, 150, 100, 255);
-    const ImU32 COLOR_PROCESSED = IM_COL32(100, 255, 100, 255);
-    const ImU32 COLOR_ERROR = IM_COL32(255, 100, 100, 255);
 
     ImU32 nodeColor(const Node *node) const;
     ImU32 connColor(const Connector *connector) const;
