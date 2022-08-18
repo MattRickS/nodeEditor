@@ -11,6 +11,7 @@
 #include "operators/normals.hpp"
 #include "operators/offset.hpp"
 #include "operators/perlin.hpp"
+#include "operators/temperature.hpp"
 #include "operators/voronoi.hpp"
 
 #include "application.h"
