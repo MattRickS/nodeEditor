@@ -169,7 +169,6 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
             GraphElement *el = getElementAtPos(m_ui->cursorPos());
             if (el)
             {
-                el->setSelectFlag(SelectFlag_Select);
                 if (Node *node = dynamic_cast<Node *>(el))
                 {
                     if (mods & GLFW_MOD_CONTROL)
@@ -239,7 +238,7 @@ void Application::onMouseMoved(double xpos, double ypos)
 
     if (m_isDragging)
     {
-        Node *node = m_ui->nodegraph()->getSelectedNode();
+        Node *node = m_scene->getSelectedNode();
         if (node)
         {
             glm::vec2 worldOffset = m_ui->nodegraph()->screenToWorldPos(cursorPos) - m_ui->nodegraph()->screenToWorldPos(lastCursorPos);
@@ -290,8 +289,12 @@ void Application::onResize([[maybe_unused]] int width, [[maybe_unused]] int heig
 
 void Application::setSelectedNode(Node *node)
 {
-    // Selecting the nodegraph will emit the selection changed signal
-    m_ui->nodegraph()->setSelectedNode(node);
+    Node *selectedNode = m_scene->getSelectedNode();
+    if (selectedNode)
+    {
+        selectedNode->clearSelectFlag(SelectFlag_Select);
+    }
+    node->setSelectFlag(SelectFlag_Select);
     m_ui->properties()->setNode(node->id());
 }
 
@@ -428,16 +431,16 @@ void Application::createNode(glm::ivec2 screenPos, std::string nodeType)
     LOG_INFO("Creating: %s", nodeType.c_str());
     NodeID nodeID = m_scene->getCurrentGraph()->createNode(nodeType);
     glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(screenPos);
-    m_scene->getCurrentGraph()->node(nodeID)->setPos(worldPos);
+    m_scene->getNode(nodeID)->setPos(worldPos);
 }
 
 void Application::deleteSelectedNode()
 {
-    if (m_ui->nodegraph()->getSelectedNode())
+    Node *selectedNode = m_scene->getSelectedNode();
+    if (selectedNode)
     {
-        NodeID nodeID = m_ui->nodegraph()->getSelectedNode()->id();
         setSelectedNode(nullptr);
-        m_scene->getCurrentGraph()->deleteNode(nodeID);
+        m_scene->getCurrentGraph()->deleteNode(selectedNode->id());
         m_scene->setDirty();
     }
 }

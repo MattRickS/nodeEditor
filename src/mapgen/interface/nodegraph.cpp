@@ -30,12 +30,6 @@ const ImU32 COLOR_ERROR = IM_COL32(255, 100, 100, 255);
 
 Nodegraph::Nodegraph(Bounds bounds) : Panel(bounds) {}
 
-Node *Nodegraph::getSelectedNode() const { return m_selectedNode; }
-void Nodegraph::setSelectedNode(Node *node)
-{
-    m_selectedNode = node;
-    selectedNodeChanged.emit(node);
-}
 void Nodegraph::setScene(Scene *scene) { m_scene = scene; }
 
 void Nodegraph::pan(glm::vec2 offset) { m_viewOffset += offset; }
@@ -183,7 +177,7 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
     drawList->AddRectFilled(ImVec2(bounds.min().x, bounds.min().y), ImVec2(bounds.max().x, bounds.max().y), nodeColor(node), m_nodeRounding);
     drawList->AddText(ImVec2(bounds.min().x, bounds.min().y), COLOR_TEXT, node->name().c_str());
 
-    if (node == m_selectedNode)
+    if (node && node->hasSelectFlag(SelectFlag_Select))
     {
         drawList->AddRect(ImVec2(bounds.min().x, bounds.min().y), ImVec2(bounds.max().x, bounds.max().y),
                           COLOR_SELECTED, m_nodeRounding, ImDrawFlags_Closed, m_selectionThickness);

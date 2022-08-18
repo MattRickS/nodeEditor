@@ -139,20 +139,24 @@ void UI::drawViewportProperties()
     ImGui::PushItemWidth(150.0f);
     if (ImGui::BeginCombo("##Layer", m_selectedLayer.c_str()))
     {
-        if (m_nodegraph && m_nodegraph->getSelectedNode())
+        if (m_scene)
         {
-            const RenderSet *renderSet = m_nodegraph->getSelectedNode()->renderSet();
-            for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
+            Node *selectedNode = m_scene->getSelectedNode();
+            if (selectedNode)
             {
-                bool isSelected = (m_selectedLayer == it->first);
-                if (ImGui::Selectable(it->first.c_str(), isSelected))
+                const RenderSet *renderSet = selectedNode->renderSet();
+                for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
                 {
-                    m_selectedLayer = it->first;
-                    layerChanged.emit(it->first);
-                }
-                if (isSelected)
-                {
-                    ImGui::SetItemDefaultFocus();
+                    bool isSelected = (m_selectedLayer == it->first);
+                    if (ImGui::Selectable(it->first.c_str(), isSelected))
+                    {
+                        m_selectedLayer = it->first;
+                        layerChanged.emit(it->first);
+                    }
+                    if (isSelected)
+                    {
+                        ImGui::SetItemDefaultFocus();
+                    }
                 }
             }
         }

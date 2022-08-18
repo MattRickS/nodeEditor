@@ -25,9 +25,16 @@ public:
     unsigned int Width() const;
     unsigned int Height() const;
 
+    // Gets the graph currently being processed
     Graph *getCurrentGraph();
+    // Gets the node that is currently rendering
     Node *getCurrentNode();
+    // Gets the node that the scene is trying to render
     Node *getViewNode();
+    // Gets the first selected node
+    Node *getSelectedNode();
+    // Gets a node from the scene by ID
+    Node *getNode(NodeID nodeID);
 
     void setDirty();
     /*

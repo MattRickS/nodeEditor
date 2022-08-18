@@ -14,13 +14,10 @@
 class Nodegraph : public Panel
 {
 public:
-    Signal<Node *> selectedNodeChanged;
     Signal<glm::ivec2, std::string> newNodeRequested;
 
     Nodegraph(Bounds bounds);
 
-    Node *getSelectedNode() const;
-    void setSelectedNode(Node *node);
     void setScene(Scene *scene);
 
     void pan(glm::vec2 offset);
@@ -49,7 +46,6 @@ protected:
     glm::vec2 m_viewOffset{0, 0};
     float m_nodeRounding = 0.0f;
     float m_connectorRounding = 0.0f;
-    Node *m_selectedNode = nullptr;
     float m_selectionThickness = 1.0f;
     float m_lineThickness = 3.0f;
     float m_viewThickness = 8.0f;

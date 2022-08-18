@@ -31,6 +31,18 @@ unsigned int Scene::Height() const { return m_height.load(); }
 Graph *Scene::getCurrentGraph() { return &m_graph; }
 Node *Scene::getCurrentNode() { return m_currNode; }
 Node *Scene::getViewNode() { return m_viewNode.load(); }
+Node *Scene::getSelectedNode()
+{
+    for (auto it = m_graph.begin(); it != m_graph.end(); ++it)
+    {
+        if (it->hasSelectFlag(SelectFlag_Select))
+        {
+            return &(*it);
+        }
+    }
+    return nullptr;
+}
+Node *Scene::getNode(NodeID nodeID) { return m_graph.node(nodeID); }
 
 void Scene::setDirty()
 {
