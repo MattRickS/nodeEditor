@@ -67,6 +67,7 @@ UI::UI(unsigned int width, unsigned int height, const char *name, const Context 
     m_nodegraph = new Nodegraph(getNodegraphBounds());
     m_viewport = new Viewport(getViewportBounds());
     m_properties = new Properties(getOperatorPropertiesBounds());
+    m_viewProperties = new ViewportProperties(getViewportPropertiesBounds());
 }
 UI::~UI()
 {
@@ -87,11 +88,7 @@ UI::~UI()
 Viewport *UI::viewport() { return m_viewport; }
 Nodegraph *UI::nodegraph() { return m_nodegraph; }
 Properties *UI::properties() { return m_properties; }
-
-std::string UI::selectedLayer() const
-{
-    return m_selectedLayer;
-}
+ViewportProperties *UI::viewportProperties() { return m_viewProperties; }
 
 void UI::setScene(Scene *scene)
 {
@@ -99,8 +96,8 @@ void UI::setScene(Scene *scene)
     m_nodegraph->setScene(scene);
     m_properties->setScene(scene);
     m_viewport->setScene(scene);
+    m_viewProperties->setScene(scene);
 }
-void UI::setPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void UI::draw()
 {
     if (m_viewport)
@@ -113,7 +110,10 @@ void UI::draw()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    drawViewportProperties();
+    if (m_viewProperties)
+    {
+        m_viewProperties->draw();
+    }
     if (m_nodegraph)
     {
         m_nodegraph->draw();
@@ -125,83 +125,6 @@ void UI::draw()
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-void UI::drawViewportProperties()
-{
-    static bool p_open = NULL;
-    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
-
-    Bounds propertiesBounds = getViewportPropertiesBounds();
-    ImGui::SetNextWindowPos(ImVec2(propertiesBounds.pos().x, propertiesBounds.pos().y));
-    ImGui::SetNextWindowSize(ImVec2(propertiesBounds.size().x, propertiesBounds.size().y));
-    ImGui::Begin("Viewport Properties", &p_open, flags);
-
-    ImGui::PushItemWidth(150.0f);
-    if (ImGui::BeginCombo("##Layer", m_selectedLayer.c_str()))
-    {
-        if (m_scene)
-        {
-            Node *selectedNode = m_scene->getSelectedNode();
-            if (selectedNode)
-            {
-                const RenderSet *renderSet = selectedNode->renderSet();
-                for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
-                {
-                    bool isSelected = (m_selectedLayer == it->first);
-                    if (ImGui::Selectable(it->first.c_str(), isSelected))
-                    {
-                        m_selectedLayer = it->first;
-                        layerChanged.emit(it->first);
-                    }
-                    if (isSelected)
-                    {
-                        ImGui::SetItemDefaultFocus();
-                    }
-                }
-            }
-        }
-        ImGui::EndCombo();
-    }
-    ImGui::PopItemWidth();
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(100.0f);
-    if (ImGui::BeginCombo("##Channel", getChannelName(m_viewport->isolatedChannel())))
-    {
-        for (int channel = Channel_All; channel != Channel_Last; ++channel)
-        {
-            bool isSelected = (m_viewport->isolatedChannel() == channel);
-            if (ImGui::Selectable(getChannelName(Channel(channel)), isSelected))
-            {
-                channelChanged.emit(Channel(channel));
-            }
-            if (isSelected)
-            {
-                ImGui::SetItemDefaultFocus();
-            }
-        }
-        ImGui::EndCombo();
-    }
-    ImGui::PopItemWidth();
-
-    if (m_pixelPreview)
-    {
-        ImGui::BeginDisabled();
-
-        ImGui::SameLine();
-        ImGui::PushItemWidth(250.0f);
-        ImGui::DragFloat4("Pixel##PixelColor", (float *)&(*m_pixelPreview).value);
-        ImGui::PopItemWidth();
-
-        ImGui::SameLine();
-        ImGui::PushItemWidth(100.0f);
-        ImGui::InputInt2("##PixelPos", (int *)&(*m_pixelPreview).pos);
-        ImGui::PopItemWidth();
-
-        ImGui::EndDisabled();
-    }
-
-    ImGui::End();
 }
 
 Bounds UI::getViewportBounds() const

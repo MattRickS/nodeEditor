@@ -26,16 +26,14 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     buffer = new float[m_scene->Width() * m_scene->Height() * 4];
 
     m_ui->setScene(mapmaker);
-    m_ui->setPixelPreview(&m_pixelPreview);
+    m_ui->viewportProperties()->setPixelPreview(&m_pixelPreview);
 
     // TODO: I'm being too lazy to work out the actual matrix for the definition
     Camera &camera = m_ui->viewport()->camera();
     camera.view = glm::translate(camera.view, glm::vec3(0, 0, -1));
     updateProjection();
 
-    m_ui->channelChanged.connect(this, &Application::onChannelChanged);
     m_ui->keyChanged.connect(this, &Application::onKeyChanged);
-    m_ui->layerChanged.connect(this, &Application::onLayerChanged);
     m_ui->mouseButtonChanged.connect(this, &Application::onMouseButtonChanged);
     m_ui->cursorMoved.connect(this, &Application::onMouseMoved);
     m_ui->mouseScrolled.connect(this, &Application::onMouseScrolled);
@@ -44,6 +42,8 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     m_ui->nodegraph()->newNodeRequested.connect(this, &Application::createNode);
     m_ui->properties()->opSettingChanged.connect(this, &Application::updateSetting);
     m_ui->properties()->pauseToggled.connect(this, &Application::togglePause);
+    m_ui->viewportProperties()->channelChanged.connect(this, &Application::onChannelChanged);
+    m_ui->viewportProperties()->layerChanged.connect(this, &Application::onLayerChanged);
 }
 
 Application::~Application()
@@ -171,13 +171,13 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
             {
                 if (Node *node = dynamic_cast<Node *>(el))
                 {
+                    setSelectedNode(node);
                     if (mods & GLFW_MOD_CONTROL)
                     {
                         setViewNode(node);
                     }
                     else
                     {
-                        setSelectedNode(node);
                         m_isDragging = true;
                     }
                 }
@@ -294,8 +294,12 @@ void Application::setSelectedNode(Node *node)
     {
         selectedNode->clearSelectFlag(SelectFlag_Select);
     }
-    node->setSelectFlag(SelectFlag_Select);
-    m_ui->properties()->setNode(node->id());
+    // Might be no new selected node
+    if (node)
+    {
+        node->setSelectFlag(SelectFlag_Select);
+        m_ui->properties()->setNode(node->id());
+    }
 }
 
 // Viewport
@@ -306,7 +310,7 @@ const Texture *Application::currentTexture() const
     {
         return nullptr;
     }
-    std::string layer = m_ui->selectedLayer();
+    std::string layer = m_ui->viewportProperties()->selectedLayer();
     auto it = node->renderSet()->find(layer);
     if (it == node->renderSet()->end())
     {
