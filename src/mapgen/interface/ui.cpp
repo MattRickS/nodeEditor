@@ -91,6 +91,7 @@ void UI::setScene(Scene *scene)
 {
     m_scene = scene;
     m_nodegraph->setScene(scene);
+    m_viewport->setScene(scene);
 }
 void UI::setPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void UI::draw()
@@ -136,6 +137,7 @@ void UI::drawViewportProperties()
                 bool isSelected = (m_selectedLayer == it->first);
                 if (ImGui::Selectable(it->first.c_str(), isSelected))
                 {
+                    m_selectedLayer = it->first;
                     layerChanged.emit(it->first);
                 }
                 if (isSelected)

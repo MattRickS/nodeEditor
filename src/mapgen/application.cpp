@@ -443,7 +443,7 @@ void Application::deleteSelectedNode()
 void Application::setViewNode(Node *node)
 {
     m_scene->setViewNode(node);
-    m_ui->viewport()->setNode(node);
+    m_ui->viewport()->setNode(node->id());
 }
 
 void Application::updateSetting(Node *node, std::string key, SettingValue value)

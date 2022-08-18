@@ -5,6 +5,7 @@
 #include "../bounds.hpp"
 #include "../constants.h"
 #include "../nodegraph/node.h"
+#include "../scene.h"
 #include "../shader.h"
 #include "panel.hpp"
 
@@ -22,7 +23,8 @@ public:
 
     Camera &camera();
     void setLayer(std::string layer);
-    void setNode(Node *node);
+    void setNode(NodeID nodeID);
+    void setScene(Scene *scene);
     void toggleIsolateChannel(Channel channel);
     Channel isolatedChannel() const;
     void draw() override;
@@ -31,6 +33,7 @@ protected:
     Shader m_viewShader;
     Camera m_camera;
     Channel m_isolateChannel = Channel_All;
-    Node *m_node = nullptr;
+    Scene *m_scene = nullptr;
+    NodeID m_nodeID = 0;
     std::string m_layer = DEFAULT_LAYER;
 };
