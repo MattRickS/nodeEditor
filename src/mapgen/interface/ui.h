@@ -8,6 +8,7 @@
 #include "../scene.h"
 #include "../shader.h"
 #include "nodegraph.h"
+#include "properties.h"
 #include "viewport.h"
 #include "window.h"
 #include "signal.hpp"
@@ -26,8 +27,6 @@ class UI : public Window
 {
 public:
     Signal<unsigned int, unsigned int> mapPosChanged;
-    Signal<Node *, std::string, SettingValue> opSettingChanged;
-    Signal<bool> pauseToggled;
     Signal<std::string> layerChanged;
     Signal<Channel> channelChanged;
 
@@ -36,6 +35,7 @@ public:
 
     Viewport *viewport();
     Nodegraph *nodegraph();
+    Properties *properties();
 
     std::string selectedLayer() const;
 
@@ -62,6 +62,7 @@ protected:
     std::string m_selectedLayer = DEFAULT_LAYER;
     Nodegraph *m_nodegraph;
     Viewport *m_viewport;
+    Properties *m_properties;
 
     // Only emits the signal if the UI didn't capture it
     virtual void onMouseMoved(double xpos, double ypos);
@@ -69,15 +70,4 @@ protected:
     virtual void onMouseScrolled(double xoffset, double yoffset);
 
     void drawViewportProperties();
-    void drawOperatorProperties();
-
-    void drawBoolSetting(Node *node, const Setting &setting);
-    void drawFloatSetting(Node *node, const Setting &setting);
-    void drawFloat2Setting(Node *node, const Setting &setting);
-    void drawFloat3Setting(Node *node, const Setting &setting);
-    void drawFloat4Setting(Node *node, const Setting &setting);
-    void drawIntSetting(Node *node, const Setting &setting);
-    void drawInt2Setting(Node *node, const Setting &setting);
-    void drawUIntSetting(Node *node, const Setting &setting);
-    void drawNodeSettings(Node *node);
 };

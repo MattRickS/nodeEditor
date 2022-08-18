@@ -41,9 +41,9 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     m_ui->mouseScrolled.connect(this, &Application::onMouseScrolled);
     m_ui->sizeChanged.connect(this, &Application::onResize);
     m_ui->closeRequested.connect(this, &Application::close);
-    m_ui->pauseToggled.connect(this, &Application::togglePause);
-    m_ui->opSettingChanged.connect(this, &Application::updateSetting);
     m_ui->nodegraph()->newNodeRequested.connect(this, &Application::createNode);
+    m_ui->properties()->opSettingChanged.connect(this, &Application::updateSetting);
+    m_ui->properties()->pauseToggled.connect(this, &Application::togglePause);
 }
 
 Application::~Application()
@@ -61,9 +61,6 @@ void Application::exec()
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-
-    // XXX: Hack to get something rendering until we have an interactive graph
-    m_ui->nodegraph()->setSelectedNode(m_scene->getCurrentGraph()->node(2));
 
     while (!m_ui->isClosed())
     {
@@ -181,8 +178,7 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
                     }
                     else
                     {
-                        // Selecting the nodegraph will emit the selection changed signal
-                        m_ui->nodegraph()->setSelectedNode(node);
+                        setSelectedNode(node);
                         m_isDragging = true;
                     }
                 }
@@ -290,6 +286,13 @@ void Application::onResize([[maybe_unused]] int width, [[maybe_unused]] int heig
 {
     updateProjection();
     m_ui->recalculateLayout();
+}
+
+void Application::setSelectedNode(Node *node)
+{
+    // Selecting the nodegraph will emit the selection changed signal
+    m_ui->nodegraph()->setSelectedNode(node);
+    m_ui->properties()->setNode(node->id());
 }
 
 // Viewport
@@ -433,8 +436,7 @@ void Application::deleteSelectedNode()
     if (m_ui->nodegraph()->getSelectedNode())
     {
         NodeID nodeID = m_ui->nodegraph()->getSelectedNode()->id();
-        // Reset the selected node or it will crash once the node is deleted
-        m_ui->nodegraph()->setSelectedNode(nullptr);
+        setSelectedNode(nullptr);
         m_scene->getCurrentGraph()->deleteNode(nodeID);
         m_scene->setDirty();
     }

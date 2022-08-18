@@ -45,6 +45,8 @@ protected:
     void onMouseScrolled(double xoffset, double yoffset);
     void onResize(int width, int height);
 
+    void setSelectedNode(Node *node);
+
     // Viewport
     const Texture *currentTexture() const;
     void togglePause(bool pause);
