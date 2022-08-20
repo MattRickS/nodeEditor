@@ -67,12 +67,11 @@ Connector *Nodegraph::activeConnection()
     return m_startConnector;
 }
 
-void Nodegraph::startTextInput(glm::vec2 pos)
+void Nodegraph::startTextInput(glm::vec2 screenPos)
 {
     m_shouldDrawTextbox = true;
     m_inputText = "";
-    glm::vec2 panelPos = pos - bounds().pos();
-    m_inputTextboxPos = ImVec2(panelPos.x, panelPos.y);
+    m_inputTextboxPos = ImVec2(screenPos.x, screenPos.y);
 }
 void Nodegraph::finishTextInput()
 {
@@ -186,7 +185,12 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
 
 void Nodegraph::drawTextBox()
 {
-    ImGui::SetCursorPos(m_inputTextboxPos);
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar;
+
+    ImGui::SetNextWindowPos(ImVec2(m_inputTextboxPos.x, m_inputTextboxPos.y));
+    ImGui::SetNextWindowSize(ImVec2(165, 35));
+    ImGui::Begin("NodeLookup", nullptr, flags);
+
     ImGui::PushItemWidth(150.0f);
     // TODO: allow inputting text to filter options
     if (ImGui::BeginCombo("##NewNodeInput", m_inputText.c_str()))
@@ -196,7 +200,7 @@ void Nodegraph::drawTextBox()
             bool isSelected = (m_inputText == *it);
             if (ImGui::Selectable(it->c_str(), isSelected))
             {
-                newNodeRequested.emit(pos() + glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
+                newNodeRequested.emit(glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
                 finishTextInput();
             }
             if (isSelected)
@@ -207,11 +211,13 @@ void Nodegraph::drawTextBox()
         ImGui::EndCombo();
     }
     ImGui::PopItemWidth();
+
+    ImGui::End();
 }
 
 void Nodegraph::draw()
 {
-    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs;
 
     ImGui::SetNextWindowPos(ImVec2(pos().x, pos().y));
     ImGui::SetNextWindowSize(ImVec2(size().x, size().y));

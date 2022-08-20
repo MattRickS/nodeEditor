@@ -15,7 +15,7 @@
 void UI::onMouseMoved(double xpos, double ypos)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(cursorPos()))
+    if (io.WantCaptureMouse)
         return;
 
     cursorMoved.emit(xpos, ypos);
@@ -24,7 +24,7 @@ void UI::onMouseMoved(double xpos, double ypos)
 void UI::onMouseButtonChanged(int button, int action, int mods)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(cursorPos()))
+    if (io.WantCaptureMouse)
         return;
 
     mouseButtonChanged.emit(button, action, mods);
@@ -33,7 +33,7 @@ void UI::onMouseButtonChanged(int button, int action, int mods)
 void UI::onMouseScrolled(double xoffset, double yoffset)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(cursorPos()))
+    if (io.WantCaptureMouse)
         return;
 
     mouseScrolled.emit(xoffset, yoffset);
