@@ -1,8 +1,8 @@
 #pragma once
-#include <iostream>
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include "util.h"
 
 /*
 An OpenGL context, window visibility is optional.
@@ -33,7 +33,7 @@ public:
         GLenum err = glewInit();
         if (err != GLEW_OK)
         {
-            std::cerr << "Failed to initialise glew: " << glewGetErrorString(err) << std::endl;
+            LOG_ERROR("Failed to initialise glew: %s", glewGetErrorString(err));
             return;
         }
         m_glew_init = true;
