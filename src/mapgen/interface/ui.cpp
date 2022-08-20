@@ -54,6 +54,18 @@ void UI::recalculateLayout()
         m_viewport->setPos(bounds.pos());
         m_viewport->setSize(bounds.size());
     }
+    if (m_properties)
+    {
+        Bounds bounds = getOperatorPropertiesBounds();
+        m_properties->setPos(bounds.pos());
+        m_properties->setSize(bounds.size());
+    }
+    if (m_viewProperties)
+    {
+        Bounds bounds = getViewportPropertiesBounds();
+        m_viewProperties->setPos(bounds.pos());
+        m_viewProperties->setSize(bounds.size());
+    }
 }
 
 UI::UI(unsigned int width, unsigned int height, const char *name, const Context *sharedContext) : Window(name, width, height, sharedContext)
@@ -129,11 +141,11 @@ void UI::draw()
 
 Bounds UI::getViewportBounds() const
 {
-    return Bounds(m_width * m_opPropertiesWidthPercent, m_height * m_viewPropertiesHeightPercent, m_width, m_height * 0.5f);
+    return Bounds(m_width * m_opPropertiesWidthPercent, m_viewPropertiesHeight, m_width, m_height * 0.5f);
 }
 Bounds UI::getViewportPropertiesBounds() const
 {
-    return Bounds(m_width * m_opPropertiesWidthPercent, 0, m_width, m_height * m_viewPropertiesHeightPercent);
+    return Bounds(m_width * m_opPropertiesWidthPercent, 0, m_width, m_viewPropertiesHeight);
 }
 Bounds UI::getOperatorPropertiesBounds() const
 {
