@@ -29,8 +29,8 @@ public:
     void finishConnection();
     Connector *activeConnection();
 
-    void startTextInput(glm::vec2 pos);
-    void finishTextInput();
+    void startNodeSelection(glm::vec2 screenPos);
+    void finishNodeSelection();
 
     glm::vec2 screenToWorldPos(glm::vec2 screenPos);
     glm::vec2 worldToScreenPos(glm::vec2 worldPos);
@@ -64,5 +64,5 @@ protected:
     ImU32 connColor(const Connector *connector) const;
 
     void drawNode(ImDrawList *drawList, Node *node);
-    void drawTextBox();
+    void drawNodeSelection();
 };

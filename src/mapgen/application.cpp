@@ -136,7 +136,7 @@ void Application::onKeyChanged(int key, [[maybe_unused]] int scancode, int actio
         case GLFW_KEY_TAB:
             if (m_ui->nodegraph()->bounds().contains(m_ui->cursorPos()))
             {
-                m_ui->nodegraph()->startTextInput(m_ui->cursorPos());
+                m_ui->nodegraph()->startNodeSelection(m_ui->cursorPos());
             }
             break;
         case GLFW_KEY_DELETE:
@@ -165,6 +165,9 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
     {
         if (action == GLFW_PRESS)
         {
+            // The node selection will capture it's own input, clicking outside of it should close it
+            m_ui->nodegraph()->finishNodeSelection();
+
             GraphElement *el = getElementAtPos(m_ui->cursorPos());
             if (el)
             {

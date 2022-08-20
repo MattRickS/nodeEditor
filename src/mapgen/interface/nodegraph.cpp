@@ -67,13 +67,13 @@ Connector *Nodegraph::activeConnection()
     return m_startConnector;
 }
 
-void Nodegraph::startTextInput(glm::vec2 screenPos)
+void Nodegraph::startNodeSelection(glm::vec2 screenPos)
 {
     m_shouldDrawTextbox = true;
     m_inputText = "";
     m_inputTextboxPos = ImVec2(screenPos.x, screenPos.y);
 }
-void Nodegraph::finishTextInput()
+void Nodegraph::finishNodeSelection()
 {
     m_shouldDrawTextbox = false;
 }
@@ -183,41 +183,44 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
     }
 }
 
-void Nodegraph::drawTextBox()
+void Nodegraph::drawNodeSelection()
 {
-    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar;
+    static ImGuiWindowFlags popupFlags = ImGuiWindowFlags_NoTitleBar |
+                                         ImGuiWindowFlags_NoResize |
+                                         ImGuiWindowFlags_NoMove |
+                                         //  ImGuiWindowFlags_NoScrollbar |
+                                         //  ImGuiWindowFlags_AlwaysVerticalScrollbar |
+                                         ImGuiWindowFlags_NoSavedSettings;
+    static bool isOpen = true;
 
-    ImGui::SetNextWindowPos(ImVec2(m_inputTextboxPos.x, m_inputTextboxPos.y));
-    ImGui::SetNextWindowSize(ImVec2(165, 35));
-    ImGui::Begin("NodeLookup", nullptr, flags);
+    // TODO: Draw text input and filter node options
+    ImGui::SetNextWindowPos(m_inputTextboxPos);
+    ImGui::SetNextWindowSize(ImVec2(150, std::min(200.0f, bounds().max().y - m_inputTextboxPos.y)));
+    ImGui::Begin("##NewNodeInput", &isOpen, popupFlags);
+    // ImGui::PushAllowKeyboardFocus(false);
 
-    ImGui::PushItemWidth(150.0f);
-    // TODO: allow inputting text to filter options
-    if (ImGui::BeginCombo("##NewNodeInput", m_inputText.c_str()))
+    for (auto it = Op::OperatorRegistry::begin(); it != Op::OperatorRegistry::end(); ++it)
     {
-        for (auto it = Op::OperatorRegistry::begin(); it != Op::OperatorRegistry::end(); ++it)
+        if (ImGui::Selectable(it->c_str()))
         {
-            bool isSelected = (m_inputText == *it);
-            if (ImGui::Selectable(it->c_str(), isSelected))
-            {
-                newNodeRequested.emit(glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
-                finishTextInput();
-            }
-            if (isSelected)
-            {
-                ImGui::SetItemDefaultFocus();
-            }
+            newNodeRequested.emit(glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
+            finishNodeSelection();
         }
-        ImGui::EndCombo();
     }
-    ImGui::PopItemWidth();
 
+    // ImGui::PopAllowKeyboardFocus();
     ImGui::End();
 }
 
 void Nodegraph::draw()
 {
-    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs;
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |
+                                    ImGuiWindowFlags_NoMove |
+                                    ImGuiWindowFlags_NoResize |
+                                    ImGuiWindowFlags_NoSavedSettings |
+                                    ImGuiWindowFlags_NoBackground |
+                                    ImGuiWindowFlags_NoScrollbar |
+                                    ImGuiWindowFlags_NoInputs;
 
     ImGui::SetNextWindowPos(ImVec2(pos().x, pos().y));
     ImGui::SetNextWindowSize(ImVec2(size().x, size().y));
@@ -246,7 +249,7 @@ void Nodegraph::draw()
 
         if (m_shouldDrawTextbox)
         {
-            drawTextBox();
+            drawNodeSelection();
         }
 
         ImGui::SetWindowFontScale(fontScale);
