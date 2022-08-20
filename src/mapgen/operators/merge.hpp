@@ -23,8 +23,8 @@ namespace Op
         }
         void defaultSettings(Settings *settings) const override
         {
-            // Needs a combo box for mode, eg, over, divide, etc...
-            // settings->registerInt("mode", 0);
+            // TODO: Needs a combo box for selecting mode
+            settings->registerInt("mode", 0);
             settings->registerFloat("blend", 1.0f);
         }
     };
