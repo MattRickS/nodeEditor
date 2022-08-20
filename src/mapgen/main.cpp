@@ -6,6 +6,7 @@
 // Not used, directly, but must be included to be added to registry
 #include "operators/add.hpp"
 #include "operators/constant.hpp"
+#include "operators/gradient.hpp"
 #include "operators/invert.hpp"
 #include "operators/multiply.hpp"
 #include "operators/normals.hpp"
