@@ -7,6 +7,14 @@
 
 namespace Op
 {
+    enum MergeMode
+    {
+        MergeMode_Difference = 0,
+        MergeMode_Max = 1,
+        MergeMode_Min = 2,
+        MergeMode_Over = 3,
+    };
+
     class Merge : public BaseComputeShaderOp
     {
     public:
@@ -24,8 +32,9 @@ namespace Op
         void defaultSettings(Settings *settings) const override
         {
             // TODO: Needs a combo box for selecting mode
-            settings->registerInt("mode", 0);
+            settings->registerInt("mode", (int)MergeMode_Over);
             settings->registerFloat("blend", 1.0f);
+            settings->registerBool("alphaMask", true);
         }
     };
 
