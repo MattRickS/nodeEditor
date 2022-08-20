@@ -442,9 +442,13 @@ void Application::setHoverState(GraphElement *el, glm::vec2 cursorPos) const
 void Application::createNode(glm::ivec2 screenPos, std::string nodeType)
 {
     LOG_INFO("Creating: %s", nodeType.c_str());
+    m_ui->nodegraph()->finishNodeSelection();
+
     NodeID nodeID = m_scene->getCurrentGraph()->createNode(nodeType);
     glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(screenPos);
-    m_scene->getNode(nodeID)->setPos(worldPos);
+    Node *node = m_scene->getNode(nodeID);
+    node->setPos(worldPos);
+    setSelectedNode(node);
 }
 
 void Application::deleteSelectedNode()

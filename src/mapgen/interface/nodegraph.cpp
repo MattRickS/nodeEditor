@@ -193,7 +193,7 @@ void Nodegraph::drawNodeSelection()
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar;
 
     ImGui::SetNextWindowPos(m_inputTextboxPos);
-    ImGui::SetNextWindowSize({165, 300});
+    ImGui::SetNextWindowSize({165, 0});
     ImGui::Begin("NodeLookup", nullptr, flags);
 
     // Ensure the input gets focus, but not if currently selecting one of the nodes
@@ -204,7 +204,26 @@ void Nodegraph::drawNodeSelection()
     ImGui::PushItemWidth(150);
     if (ImGui::InputText("##NodeSelection", m_inputText, MAX_NODE_SEARCH_SIZE, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
     {
-        LOG_DEBUG("Text entered: %s", m_inputText);
+        // If there's only one possible match, create it
+        std::string matchingOp;
+        bool matchFound = false;
+        for (auto it = Op::OperatorRegistry::begin(); it != Op::OperatorRegistry::end(); ++it)
+        {
+            if (containsTextCaseInsensitive(it->c_str(), m_inputText))
+            {
+                if (!matchingOp.empty())
+                {
+                    matchFound = false;
+                    break;
+                }
+                matchingOp = *it;
+                matchFound = true;
+            }
+        }
+        if (matchFound)
+        {
+            newNodeRequested.emit(glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), matchingOp);
+        }
     }
     ImGui::PopItemWidth();
 
@@ -213,7 +232,6 @@ void Nodegraph::drawNodeSelection()
         if (containsTextCaseInsensitive(it->c_str(), m_inputText) && ImGui::Selectable(it->c_str()))
         {
             newNodeRequested.emit(glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
-            finishNodeSelection();
         }
     }
 
