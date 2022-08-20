@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include <GL/glew.h>
 
 #include "constants.h"
@@ -54,4 +56,36 @@ const char *getChannelName(Channel channel)
     default:
         return "";
     }
+}
+
+bool containsTextCaseInsensitive(const char *text, const char *search)
+{
+    size_t i1 = 0;
+    while (text[i1] != '\0')
+    {
+        size_t i2 = 0;
+        while (search[i2] != '\0')
+        {
+            // Search does not fit in the rest of the text
+            if (text[i1 + i2] == '\0')
+            {
+                return false;
+            }
+            // Break on the first mismatching character
+            if (std::tolower(text[i1 + i2]) != std::tolower(search[i2]))
+            {
+                break;
+            }
+            // Keep incrementing search index as long as they match
+            ++i2;
+        }
+        // The whole search string was matched successfully
+        if (search[i2] == '\0')
+        {
+            return true;
+        }
+        ++i1;
+    }
+
+    return false;
 }

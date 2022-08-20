@@ -95,6 +95,13 @@ void Application::onLayerChanged(std::string layerName)
 
 void Application::onKeyChanged(int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mode)
 {
+    // TODO: This could be cleaner, it blocks other UIs rather than closing if reaching outside of it.
+    //       Perhaps the UI onKeyChanged should check which widget is being accessed?
+    if (m_ui->nodegraph()->hasNodeSelection())
+    {
+        return;
+    }
+
     if (action == GLFW_PRESS)
     {
         switch (key)

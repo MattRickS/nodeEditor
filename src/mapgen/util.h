@@ -45,3 +45,4 @@
 
 void makeQuad(GLuint *VAO);
 const char *getChannelName(Channel channel);
+bool containsTextCaseInsensitive(const char *text, const char *search);

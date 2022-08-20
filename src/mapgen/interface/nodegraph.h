@@ -11,6 +11,8 @@
 #include "panel.hpp"
 #include "signal.hpp"
 
+constexpr size_t MAX_NODE_SEARCH_SIZE = 64;
+
 class Nodegraph : public Panel
 {
 public:
@@ -30,6 +32,7 @@ public:
     Connector *activeConnection();
 
     void startNodeSelection(glm::vec2 screenPos);
+    bool hasNodeSelection() const;
     void finishNodeSelection();
 
     glm::vec2 screenToWorldPos(glm::vec2 screenPos);
@@ -58,7 +61,7 @@ protected:
     // New node input
     bool m_shouldDrawTextbox = false;
     ImVec2 m_inputTextboxPos;
-    std::string m_inputText;
+    char m_inputText[MAX_NODE_SEARCH_SIZE]{""};
 
     ImU32 nodeColor(const Node *node) const;
     ImU32 connColor(const Connector *connector) const;

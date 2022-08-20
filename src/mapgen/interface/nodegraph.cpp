@@ -69,9 +69,13 @@ Connector *Nodegraph::activeConnection()
 
 void Nodegraph::startNodeSelection(glm::vec2 screenPos)
 {
+    m_inputText[0] = '\0';
     m_shouldDrawTextbox = true;
-    m_inputText = "";
     m_inputTextboxPos = ImVec2(screenPos.x, screenPos.y);
+}
+bool Nodegraph::hasNodeSelection() const
+{
+    return m_shouldDrawTextbox;
 }
 void Nodegraph::finishNodeSelection()
 {
@@ -185,30 +189,34 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
 
 void Nodegraph::drawNodeSelection()
 {
-    static ImGuiWindowFlags popupFlags = ImGuiWindowFlags_NoTitleBar |
-                                         ImGuiWindowFlags_NoResize |
-                                         ImGuiWindowFlags_NoMove |
-                                         //  ImGuiWindowFlags_NoScrollbar |
-                                         //  ImGuiWindowFlags_AlwaysVerticalScrollbar |
-                                         ImGuiWindowFlags_NoSavedSettings;
-    static bool isOpen = true;
 
-    // TODO: Draw text input and filter node options
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar;
+
     ImGui::SetNextWindowPos(m_inputTextboxPos);
-    ImGui::SetNextWindowSize(ImVec2(150, std::min(200.0f, bounds().max().y - m_inputTextboxPos.y)));
-    ImGui::Begin("##NewNodeInput", &isOpen, popupFlags);
-    // ImGui::PushAllowKeyboardFocus(false);
+    ImGui::SetNextWindowSize({165, 300});
+    ImGui::Begin("NodeLookup", nullptr, flags);
+
+    // Ensure the input gets focus, but not if currently selecting one of the nodes
+    if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+    {
+        ImGui::SetKeyboardFocusHere(0);
+    }
+    ImGui::PushItemWidth(150);
+    if (ImGui::InputText("##NodeSelection", m_inputText, MAX_NODE_SEARCH_SIZE, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+        LOG_DEBUG("Text entered: %s", m_inputText);
+    }
+    ImGui::PopItemWidth();
 
     for (auto it = Op::OperatorRegistry::begin(); it != Op::OperatorRegistry::end(); ++it)
     {
-        if (ImGui::Selectable(it->c_str()))
+        if (containsTextCaseInsensitive(it->c_str(), m_inputText) && ImGui::Selectable(it->c_str()))
         {
             newNodeRequested.emit(glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
             finishNodeSelection();
         }
     }
 
-    // ImGui::PopAllowKeyboardFocus();
     ImGui::End();
 }
 
