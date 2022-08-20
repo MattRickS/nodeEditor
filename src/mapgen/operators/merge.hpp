@@ -61,6 +61,7 @@ namespace Op
             settings->registerInt("mode", (int)MergeMode_Over);
             settings->registerFloat("blend", 1.0f);
             settings->registerBool("alphaMask", true);
+            settings->registerInt("maskChannel", 3);
         }
     };
 
