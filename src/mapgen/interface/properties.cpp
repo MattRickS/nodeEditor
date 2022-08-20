@@ -85,7 +85,7 @@ void Properties::drawFloatSetting(Node *node, const Setting &setting)
 {
     float value = setting.value<float>();
     // TODO: Setting options for min/max
-    if (ImGui::SliderFloat(setting.name().c_str(), &value, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
+    if (ImGui::SliderFloat(setting.name().c_str(), &value, 0, 100, "%.3f")) // ImGuiSliderFlags_Logarithmic
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawFloat2Setting(Node *node, const Setting &setting)

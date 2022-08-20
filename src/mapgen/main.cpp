@@ -8,6 +8,7 @@
 #include "operators/constant.hpp"
 #include "operators/gradient.hpp"
 #include "operators/invert.hpp"
+#include "operators/merge.hpp"
 #include "operators/multiply.hpp"
 #include "operators/normals.hpp"
 #include "operators/offset.hpp"

@@ -17,10 +17,6 @@ namespace Op
 
         Gradient() : BaseComputeShaderOp("src/mapgen/operators/gradient.glsl") {}
         std::string name() const override { return "Gradient"; }
-        std::vector<Input> inputs() const override
-        {
-            return {{"", false}};
-        }
         void defaultSettings(Settings *settings) const override
         {
             settings->registerFloat2("start", glm::vec2(0));

@@ -1,7 +1,6 @@
 #version 430 core
 layout(local_size_x = 8, local_size_y = 4) in;
-layout(rgba32f, binding=0) uniform image2D imgIn;
-layout(rgba32f, binding=1) uniform image2D imgOut;
+layout(rgba32f, binding=0) uniform image2D imgOut;
 
 uniform vec2 start;
 uniform vec2 end;
