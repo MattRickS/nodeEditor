@@ -91,20 +91,20 @@ void Settings::registerFloat(const std::string name, float value, float min, flo
     validateUniqueSetting(name);
     m_settings[name] = Setting(name, SettingType_Float, value, min, max, hints);
 }
-void Settings::registerFloat2(const std::string name, glm::vec2 value, SettingHint hints)
+void Settings::registerFloat2(const std::string name, glm::vec2 value, float min, float max, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Float2, value, hints);
+    m_settings[name] = Setting(name, SettingType_Float2, value, min, max, hints);
 }
-void Settings::registerFloat3(const std::string name, glm::vec3 value, SettingHint hints)
+void Settings::registerFloat3(const std::string name, glm::vec3 value, float min, float max, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Float3, value, hints);
+    m_settings[name] = Setting(name, SettingType_Float3, value, min, max, hints);
 }
-void Settings::registerFloat4(const std::string name, glm::vec4 value, SettingHint hints)
+void Settings::registerFloat4(const std::string name, glm::vec4 value, float min, float max, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Float4, value, hints);
+    m_settings[name] = Setting(name, SettingType_Float4, value, min, max, hints);
 }
 void Settings::registerInt2(const std::string name, glm::ivec2 value, SettingHint hints)
 {

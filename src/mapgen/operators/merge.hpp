@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "../constants.h"
 #include "../operator.h"
 #include "../settings.h"
 
@@ -92,7 +93,7 @@ namespace Op
                                    {"xor", MergeMode_Xor}});
             settings->registerFloat("blend", 1.0f);
             settings->registerBool("alphaMask", true);
-            settings->registerInt("maskChannel", 3, 0, 3, SettingHint_Channel);
+            settings->registerInt("maskChannel", ::Channel_Alpha, 0, 3, SettingHint_Channel);
         }
     };
 

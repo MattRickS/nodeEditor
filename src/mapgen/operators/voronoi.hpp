@@ -19,7 +19,7 @@ namespace Op
         void defaultSettings(Settings *settings) const override
         {
             settings->registerInt2("offset", glm::ivec2(0));
-            settings->registerFloat("size", 100.0f);
+            settings->registerFloat("size", 100.0f, 1.0f, 2048.0f);
             settings->registerFloat("skew", 0.5f);
         }
     };

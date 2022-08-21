@@ -24,10 +24,10 @@ enum SettingType
 
 enum SettingHint
 {
-    SettingHint_None,
-    SettingHint_Channel,     // Displays a channel selector. Supports Int
-    SettingHint_Color,       // Displays as a color. Supports Float3, Float4
-    SettingHint_Logarithmic, // UI interaction will make it easier to select smaller values. Supports Float
+    SettingHint_None = 0,
+    SettingHint_Channel = 1 << 0,     // Displays a channel selector. Supports Int
+    SettingHint_Color = 1 << 1,       // Displays as a color. Supports Float3, Float4
+    SettingHint_Logarithmic = 1 << 2, // UI interaction will make it easier to select smaller values. Supports Float
 };
 
 class Setting
@@ -107,11 +107,11 @@ public:
     void registerInt(const std::string name, int value, SettingChoices choices);
     void registerFloat(const std::string name, float value, float min = 0.0f, float max = 1.0f, SettingHint hints = SettingHint_None);
     void registerFloat(const std::string name, float value, SettingChoices choices);
-    void registerFloat2(const std::string name, glm::vec2 value, SettingHint hints = SettingHint_None);
+    void registerFloat2(const std::string name, glm::vec2 value, float min = 0.0f, float max = 1.0f, SettingHint hints = SettingHint_None);
     void registerFloat2(const std::string name, glm::vec2 value, SettingChoices choices);
-    void registerFloat3(const std::string name, glm::vec3 value, SettingHint hints = SettingHint_None);
+    void registerFloat3(const std::string name, glm::vec3 value, float min = 0.0f, float max = 1.0f, SettingHint hints = SettingHint_None);
     void registerFloat3(const std::string name, glm::vec3 value, SettingChoices choices);
-    void registerFloat4(const std::string name, glm::vec4 value, SettingHint hints = SettingHint_None);
+    void registerFloat4(const std::string name, glm::vec4 value, float min = 0.0f, float max = 1.0f, SettingHint hints = SettingHint_None);
     void registerFloat4(const std::string name, glm::vec4 value, SettingChoices choices);
     void registerInt2(const std::string name, glm::ivec2 value, SettingHint hints = SettingHint_None);
     void registerInt2(const std::string name, glm::ivec2 value, SettingChoices choices);

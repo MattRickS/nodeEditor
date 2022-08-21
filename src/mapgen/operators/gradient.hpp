@@ -21,8 +21,8 @@ namespace Op
         {
             settings->registerFloat2("start", glm::vec2(0));
             settings->registerFloat2("end", glm::vec2(100));
-            settings->registerFloat4("startColour", glm::vec4(1));
-            settings->registerFloat4("endColour", glm::vec4(0));
+            settings->registerFloat4("startColour", glm::vec4(1), 0.0f, 1.0f, SettingHint_Color);
+            settings->registerFloat4("endColour", glm::vec4(0), 0.0f, 1.0f, SettingHint_Color);
             settings->registerFloat("falloff", 1.0f);
         }
     };
