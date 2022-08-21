@@ -22,10 +22,10 @@ namespace Op
         void defaultSettings(Settings *settings) const override
         {
             settings->registerFloat3("offset", glm::vec3(1));
-            settings->registerInt("octaves", 8);
-            settings->registerFloat("frequency", 0.003f);
-            settings->registerFloat("amplitude", 1.0f);
-            settings->registerFloat("lacunarity", 1.5f);
+            settings->registerInt("octaves", 8, 1, 16);
+            settings->registerFloat("frequency", 0.003f, 0.0f, 1.0f, SettingHint_Logarithmic);
+            settings->registerFloat("amplitude", 1.0f, 0.01f, 100.0f, SettingHint_Logarithmic);
+            settings->registerFloat("lacunarity", 1.5f, 0.01f, 100.0f, SettingHint_Logarithmic);
             settings->registerFloat("persistence", 0.66f);
         }
     };

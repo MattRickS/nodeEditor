@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "../constants.h"
 #include "../operator.h"
 #include "../settings.h"
 
@@ -23,8 +24,8 @@ namespace Op
         }
         void defaultSettings(Settings *settings) const override
         {
-            settings->registerFloat("scale", true);
-            settings->registerUInt("channel", 0);
+            settings->registerFloat("scale", true, 0.01f, 100.0f);
+            settings->registerInt("channel", ::Channel_Red, 0, 3, SettingHint_Channel);
         }
     };
 

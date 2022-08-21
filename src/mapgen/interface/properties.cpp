@@ -1,8 +1,42 @@
+#include <sstream>
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
 #include "properties.h"
+
+const SettingChoices CHANNEL_CHOICES{
+    {"red", 0},
+    {"green", 1},
+    {"blue", 2},
+    {"alpha", 3}};
+const float DEFAULT_FLOAT_SLIDER_SPEED = 0.01f;
+
+SettingChoices rangedChannelChoices(const Setting &setting)
+{
+    SettingChoices choices;
+    int min = setting.min<int>();
+    int max = setting.max<int>();
+    for (auto pair : CHANNEL_CHOICES)
+    {
+        if (min <= std::get<int>(pair.second) && std::get<int>(pair.second) <= max)
+        {
+            choices.emplace(pair);
+        }
+    }
+    return choices;
+}
+
+ImGuiSliderFlags sliderFlags(const Setting &setting)
+{
+    ImGuiSliderFlags flags = ImGuiSliderFlags_NoRoundToFormat;
+    if (setting.hints() & SettingHint_Logarithmic)
+    {
+        flags |= ImGuiSliderFlags_Logarithmic;
+    }
+    return flags;
+}
 
 Properties::Properties(Bounds bounds) : Panel(bounds) {}
 
@@ -45,6 +79,12 @@ void Properties::drawNodeSettings(Node *node)
     }
     for (auto it = node->settings()->begin(); it != node->settings()->end(); ++it)
     {
+        if (it->hasChoices())
+        {
+            drawSettingChoices(node, *it);
+            continue;
+        }
+
         switch (it->type())
         {
         case SettingType_Bool:
@@ -84,33 +124,57 @@ void Properties::drawBoolSetting(Node *node, const Setting &setting)
 void Properties::drawFloatSetting(Node *node, const Setting &setting)
 {
     float value = setting.value<float>();
-    // TODO: Setting options for min/max
-    if (ImGui::SliderFloat(setting.name().c_str(), &value, 0, 100, "%.3f")) // ImGuiSliderFlags_Logarithmic
+    if (ImGui::SliderFloat(setting.name().c_str(), &value, setting.min<float>(), setting.max<float>(), "%.3f", sliderFlags(setting)))
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawFloat2Setting(Node *node, const Setting &setting)
 {
     glm::vec2 value = setting.value<glm::vec2>();
-    if (ImGui::DragFloat2(setting.name().c_str(), (float *)&value))
+    if (ImGui::DragFloat2(setting.name().c_str(), (float *)&value, DEFAULT_FLOAT_SLIDER_SPEED, setting.min<float>(), setting.max<float>(), "%.3f", sliderFlags(setting)))
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawFloat3Setting(Node *node, const Setting &setting)
 {
     glm::vec3 value = setting.value<glm::vec3>();
-    if (ImGui::DragFloat3(setting.name().c_str(), (float *)&value))
+    if (setting.hints() & SettingHint_Color)
+    {
+        // XXX: Providing the flags doesn't seem to change behaviour but triggers a change every frame
+        if (ImGui::ColorEdit3(setting.name().c_str(), (float *)&value)) // ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR
+            opSettingChanged.emit(node, setting.name(), value);
+        return;
+    }
+
+    if (ImGui::DragFloat3(setting.name().c_str(), (float *)&value, DEFAULT_FLOAT_SLIDER_SPEED, setting.min<float>(), setting.max<float>(), "%.3f", sliderFlags(setting)))
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawFloat4Setting(Node *node, const Setting &setting)
 {
     glm::vec4 value = setting.value<glm::vec4>();
-    if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value))
+    if (setting.hints() & SettingHint_Color)
+    {
+        // XXX: Providing the flags doesn't seem to change behaviour but triggers a change every frame
+        if (ImGui::ColorEdit4(setting.name().c_str(), (float *)&value)) // ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR
+        {
+            opSettingChanged.emit(node, setting.name(), value);
+        }
+        return;
+    }
+
+    if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value, DEFAULT_FLOAT_SLIDER_SPEED, setting.min<float>(), setting.max<float>(), "%.3f", sliderFlags(setting)))
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawIntSetting(Node *node, const Setting &setting)
 {
     int value = setting.value<int>();
-    if (ImGui::InputInt(setting.name().c_str(), &value))
-        opSettingChanged.emit(node, setting.name(), value);
+    if (setting.hints() & SettingHint_Channel)
+    {
+        drawChoices(node, setting.name().c_str(), rangedChannelChoices(setting), currentChoice(CHANNEL_CHOICES, value).c_str());
+    }
+    else
+    {
+        if (ImGui::InputInt(setting.name().c_str(), &value, setting.min<int>(), setting.max<int>()))
+            opSettingChanged.emit(node, setting.name(), value);
+    }
 }
 void Properties::drawInt2Setting(Node *node, const Setting &setting)
 {
@@ -123,4 +187,26 @@ void Properties::drawUIntSetting(Node *node, const Setting &setting)
     unsigned int value = setting.value<unsigned int>();
     if (ImGui::InputScalar(setting.name().c_str(), ImGuiDataType_U32, &value))
         opSettingChanged.emit(node, setting.name(), value);
+}
+
+void Properties::drawSettingChoices(Node *node, const Setting &setting)
+{
+    drawChoices(node, setting.name().c_str(), setting.choices(), setting.currentChoice().c_str());
+}
+
+void Properties::drawChoices(Node *node, const char *name, const SettingChoices &choices, const char *currChoice)
+{
+    std::ostringstream s;
+    s << name << "##Setting" << node->name().c_str();
+    if (ImGui::BeginCombo(s.str().c_str(), currChoice))
+    {
+        for (auto it = choices.cbegin(); it != choices.cend(); ++it)
+        {
+            if (ImGui::Selectable(it->first.c_str(), it->first == currChoice))
+            {
+                opSettingChanged.emit(node, name, it->second);
+            }
+        }
+        ImGui::EndCombo();
+    }
 }

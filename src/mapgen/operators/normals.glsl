@@ -4,7 +4,7 @@ layout(rgba32f, binding=0) uniform image2D imgIn;
 layout(rgba32f, binding=1) uniform image2D imgOut;
 
 uniform float scale;
-uniform uint channel;
+uniform int channel;
 
 void main(){
     ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);

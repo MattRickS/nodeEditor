@@ -34,4 +34,6 @@ protected:
     void drawIntSetting(Node *node, const Setting &setting);
     void drawInt2Setting(Node *node, const Setting &setting);
     void drawUIntSetting(Node *node, const Setting &setting);
+    void drawSettingChoices(Node *node, const Setting &setting);
+    void drawChoices(Node *node, const char *name, const SettingChoices &choices, const char *currChoice);
 };
