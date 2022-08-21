@@ -34,6 +34,7 @@ void Viewport::draw()
 
     glActiveTexture(GL_TEXTURE0);
     Channel channel = m_isolateChannel;
+    glm::mat4 model{1.0f};
     // Takes node and layer so it can read the texture live as it's processed
     if (m_scene && m_nodeID && !m_layer.empty())
     {
@@ -44,11 +45,13 @@ void Viewport::draw()
             if (it != node->renderSet()->end())
             {
                 glBindTexture(GL_TEXTURE_2D, it->second->ID);
+                model = glm::scale(model, glm::vec3(it->second->width / it->second->height, 1, 1));
             }
         }
     }
 
     m_viewShader.use();
+    m_viewShader.setMat4("model", model);
     m_viewShader.setMat4("view", m_camera.view);
     m_viewShader.setMat4("projection", m_camera.projection);
     m_viewShader.setInt("renderTexture", 0);
