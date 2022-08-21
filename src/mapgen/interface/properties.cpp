@@ -77,6 +77,12 @@ void Properties::drawNodeSettings(Node *node)
     {
         return;
     }
+    if (node->definesDimensions())
+    {
+        glm::ivec2 dimensions = node->dimensions();
+        if (ImGui::DragInt2("size", (int *)&dimensions))
+            nodeSizeChanged.emit(node, dimensions);
+    }
     for (auto it = node->settings()->begin(); it != node->settings()->end(); ++it)
     {
         if (it->hasChoices())

@@ -61,6 +61,46 @@ std::string Node::name() const { return m_name; }
 State Node::state() const { return m_state; }
 const RenderSet *Node::renderSet() const { return &m_renderSet; }
 
+bool Node::definesDimensions() const
+{
+    return numInputs() == 0;
+}
+
+glm::ivec2 Node::dimensions() const
+{
+    if (definesDimensions())
+    {
+        return m_dimensions;
+    }
+    else if (m_inputTextures.empty())
+    {
+        return {0, 0};
+    }
+    else
+    {
+        return {m_inputTextures[0]->width, m_inputTextures[0]->height};
+    }
+}
+size_t Node::width() const
+{
+    return dimensions().x;
+}
+size_t Node::height() const
+{
+    return dimensions().y;
+}
+bool Node::setDimensions(glm::ivec2 dimensions)
+{
+    if (!definesDimensions())
+    {
+        LOG_ERROR("Cannot set dimensions for node %s", name().c_str());
+        return false;
+    }
+    m_dimensions = dimensions;
+    setDirty(true);
+    return true;
+}
+
 // Maybe settings needs a redo so that the register methods are on the node, and the settings object it exposes is immutable
 // This ensures settings are only updated through updateSetting() so that the dirty bit can be set
 Settings *Node::settings() { return &m_settings; }
@@ -258,10 +298,8 @@ const RenderSet *Node::evaluateInputs()
 
 void Node::evaluateOutputs()
 {
-    // TODO: These will eventually need to be picked up from input metadata
-    //       or via some alternate mechanism if the node has no inputs (eg,
-    //       it only creates content)
-    unsigned int width = 1024, height = 1024;
+    unsigned int width = this->width(), height = this->height();
+
     for (size_t i = 0; i < numOutputs(); ++i)
     {
         if (m_outputTextures.size() <= i)

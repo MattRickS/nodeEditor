@@ -12,6 +12,7 @@ class Properties : public Panel
 {
 public:
     Signal<Node *, std::string, SettingValue> opSettingChanged;
+    Signal<Node *, glm::ivec2> nodeSizeChanged;
     Signal<bool> pauseToggled;
 
     Properties(Bounds bounds);

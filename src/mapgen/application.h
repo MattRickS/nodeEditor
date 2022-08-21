@@ -64,4 +64,5 @@ protected:
     void deleteSelectedNode();
     void setViewNode(Node *node);
     void updateSetting(Node *node, std::string key, SettingValue value);
+    void onNodeSizeChanged(Node *node, glm::ivec2 dimensions);
 };

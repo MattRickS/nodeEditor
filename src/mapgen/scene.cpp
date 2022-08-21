@@ -25,8 +25,8 @@ Scene::~Scene()
 }
 
 const Context *Scene::context() const { return &m_context; }
-unsigned int Scene::Width() const { return m_width.load(); }
-unsigned int Scene::Height() const { return m_height.load(); }
+unsigned int Scene::width() const { return m_width.load(); }
+unsigned int Scene::height() const { return m_height.load(); }
 
 Graph *Scene::getCurrentGraph() { return &m_graph; }
 Node *Scene::getCurrentNode() { return m_currNode; }

@@ -25,6 +25,14 @@ public:
     State state() const;
     const RenderSet *renderSet() const;
 
+    // A node's dimensions are taken from it's first input. These methods can be
+    // used to assign default dimensions if it has no inputs.
+    virtual bool definesDimensions() const;
+    glm::ivec2 dimensions() const;
+    size_t width() const;
+    size_t height() const;
+    bool setDimensions(glm::ivec2 dimensions);
+
     // Maybe settings needs a redo so that the register methods are on the node, and the settings object it exposes is immutable
     // This ensures settings are only updated through updateSetting() so that the dirty bit can be set
     Settings *settings();
@@ -53,6 +61,7 @@ protected:
     std::string m_name;
     Op::Operator *m_op;
     Settings m_settings;
+    glm::ivec2 m_dimensions{1024, 1024};
     std::vector<InputConnector> m_inputs;
     std::vector<OutputConnector> m_outputs;
 

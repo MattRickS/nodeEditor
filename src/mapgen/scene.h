@@ -22,8 +22,8 @@ public:
     ~Scene();
 
     const Context *context() const;
-    unsigned int Width() const;
-    unsigned int Height() const;
+    unsigned int width() const;
+    unsigned int height() const;
 
     // Gets the graph currently being processed
     Graph *getCurrentGraph();

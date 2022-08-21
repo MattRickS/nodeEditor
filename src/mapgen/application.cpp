@@ -22,7 +22,7 @@
 Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
 {
     // prep a buffer for reading the image values
-    buffer = new float[m_scene->Width() * m_scene->Height() * 4];
+    buffer = new float[m_scene->width() * m_scene->height() * 4];
 
     m_ui->setScene(mapmaker);
     m_ui->viewportProperties()->setPixelPreview(&m_pixelPreview);
@@ -39,6 +39,7 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     m_ui->sizeChanged.connect(this, &Application::onResize);
     m_ui->closeRequested.connect(this, &Application::close);
     m_ui->nodegraph()->newNodeRequested.connect(this, &Application::createNode);
+    m_ui->properties()->nodeSizeChanged.connect(this, &Application::onNodeSizeChanged);
     m_ui->properties()->opSettingChanged.connect(this, &Application::updateSetting);
     m_ui->properties()->pauseToggled.connect(this, &Application::togglePause);
     m_ui->viewportProperties()->channelChanged.connect(this, &Application::onChannelChanged);
@@ -339,8 +340,8 @@ void Application::updatePixelPreview(double xpos, double ypos)
     glm::vec2 worldPos = m_ui->screenToWorldPos({xpos, m_ui->height() - ypos});
     if (worldPos.x >= 0 && worldPos.x < 1 && worldPos.y >= 0 && worldPos.y < 1)
     {
-        int x = worldPos.x * m_scene->Width();
-        int y = worldPos.y * m_scene->Height();
+        int x = worldPos.x * m_scene->width();
+        int y = worldPos.y * m_scene->height();
         m_pixelPreview.pos = {x, y};
         // TODO: Only reads from buffer. Current framebuffer only has 0-1 values.
         //       Could mount the texture to a storage buffer, but not sure if that
@@ -356,7 +357,7 @@ void Application::updatePixelPreview(double xpos, double ypos)
         {
             glBindTexture(GL_TEXTURE_2D, texptr->ID);
             glGetTexImage(GL_TEXTURE_2D, 0, texptr->format, GL_FLOAT, buffer);
-            size_t index = (y * m_scene->Width() + x) * texptr->numChannels();
+            size_t index = (y * m_scene->width() + x) * texptr->numChannels();
             for (size_t i = 0; i < 4; ++i)
                 m_pixelPreview.value[i] = i < texptr->numChannels() ? buffer[index + i] : 0.0f;
         }
@@ -472,5 +473,13 @@ void Application::updateSetting(Node *node, std::string key, SettingValue value)
 {
     node->updateSetting(key, value);
     // Must also set the scene as dirty so that the graph is re-evaluated
+    m_scene->setDirty();
+}
+
+void Application::onNodeSizeChanged(Node *node, glm::ivec2 dimensions)
+{
+    node->setDimensions(dimensions);
+    delete[] buffer;
+    buffer = new float[dimensions.x * dimensions.y * 4];
     m_scene->setDirty();
 }
