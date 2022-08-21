@@ -2,6 +2,7 @@
 #include <map>
 #include <string>
 #include <variant>
+#include <vector>
 
 #include <glm/glm.hpp>
 
@@ -71,32 +72,16 @@ private:
 class Settings
 {
 public:
-    typedef std::map<std::string, Setting>::iterator pair_iterator;
-    typedef std::map<std::string, Setting>::const_iterator const_pair_iterator;
+    typedef std::vector<Setting>::iterator iterator;
+    typedef std::vector<Setting>::const_iterator const_iterator;
 
-    class value_iterator : public pair_iterator
-    {
-    public:
-        value_iterator() : pair_iterator() {}
-        value_iterator(pair_iterator it) : pair_iterator(it) {}
-        Setting *operator->() { return &(pair_iterator::operator->()->second); }
-        Setting &operator*() { return pair_iterator::operator*().second; }
-    };
-    class const_value_iterator : public const_pair_iterator
-    {
-    public:
-        const_value_iterator() : const_pair_iterator() {}
-        const_value_iterator(const_pair_iterator it) : const_pair_iterator(it) {}
-        const Setting *operator->() { return &(const_pair_iterator::operator->()->second); }
-        const Setting &operator*() { return const_pair_iterator::operator*().second; }
-    };
-
-    value_iterator begin();
-    value_iterator end();
-    const_value_iterator cbegin() const;
-    const_value_iterator cend() const;
+    iterator begin();
+    iterator end();
+    const_iterator cbegin() const;
+    const_iterator cend() const;
 
     Setting *get(const std::string key);
+    const Setting *get(const std::string key) const;
 
     // TODO: Add additional registration options and separate set methods
     void registerBool(const std::string name, bool value, SettingHint hints = SettingHint_None);
@@ -126,9 +111,7 @@ public:
     glm::ivec2 getInt2(const std::string key) const;
 
 protected:
-    // TODO: Use a vector so settings are ordered
-    std::map<std::string, Setting> m_settings;
+    std::vector<Setting> m_settings;
 
     void validateUniqueSetting(const std::string &name) const;
-    void validateKeyExists(const std::string &name) const;
 };
