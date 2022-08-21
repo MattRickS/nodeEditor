@@ -338,30 +338,40 @@ void Application::updatePixelPreview(double xpos, double ypos)
 {
     // Invert the screen y-pos to get world position
     glm::vec2 worldPos = m_ui->screenToWorldPos({xpos, m_ui->height() - ypos});
-    if (worldPos.x >= 0 && worldPos.x < 1 && worldPos.y >= 0 && worldPos.y < 1)
+    const Texture *texptr = currentTexture();
+    if (texptr)
     {
-        int x = worldPos.x * m_scene->width();
-        int y = worldPos.y * m_scene->height();
-        m_pixelPreview.pos = {x, y};
-        // TODO: Only reads from buffer. Current framebuffer only has 0-1 values.
-        //       Could mount the texture to a storage buffer, but not sure if that
-        //       will improve retrieved values/performance
-        // glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
-
-        // TODO: If keeping this method, only read the texture data once when
-        // - requested
-        // - active texture has changed / was processed further
-        glActiveTexture(GL_TEXTURE0);
-        const Texture *texptr = currentTexture();
-        if (texptr)
+        float ratio = 0.5f * float(texptr->width) / texptr->height;
+        if (worldPos.x >= (0.5f - ratio) && worldPos.x < (0.5f + ratio) && worldPos.y >= 0 && worldPos.y < 1)
         {
+            // TODO: Only reads from buffer. Current framebuffer only has 0-1 values.
+            //       Could mount the texture to a storage buffer, but not sure if that
+            //       will improve retrieved values/performance
+            // glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
+
+            // TODO: If keeping this method, only read the texture data once when
+            // - requested
+            // - active texture has changed / was processed further
+            glActiveTexture(GL_TEXTURE0);
+
+            int x = (worldPos.x - (0.5f - ratio)) / (2 * ratio) * texptr->width;
+            int y = worldPos.y * texptr->height;
+            m_pixelPreview.pos = {x, y};
+
             glBindTexture(GL_TEXTURE_2D, texptr->ID);
             glGetTexImage(GL_TEXTURE_2D, 0, texptr->format, GL_FLOAT, buffer);
-            size_t index = (y * m_scene->width() + x) * texptr->numChannels();
+            size_t index = (y * texptr->width + x) * texptr->numChannels();
             for (size_t i = 0; i < 4; ++i)
+            {
                 m_pixelPreview.value[i] = i < texptr->numChannels() ? buffer[index + i] : 0.0f;
+            }
+
+            return;
         }
     }
+    // fallback on empty values
+    m_pixelPreview.pos = {0, 0};
+    m_pixelPreview.value = {0, 0, 0, 0};
 }
 
 void Application::updateProjection()

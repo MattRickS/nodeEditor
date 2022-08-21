@@ -45,7 +45,7 @@ void Viewport::draw()
             if (it != node->renderSet()->end())
             {
                 glBindTexture(GL_TEXTURE_2D, it->second->ID);
-                model = glm::scale(model, glm::vec3(it->second->width / it->second->height, 1, 1));
+                model = glm::scale(model, glm::vec3(float(it->second->width) / it->second->height, 1, 1));
             }
         }
     }
