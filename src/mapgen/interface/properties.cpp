@@ -1,8 +1,16 @@
+#include <sstream>
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
 #include "properties.h"
+
+const SettingChoices channelChoices{
+    {"red", 0},
+    {"green", 1},
+    {"blue", 2},
+    {"alpha", 3}};
 
 Properties::Properties(Bounds bounds) : Panel(bounds) {}
 
@@ -102,20 +110,47 @@ void Properties::drawFloat2Setting(Node *node, const Setting &setting)
 void Properties::drawFloat3Setting(Node *node, const Setting &setting)
 {
     glm::vec3 value = setting.value<glm::vec3>();
-    if (ImGui::DragFloat3(setting.name().c_str(), (float *)&value))
-        opSettingChanged.emit(node, setting.name(), value);
+    if (setting.hints() & SettingHint_Color)
+    {
+        // XXX: Providing the flags doesn't seem to change behaviour but triggers a change every frame
+        if (ImGui::ColorEdit3(setting.name().c_str(), (float *)&value)) // ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR
+            opSettingChanged.emit(node, setting.name(), value);
+    }
+    else
+    {
+        if (ImGui::DragFloat3(setting.name().c_str(), (float *)&value))
+            opSettingChanged.emit(node, setting.name(), value);
+    }
 }
 void Properties::drawFloat4Setting(Node *node, const Setting &setting)
 {
     glm::vec4 value = setting.value<glm::vec4>();
-    if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value))
-        opSettingChanged.emit(node, setting.name(), value);
+    if (setting.hints() & SettingHint_Color)
+    {
+        // XXX: Providing the flags doesn't seem to change behaviour but triggers a change every frame
+        if (ImGui::ColorEdit4(setting.name().c_str(), (float *)&value)) // ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR
+        {
+            opSettingChanged.emit(node, setting.name(), value);
+        }
+    }
+    else
+    {
+        if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value))
+            opSettingChanged.emit(node, setting.name(), value);
+    }
 }
 void Properties::drawIntSetting(Node *node, const Setting &setting)
 {
     int value = setting.value<int>();
-    if (ImGui::InputInt(setting.name().c_str(), &value, setting.min<int>(), setting.max<int>()))
-        opSettingChanged.emit(node, setting.name(), value);
+    if (setting.hints() & SettingHint_Channel)
+    {
+        drawChoices(node, setting.name().c_str(), channelChoices, currentChoice(channelChoices, value).c_str());
+    }
+    else
+    {
+        if (ImGui::InputInt(setting.name().c_str(), &value, setting.min<int>(), setting.max<int>()))
+            opSettingChanged.emit(node, setting.name(), value);
+    }
 }
 void Properties::drawInt2Setting(Node *node, const Setting &setting)
 {
@@ -132,17 +167,22 @@ void Properties::drawUIntSetting(Node *node, const Setting &setting)
 
 void Properties::drawSettingChoices(Node *node, const Setting &setting)
 {
-    if (ImGui::BeginCombo(("##Setting" + node->name() + setting.name()).c_str(), setting.currentChoice().c_str()))
+    drawChoices(node, setting.name().c_str(), setting.choices(), setting.currentChoice().c_str());
+}
+
+void Properties::drawChoices(Node *node, const char *name, const SettingChoices &choices, const char *currChoice)
+{
+    std::ostringstream s;
+    s << name << "##Setting" << node->name().c_str();
+    if (ImGui::BeginCombo(s.str().c_str(), currChoice))
     {
-        for (auto it = setting.choices().cbegin(); it != setting.choices().cend(); ++it)
+        for (auto it = choices.cbegin(); it != choices.cend(); ++it)
         {
-            if (ImGui::Selectable(it->first.c_str(), it->first == setting.currentChoice()))
+            if (ImGui::Selectable(it->first.c_str(), it->first == currChoice))
             {
-                opSettingChanged.emit(node, setting.name(), it->second);
+                opSettingChanged.emit(node, name, it->second);
             }
         }
         ImGui::EndCombo();
     }
-    ImGui::SameLine();
-    ImGui::TextUnformatted(setting.name().c_str());
 }

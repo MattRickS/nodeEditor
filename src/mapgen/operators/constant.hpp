@@ -19,7 +19,7 @@ namespace Op
         std::string name() const override { return "Constant"; }
         void defaultSettings(Settings *settings) const override
         {
-            settings->registerFloat4("color", glm::vec4(0, 0, 0, 1));
+            settings->registerFloat4("color", glm::vec4(0, 0, 0, 1), SettingHint_Color);
         }
     };
 

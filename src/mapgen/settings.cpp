@@ -8,14 +8,27 @@
 
 const std::string EMPTY_STRING = "";
 
+const std::string &currentChoice(SettingChoices choices, SettingValue value)
+{
+    for (auto it = choices.cbegin(); it != choices.cend(); ++it)
+    {
+        if (it->second == value)
+        {
+            return it->first;
+        }
+    }
+    return EMPTY_STRING;
+}
+
 // =============================================================================
 // Setting
 Setting::Setting() {}
-Setting::Setting(const std::string name, const SettingType type, SettingValue value) : m_name(name), m_type(type), m_value(value) {}
+Setting::Setting(const std::string name, const SettingType type, SettingValue value, SettingHint hints) : m_name(name), m_type(type), m_value(value), m_hints(hints) {}
 Setting::Setting(const std::string name, const SettingType type, SettingValue value, SettingChoices choices) : m_name(name), m_type(type), m_value(value), m_choices(choices) {}
-Setting::Setting(const std::string name, const SettingType type, SettingValue value, SettingValue min, SettingValue max) : m_name(name), m_type(type), m_value(value), m_min(min), m_max(max) {}
+Setting::Setting(const std::string name, const SettingType type, SettingValue value, SettingValue min, SettingValue max, SettingHint hints) : m_name(name), m_type(type), m_value(value), m_hints(hints), m_min(min), m_max(max) {}
 const std::string &Setting::name() const { return m_name; }
 SettingType Setting::type() const { return m_type; }
+SettingHint Setting::hints() const { return m_hints; }
 
 void Setting::set(SettingValue value) { m_value = value; }
 
@@ -23,14 +36,7 @@ bool Setting::hasChoices() const { return !m_choices.empty(); }
 const SettingChoices &Setting::choices() const { return m_choices; }
 const std::string &Setting::currentChoice() const
 {
-    for (auto it = m_choices.cbegin(); it != m_choices.cend(); ++it)
-    {
-        if (it->second == m_value)
-        {
-            return it->first;
-        }
-    }
-    return EMPTY_STRING;
+    return ::currentChoice(m_choices, m_value);
 }
 
 // =============================================================================
@@ -65,45 +71,45 @@ Setting *Settings::get(const std::string key)
     }
     return &m_settings[key];
 }
-void Settings::registerBool(const std::string name, bool value)
+void Settings::registerBool(const std::string name, bool value, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Bool, value);
+    m_settings[name] = Setting(name, SettingType_Bool, value, hints);
 }
-void Settings::registerUInt(const std::string name, unsigned int value, unsigned int min, unsigned int max)
+void Settings::registerUInt(const std::string name, unsigned int value, unsigned int min, unsigned int max, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_UInt, value, min, max);
+    m_settings[name] = Setting(name, SettingType_UInt, value, min, max, hints);
 }
-void Settings::registerInt(const std::string name, int value, int min, int max)
+void Settings::registerInt(const std::string name, int value, int min, int max, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Int, value, min, max);
+    m_settings[name] = Setting(name, SettingType_Int, value, min, max, hints);
 }
-void Settings::registerFloat(const std::string name, float value, float min, float max)
+void Settings::registerFloat(const std::string name, float value, float min, float max, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Float, value, min, max);
+    m_settings[name] = Setting(name, SettingType_Float, value, min, max, hints);
 }
-void Settings::registerFloat2(const std::string name, glm::vec2 value)
+void Settings::registerFloat2(const std::string name, glm::vec2 value, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Float2, value);
+    m_settings[name] = Setting(name, SettingType_Float2, value, hints);
 }
-void Settings::registerFloat3(const std::string name, glm::vec3 value)
+void Settings::registerFloat3(const std::string name, glm::vec3 value, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Float3, value);
+    m_settings[name] = Setting(name, SettingType_Float3, value, hints);
 }
-void Settings::registerFloat4(const std::string name, glm::vec4 value)
+void Settings::registerFloat4(const std::string name, glm::vec4 value, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Float4, value);
+    m_settings[name] = Setting(name, SettingType_Float4, value, hints);
 }
-void Settings::registerInt2(const std::string name, glm::ivec2 value)
+void Settings::registerInt2(const std::string name, glm::ivec2 value, SettingHint hints)
 {
     validateUniqueSetting(name);
-    m_settings[name] = Setting(name, SettingType_Int2, value);
+    m_settings[name] = Setting(name, SettingType_Int2, value, hints);
 }
 
 void Settings::registerBool(const std::string name, bool value, SettingChoices choices)

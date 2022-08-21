@@ -92,7 +92,7 @@ namespace Op
                                    {"xor", MergeMode_Xor}});
             settings->registerFloat("blend", 1.0f);
             settings->registerBool("alphaMask", true);
-            settings->registerInt("maskChannel", 3, {{"red", 0}, {"green", 1}, {"blue", 2}, {"alpha", 3}});
+            settings->registerInt("maskChannel", 3, 0, 3, SettingHint_Channel);
         }
     };
 
