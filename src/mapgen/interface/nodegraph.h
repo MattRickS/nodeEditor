@@ -11,16 +11,15 @@
 #include "panel.hpp"
 #include "signal.hpp"
 
+constexpr size_t MAX_NODE_SEARCH_SIZE = 64;
+
 class Nodegraph : public Panel
 {
 public:
-    Signal<Node *> selectedNodeChanged;
     Signal<glm::ivec2, std::string> newNodeRequested;
 
     Nodegraph(Bounds bounds);
 
-    Node *getSelectedNode() const;
-    void setSelectedNode(Node *node);
     void setScene(Scene *scene);
 
     void pan(glm::vec2 offset);
@@ -32,8 +31,9 @@ public:
     void finishConnection();
     Connector *activeConnection();
 
-    void startTextInput(glm::vec2 pos);
-    void finishTextInput();
+    void startNodeSelection(glm::vec2 screenPos);
+    bool hasNodeSelection() const;
+    void finishNodeSelection();
 
     glm::vec2 screenToWorldPos(glm::vec2 screenPos);
     glm::vec2 worldToScreenPos(glm::vec2 worldPos);
@@ -49,7 +49,6 @@ protected:
     glm::vec2 m_viewOffset{0, 0};
     float m_nodeRounding = 0.0f;
     float m_connectorRounding = 0.0f;
-    Node *m_selectedNode = nullptr;
     float m_selectionThickness = 1.0f;
     float m_lineThickness = 3.0f;
     float m_viewThickness = 8.0f;
@@ -62,11 +61,11 @@ protected:
     // New node input
     bool m_shouldDrawTextbox = false;
     ImVec2 m_inputTextboxPos;
-    std::string m_inputText;
+    char m_inputText[MAX_NODE_SEARCH_SIZE]{""};
 
     ImU32 nodeColor(const Node *node) const;
     ImU32 connColor(const Connector *connector) const;
 
     void drawNode(ImDrawList *drawList, Node *node);
-    void drawTextBox();
+    void drawNodeSelection();
 };

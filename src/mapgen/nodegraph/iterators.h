@@ -21,6 +21,9 @@ public:
     DepthIterator();
     DepthIterator(Node *node, GraphDirection direction = GraphDirection_Upstream, IteratorFlags flags = IteratorFlags_None, int depth = 0);
 
+    DepthIterator(const DepthIterator &it);            // Copy constructor
+    DepthIterator &operator=(const DepthIterator &it); // Copy assignment
+
     int depth() const;
     GraphDirection direction() const;
     IteratorFlags flags() const;

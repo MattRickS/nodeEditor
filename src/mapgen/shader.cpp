@@ -1,5 +1,4 @@
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -8,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader.h"
+#include "util.h"
 
 std::string loadFile(const char *filename)
 {
@@ -25,7 +25,7 @@ std::string loadFile(const char *filename)
     }
     catch (std::ifstream::failure const &)
     {
-        std::cout << "Unable to open " << filename << std::endl;
+        LOG_ERROR("Unable to open %s", filename);
     }
 
     return code;
@@ -43,8 +43,7 @@ GLuint compileShader(const char *source, GLenum shaderType)
     {
         char infoLog[512];
         glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
-        std::cout << "Error compiling shader:" << std::endl
-                  << infoLog << std::endl;
+        LOG_ERROR("Error compiling shader: %s", infoLog);
         return 0;
     }
 
@@ -66,8 +65,7 @@ GLuint compileProgram(size_t numShaders, GLuint *shaders)
     {
         char infoLog[512];
         glGetProgramInfoLog(programID, 512, NULL, infoLog);
-        std::cout << "Error linking program:" << std::endl
-                  << infoLog << std::endl;
+        LOG_ERROR("Error linking program: %s", infoLog);
         return 0;
     }
 
@@ -110,7 +108,7 @@ GLuint Shader::getLocation(const std::string &name) const
     int location = glGetUniformLocation(ID, name.c_str());
     if (location == -1)
     {
-        std::cout << "Shader uniform not found: " << name << std::endl;
+        LOG_WARNING("Shader uniform not found: %s", name.c_str());
     }
     return location;
 }

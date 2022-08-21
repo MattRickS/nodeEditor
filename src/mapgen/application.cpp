@@ -1,5 +1,4 @@
 #define GLEW_STATIC
-#include <iostream>
 #include <string>
 
 #include <GL/glew.h>
@@ -26,24 +25,24 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     buffer = new float[m_scene->Width() * m_scene->Height() * 4];
 
     m_ui->setScene(mapmaker);
-    m_ui->setPixelPreview(&m_pixelPreview);
+    m_ui->viewportProperties()->setPixelPreview(&m_pixelPreview);
 
     // TODO: I'm being too lazy to work out the actual matrix for the definition
     Camera &camera = m_ui->viewport()->camera();
     camera.view = glm::translate(camera.view, glm::vec3(0, 0, -1));
     updateProjection();
 
-    m_ui->channelChanged.connect(this, &Application::onChannelChanged);
     m_ui->keyChanged.connect(this, &Application::onKeyChanged);
-    m_ui->layerChanged.connect(this, &Application::onLayerChanged);
     m_ui->mouseButtonChanged.connect(this, &Application::onMouseButtonChanged);
     m_ui->cursorMoved.connect(this, &Application::onMouseMoved);
     m_ui->mouseScrolled.connect(this, &Application::onMouseScrolled);
     m_ui->sizeChanged.connect(this, &Application::onResize);
     m_ui->closeRequested.connect(this, &Application::close);
-    m_ui->pauseToggled.connect(this, &Application::togglePause);
-    m_ui->opSettingChanged.connect(this, &Application::updateSetting);
     m_ui->nodegraph()->newNodeRequested.connect(this, &Application::createNode);
+    m_ui->properties()->opSettingChanged.connect(this, &Application::updateSetting);
+    m_ui->properties()->pauseToggled.connect(this, &Application::togglePause);
+    m_ui->viewportProperties()->channelChanged.connect(this, &Application::onChannelChanged);
+    m_ui->viewportProperties()->layerChanged.connect(this, &Application::onLayerChanged);
 }
 
 Application::~Application()
@@ -61,9 +60,6 @@ void Application::exec()
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-
-    // XXX: Hack to get something rendering until we have an interactive graph
-    m_ui->nodegraph()->setSelectedNode(m_scene->getCurrentGraph()->node(2));
 
     while (!m_ui->isClosed())
     {
@@ -99,6 +95,13 @@ void Application::onLayerChanged(std::string layerName)
 
 void Application::onKeyChanged(int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mode)
 {
+    // TODO: This could be cleaner, it blocks other UIs rather than closing if reaching outside of it.
+    //       Perhaps the UI onKeyChanged should check which widget is being accessed?
+    if (m_ui->nodegraph()->hasNodeSelection())
+    {
+        return;
+    }
+
     if (action == GLFW_PRESS)
     {
         switch (key)
@@ -140,7 +143,7 @@ void Application::onKeyChanged(int key, [[maybe_unused]] int scancode, int actio
         case GLFW_KEY_TAB:
             if (m_ui->nodegraph()->bounds().contains(m_ui->cursorPos()))
             {
-                m_ui->nodegraph()->startTextInput(m_ui->cursorPos());
+                m_ui->nodegraph()->startNodeSelection(m_ui->cursorPos());
             }
             break;
         case GLFW_KEY_DELETE:
@@ -169,20 +172,21 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
     {
         if (action == GLFW_PRESS)
         {
+            // The node selection will capture it's own input, clicking outside of it should close it
+            m_ui->nodegraph()->finishNodeSelection();
+
             GraphElement *el = getElementAtPos(m_ui->cursorPos());
             if (el)
             {
-                el->setSelectFlag(SelectFlag_Select);
                 if (Node *node = dynamic_cast<Node *>(el))
                 {
+                    setSelectedNode(node);
                     if (mods & GLFW_MOD_CONTROL)
                     {
                         setViewNode(node);
                     }
                     else
                     {
-                        // Selecting the nodegraph will emit the selection changed signal
-                        m_ui->nodegraph()->setSelectedNode(node);
                         m_isDragging = true;
                     }
                 }
@@ -243,7 +247,7 @@ void Application::onMouseMoved(double xpos, double ypos)
 
     if (m_isDragging)
     {
-        Node *node = m_ui->nodegraph()->getSelectedNode();
+        Node *node = m_scene->getSelectedNode();
         if (node)
         {
             glm::vec2 worldOffset = m_ui->nodegraph()->screenToWorldPos(cursorPos) - m_ui->nodegraph()->screenToWorldPos(lastCursorPos);
@@ -292,6 +296,21 @@ void Application::onResize([[maybe_unused]] int width, [[maybe_unused]] int heig
     m_ui->recalculateLayout();
 }
 
+void Application::setSelectedNode(Node *node)
+{
+    Node *selectedNode = m_scene->getSelectedNode();
+    if (selectedNode)
+    {
+        selectedNode->clearSelectFlag(SelectFlag_Select);
+    }
+    // Might be no new selected node
+    if (node)
+    {
+        node->setSelectFlag(SelectFlag_Select);
+        m_ui->properties()->setNode(node->id());
+    }
+}
+
 // Viewport
 const Texture *Application::currentTexture() const
 {
@@ -300,7 +319,7 @@ const Texture *Application::currentTexture() const
     {
         return nullptr;
     }
-    std::string layer = m_ui->selectedLayer();
+    std::string layer = m_ui->viewportProperties()->selectedLayer();
     auto it = node->renderSet()->find(layer);
     if (it == node->renderSet()->end())
     {
@@ -423,19 +442,22 @@ void Application::setHoverState(GraphElement *el, glm::vec2 cursorPos) const
 void Application::createNode(glm::ivec2 screenPos, std::string nodeType)
 {
     LOG_INFO("Creating: %s", nodeType.c_str());
+    m_ui->nodegraph()->finishNodeSelection();
+
     NodeID nodeID = m_scene->getCurrentGraph()->createNode(nodeType);
     glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(screenPos);
-    m_scene->getCurrentGraph()->node(nodeID)->setPos(worldPos);
+    Node *node = m_scene->getNode(nodeID);
+    node->setPos(worldPos);
+    setSelectedNode(node);
 }
 
 void Application::deleteSelectedNode()
 {
-    if (m_ui->nodegraph()->getSelectedNode())
+    Node *selectedNode = m_scene->getSelectedNode();
+    if (selectedNode)
     {
-        NodeID nodeID = m_ui->nodegraph()->getSelectedNode()->id();
-        // Reset the selected node or it will crash once the node is deleted
-        m_ui->nodegraph()->setSelectedNode(nullptr);
-        m_scene->getCurrentGraph()->deleteNode(nodeID);
+        setSelectedNode(nullptr);
+        m_scene->getCurrentGraph()->deleteNode(selectedNode->id());
         m_scene->setDirty();
     }
 }
@@ -443,7 +465,7 @@ void Application::deleteSelectedNode()
 void Application::setViewNode(Node *node)
 {
     m_scene->setViewNode(node);
-    m_ui->viewport()->setNode(node);
+    m_ui->viewport()->setNode(node->id());
 }
 
 void Application::updateSetting(Node *node, std::string key, SettingValue value)

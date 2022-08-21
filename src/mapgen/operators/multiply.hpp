@@ -19,7 +19,7 @@ namespace Op
         std::string name() const override { return "Multiply"; }
         std::vector<Input> inputs() const override
         {
-            return {{}, {"Multiplier", false}};
+            return {{}};
         }
         void defaultSettings(Settings *settings) const override
         {

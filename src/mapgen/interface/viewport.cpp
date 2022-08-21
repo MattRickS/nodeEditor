@@ -15,7 +15,8 @@ Viewport::Viewport(Bounds bounds) : Panel(bounds), m_viewShader("src/mapgen/shad
 
 Camera &Viewport::camera() { return m_camera; }
 void Viewport::setLayer(std::string layer) { m_layer = layer; }
-void Viewport::setNode(Node *node) { m_node = node; }
+void Viewport::setNode(NodeID nodeID) { m_nodeID = nodeID; }
+void Viewport::setScene(Scene *scene) { m_scene = scene; }
 void Viewport::toggleIsolateChannel(Channel channel)
 {
     m_isolateChannel = (m_isolateChannel == channel) ? Channel_All : channel;
@@ -34,12 +35,16 @@ void Viewport::draw()
     glActiveTexture(GL_TEXTURE0);
     Channel channel = m_isolateChannel;
     // Takes node and layer so it can read the texture live as it's processed
-    if (m_node && !m_layer.empty())
+    if (m_scene && m_nodeID && !m_layer.empty())
     {
-        auto it = m_node->renderSet()->find(m_layer);
-        if (it != m_node->renderSet()->end())
+        Node *node = m_scene->getCurrentGraph()->node(m_nodeID);
+        if (node)
         {
-            glBindTexture(GL_TEXTURE_2D, it->second->ID);
+            auto it = node->renderSet()->find(m_layer);
+            if (it != node->renderSet()->end())
+            {
+                glBindTexture(GL_TEXTURE_2D, it->second->ID);
+            }
         }
     }
 

@@ -31,6 +31,18 @@ unsigned int Scene::Height() const { return m_height.load(); }
 Graph *Scene::getCurrentGraph() { return &m_graph; }
 Node *Scene::getCurrentNode() { return m_currNode; }
 Node *Scene::getViewNode() { return m_viewNode.load(); }
+Node *Scene::getSelectedNode()
+{
+    for (auto it = m_graph.begin(); it != m_graph.end(); ++it)
+    {
+        if (it->hasSelectFlag(SelectFlag_Select))
+        {
+            return &(*it);
+        }
+    }
+    return nullptr;
+}
+Node *Scene::getNode(NodeID nodeID) { return m_graph.node(nodeID); }
 
 void Scene::setDirty()
 {
@@ -53,7 +65,10 @@ void Scene::setViewNode(Node *node)
 
     // TODO: m_currNode is not thread safe currently
     m_currNode = calculateCurrentNode();
-    std::cout << "View node changed to " << (node ? node->name() : "None") << ", current calculated as: " << (m_currNode ? m_currNode->name() : "None") << std::endl;
+    LOG_DEBUG(
+        "View node changed to '%s', current calculated as: '%s'",
+        (node ? node->name().c_str() : "None"),
+        (m_currNode ? m_currNode->name().c_str() : "None"));
     // TODO: Check if actually needs to wake up
     setAwake(true);
 }
@@ -76,7 +91,7 @@ void Scene::stopProcessing()
     m_stopped = true;
     setAwake(true);
     setPaused(false);
-    std::cout << "Waiting on thread to stop" << std::endl;
+    LOG_INFO("Waiting on thread to stop");
     m_thread->join();
 }
 
@@ -114,7 +129,7 @@ bool Scene::waitToProcess()
 
 void Scene::process()
 {
-    std::cout << "Starting process" << std::endl;
+    LOG_INFO("Starting process");
 
     m_context.use();
     makeQuad(&m_quadVAO);
@@ -127,7 +142,7 @@ void Scene::process()
         // Ensure all state changes are processed first and reevaluate state
         if (maybeCleanNodes())
         {
-            std::cout << "Cleaned up state" << std::endl;
+            LOG_DEBUG("Cleaned up state");
             m_currNode = calculateCurrentNode();
             continue;
         }
@@ -156,7 +171,7 @@ bool Scene::isActive()
 
 void Scene::setAwake(bool idle)
 {
-    std::cout << "Idle thread, going to sleep" << std::endl;
+    LOG_DEBUG("Idle thread, going to sleep");
     std::lock_guard<std::mutex> guard(m_mutex);
     m_awake = idle;
     m_condition.notify_one();
@@ -167,7 +182,7 @@ Node *Scene::calculateCurrentNode() const
     // Everything is up to date, nothing to do
     if (!m_viewNode.load() || m_viewNode.load()->state() == State::Processed)
     {
-        std::cout << "Current view node is fully processed, no new current node" << std::endl;
+        LOG_DEBUG("Current view node is fully processed, no new current node");
         return nullptr;
     }
 
@@ -183,6 +198,7 @@ Node *Scene::calculateCurrentNode() const
         }
     }
 
+    LOG_DEBUG("New current node calculated as '%s'", last->name().c_str());
     return &(*last);
 }
 
@@ -197,7 +213,7 @@ bool Scene::maybeCleanNodes()
     {
         if (it->isDirty())
         {
-            std::cout << "Cleaning node " << it->name() << " and downstream" << std::endl;
+            LOG_DEBUG("Cleaning node '%s' and downstream", it->name().c_str());
             // All nodes after (and including) a dirty node must be reset
             for (DepthIterator it2{&(*it), GraphDirection_Downstream}; it2 != DepthIterator(); it2++)
             {

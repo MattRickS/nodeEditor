@@ -15,7 +15,7 @@
 void UI::onMouseMoved(double xpos, double ypos)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(cursorPos()))
+    if (io.WantCaptureMouse)
         return;
 
     cursorMoved.emit(xpos, ypos);
@@ -24,7 +24,7 @@ void UI::onMouseMoved(double xpos, double ypos)
 void UI::onMouseButtonChanged(int button, int action, int mods)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(cursorPos()))
+    if (io.WantCaptureMouse)
         return;
 
     mouseButtonChanged.emit(button, action, mods);
@@ -33,7 +33,7 @@ void UI::onMouseButtonChanged(int button, int action, int mods)
 void UI::onMouseScrolled(double xoffset, double yoffset)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse && !m_nodegraph->bounds().contains(cursorPos()))
+    if (io.WantCaptureMouse)
         return;
 
     mouseScrolled.emit(xoffset, yoffset);
@@ -54,6 +54,18 @@ void UI::recalculateLayout()
         m_viewport->setPos(bounds.pos());
         m_viewport->setSize(bounds.size());
     }
+    if (m_properties)
+    {
+        Bounds bounds = getOperatorPropertiesBounds();
+        m_properties->setPos(bounds.pos());
+        m_properties->setSize(bounds.size());
+    }
+    if (m_viewProperties)
+    {
+        Bounds bounds = getViewportPropertiesBounds();
+        m_viewProperties->setPos(bounds.pos());
+        m_viewProperties->setSize(bounds.size());
+    }
 }
 
 UI::UI(unsigned int width, unsigned int height, const char *name, const Context *sharedContext) : Window(name, width, height, sharedContext)
@@ -66,6 +78,8 @@ UI::UI(unsigned int width, unsigned int height, const char *name, const Context 
 
     m_nodegraph = new Nodegraph(getNodegraphBounds());
     m_viewport = new Viewport(getViewportBounds());
+    m_properties = new Properties(getOperatorPropertiesBounds());
+    m_viewProperties = new ViewportProperties(getViewportPropertiesBounds());
 }
 UI::~UI()
 {
@@ -77,22 +91,25 @@ UI::~UI()
     {
         delete m_viewport;
     }
+    if (m_properties)
+    {
+        delete m_properties;
+    }
 }
 
 Viewport *UI::viewport() { return m_viewport; }
 Nodegraph *UI::nodegraph() { return m_nodegraph; }
-
-std::string UI::selectedLayer() const
-{
-    return m_selectedLayer;
-}
+Properties *UI::properties() { return m_properties; }
+ViewportProperties *UI::viewportProperties() { return m_viewProperties; }
 
 void UI::setScene(Scene *scene)
 {
     m_scene = scene;
     m_nodegraph->setScene(scene);
+    m_properties->setScene(scene);
+    m_viewport->setScene(scene);
+    m_viewProperties->setScene(scene);
 }
-void UI::setPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void UI::draw()
 {
     if (m_viewport)
@@ -105,208 +122,30 @@ void UI::draw()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    drawOperatorProperties();
-    drawViewportProperties();
+    if (m_viewProperties)
+    {
+        m_viewProperties->draw();
+    }
     if (m_nodegraph)
     {
         m_nodegraph->draw();
+    }
+    if (m_properties)
+    {
+        m_properties->draw();
     }
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-void UI::drawViewportProperties()
-{
-    static bool p_open = NULL;
-    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
-
-    Bounds propertiesBounds = getViewportPropertiesBounds();
-    ImGui::SetNextWindowPos(ImVec2(propertiesBounds.pos().x, propertiesBounds.pos().y));
-    ImGui::SetNextWindowSize(ImVec2(propertiesBounds.size().x, propertiesBounds.size().y));
-    ImGui::Begin("Viewport Properties", &p_open, flags);
-
-    ImGui::PushItemWidth(150.0f);
-    if (ImGui::BeginCombo("##Layer", m_selectedLayer.c_str()))
-    {
-        if (m_nodegraph && m_nodegraph->getSelectedNode())
-        {
-            const RenderSet *renderSet = m_nodegraph->getSelectedNode()->renderSet();
-            for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
-            {
-                bool isSelected = (m_selectedLayer == it->first);
-                if (ImGui::Selectable(it->first.c_str(), isSelected))
-                {
-                    layerChanged.emit(it->first);
-                }
-                if (isSelected)
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
-            }
-        }
-        ImGui::EndCombo();
-    }
-    ImGui::PopItemWidth();
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(100.0f);
-    if (ImGui::BeginCombo("##Channel", getChannelName(m_viewport->isolatedChannel())))
-    {
-        for (int channel = Channel_All; channel != Channel_Last; ++channel)
-        {
-            bool isSelected = (m_viewport->isolatedChannel() == channel);
-            if (ImGui::Selectable(getChannelName(Channel(channel)), isSelected))
-            {
-                channelChanged.emit(Channel(channel));
-            }
-            if (isSelected)
-            {
-                ImGui::SetItemDefaultFocus();
-            }
-        }
-        ImGui::EndCombo();
-    }
-    ImGui::PopItemWidth();
-
-    if (m_pixelPreview)
-    {
-        ImGui::BeginDisabled();
-
-        ImGui::SameLine();
-        ImGui::PushItemWidth(250.0f);
-        ImGui::DragFloat4("Pixel##PixelColor", (float *)&(*m_pixelPreview).value);
-        ImGui::PopItemWidth();
-
-        ImGui::SameLine();
-        ImGui::PushItemWidth(100.0f);
-        ImGui::InputInt2("##PixelPos", (int *)&(*m_pixelPreview).pos);
-        ImGui::PopItemWidth();
-
-        ImGui::EndDisabled();
-    }
-
-    ImGui::End();
-}
-void UI::drawOperatorProperties()
-{
-    static bool p_open = NULL;
-    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
-
-    Bounds propertiesBounds = getOperatorPropertiesBounds();
-    ImGui::SetNextWindowPos(ImVec2(propertiesBounds.pos().x, propertiesBounds.pos().y));
-    ImGui::SetNextWindowSize(ImVec2(propertiesBounds.size().x, propertiesBounds.size().y));
-    ImGui::Begin("Mapmaker Properties", &p_open, flags);
-
-    if (m_scene)
-    {
-        ImGui::Text("Operator Settings");
-        drawNodeSettings(m_nodegraph->getSelectedNode());
-
-        bool isPaused = m_scene->isPaused();
-        if (ImGui::Button(isPaused ? "Play" : "Pause"))
-        {
-            pauseToggled.emit(!isPaused);
-        }
-    }
-
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    ImGui::End();
-}
-
-void UI::drawBoolSetting(Node *node, const Setting &setting)
-{
-    bool value = setting.value<bool>();
-    if (ImGui::Checkbox(setting.name().c_str(), &value))
-        opSettingChanged.emit(node, setting.name(), value);
-}
-void UI::drawFloatSetting(Node *node, const Setting &setting)
-{
-    float value = setting.value<float>();
-    // TODO: Setting options for min/max
-    if (ImGui::SliderFloat(setting.name().c_str(), &value, 0, 100, "%.3f", ImGuiSliderFlags_Logarithmic))
-        opSettingChanged.emit(node, setting.name(), value);
-}
-void UI::drawFloat2Setting(Node *node, const Setting &setting)
-{
-    glm::vec2 value = setting.value<glm::vec2>();
-    if (ImGui::DragFloat2(setting.name().c_str(), (float *)&value))
-        opSettingChanged.emit(node, setting.name(), value);
-}
-void UI::drawFloat3Setting(Node *node, const Setting &setting)
-{
-    glm::vec3 value = setting.value<glm::vec3>();
-    if (ImGui::DragFloat3(setting.name().c_str(), (float *)&value))
-        opSettingChanged.emit(node, setting.name(), value);
-}
-void UI::drawFloat4Setting(Node *node, const Setting &setting)
-{
-    glm::vec4 value = setting.value<glm::vec4>();
-    if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value))
-        opSettingChanged.emit(node, setting.name(), value);
-}
-void UI::drawIntSetting(Node *node, const Setting &setting)
-{
-    int value = setting.value<int>();
-    if (ImGui::InputInt(setting.name().c_str(), &value))
-        opSettingChanged.emit(node, setting.name(), value);
-}
-void UI::drawInt2Setting(Node *node, const Setting &setting)
-{
-    glm::ivec2 offset = setting.value<glm::ivec2>();
-    if (ImGui::DragInt2(setting.name().c_str(), (int *)&offset))
-        opSettingChanged.emit(node, setting.name(), offset);
-}
-void UI::drawUIntSetting(Node *node, const Setting &setting)
-{
-    unsigned int value = setting.value<unsigned int>();
-    if (ImGui::InputScalar(setting.name().c_str(), ImGuiDataType_U32, &value))
-        opSettingChanged.emit(node, setting.name(), value);
-}
-void UI::drawNodeSettings(Node *node)
-{
-    if (!node)
-    {
-        return;
-    }
-    for (auto it = node->settings()->begin(); it != node->settings()->end(); ++it)
-    {
-        switch (it->type())
-        {
-        case SettingType_Bool:
-            drawBoolSetting(node, *it);
-            break;
-        case SettingType_Float:
-            drawFloatSetting(node, *it);
-            break;
-        case SettingType_Float2:
-            drawFloat2Setting(node, *it);
-            break;
-        case SettingType_Float3:
-            drawFloat3Setting(node, *it);
-            break;
-        case SettingType_Float4:
-            drawFloat4Setting(node, *it);
-            break;
-        case SettingType_Int:
-            drawIntSetting(node, *it);
-            break;
-        case SettingType_Int2:
-            drawInt2Setting(node, *it);
-            break;
-        case SettingType_UInt:
-            drawUIntSetting(node, *it);
-            break;
-        }
-    }
-}
 
 Bounds UI::getViewportBounds() const
 {
-    return Bounds(m_width * m_opPropertiesWidthPercent, m_height * m_viewPropertiesHeightPercent, m_width, m_height * 0.5f);
+    return Bounds(m_width * m_opPropertiesWidthPercent, m_viewPropertiesHeight, m_width, m_height * 0.5f);
 }
 Bounds UI::getViewportPropertiesBounds() const
 {
-    return Bounds(m_width * m_opPropertiesWidthPercent, 0, m_width, m_height * m_viewPropertiesHeightPercent);
+    return Bounds(m_width * m_opPropertiesWidthPercent, 0, m_width, m_viewPropertiesHeight);
 }
 Bounds UI::getOperatorPropertiesBounds() const
 {

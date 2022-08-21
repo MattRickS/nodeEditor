@@ -30,12 +30,6 @@ const ImU32 COLOR_ERROR = IM_COL32(255, 100, 100, 255);
 
 Nodegraph::Nodegraph(Bounds bounds) : Panel(bounds) {}
 
-Node *Nodegraph::getSelectedNode() const { return m_selectedNode; }
-void Nodegraph::setSelectedNode(Node *node)
-{
-    m_selectedNode = node;
-    selectedNodeChanged.emit(node);
-}
 void Nodegraph::setScene(Scene *scene) { m_scene = scene; }
 
 void Nodegraph::pan(glm::vec2 offset) { m_viewOffset += offset; }
@@ -73,14 +67,17 @@ Connector *Nodegraph::activeConnection()
     return m_startConnector;
 }
 
-void Nodegraph::startTextInput(glm::vec2 pos)
+void Nodegraph::startNodeSelection(glm::vec2 screenPos)
 {
+    m_inputText[0] = '\0';
     m_shouldDrawTextbox = true;
-    m_inputText = "";
-    glm::vec2 panelPos = pos - bounds().pos();
-    m_inputTextboxPos = ImVec2(panelPos.x, panelPos.y);
+    m_inputTextboxPos = ImVec2(screenPos.x, screenPos.y);
 }
-void Nodegraph::finishTextInput()
+bool Nodegraph::hasNodeSelection() const
+{
+    return m_shouldDrawTextbox;
+}
+void Nodegraph::finishNodeSelection()
 {
     m_shouldDrawTextbox = false;
 }
@@ -183,41 +180,73 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
     drawList->AddRectFilled(ImVec2(bounds.min().x, bounds.min().y), ImVec2(bounds.max().x, bounds.max().y), nodeColor(node), m_nodeRounding);
     drawList->AddText(ImVec2(bounds.min().x, bounds.min().y), COLOR_TEXT, node->name().c_str());
 
-    if (node == m_selectedNode)
+    if (node && node->hasSelectFlag(SelectFlag_Select))
     {
         drawList->AddRect(ImVec2(bounds.min().x, bounds.min().y), ImVec2(bounds.max().x, bounds.max().y),
                           COLOR_SELECTED, m_nodeRounding, ImDrawFlags_Closed, m_selectionThickness);
     }
 }
 
-void Nodegraph::drawTextBox()
+void Nodegraph::drawNodeSelection()
 {
-    ImGui::SetCursorPos(m_inputTextboxPos);
-    ImGui::PushItemWidth(150.0f);
-    // TODO: allow inputting text to filter options
-    if (ImGui::BeginCombo("##NewNodeInput", m_inputText.c_str()))
+
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar;
+
+    ImGui::SetNextWindowPos(m_inputTextboxPos);
+    ImGui::SetNextWindowSize({165, 0});
+    ImGui::Begin("NodeLookup", nullptr, flags);
+
+    // Ensure the input gets focus, but not if currently selecting one of the nodes
+    if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
     {
+        ImGui::SetKeyboardFocusHere(0);
+    }
+    ImGui::PushItemWidth(150);
+    if (ImGui::InputText("##NodeSelection", m_inputText, MAX_NODE_SEARCH_SIZE, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+        // If there's only one possible match, create it
+        std::string matchingOp;
+        bool matchFound = false;
         for (auto it = Op::OperatorRegistry::begin(); it != Op::OperatorRegistry::end(); ++it)
         {
-            bool isSelected = (m_inputText == *it);
-            if (ImGui::Selectable(it->c_str(), isSelected))
+            if (containsTextCaseInsensitive(it->c_str(), m_inputText))
             {
-                newNodeRequested.emit(pos() + glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
-                finishTextInput();
-            }
-            if (isSelected)
-            {
-                ImGui::SetItemDefaultFocus();
+                if (!matchingOp.empty())
+                {
+                    matchFound = false;
+                    break;
+                }
+                matchingOp = *it;
+                matchFound = true;
             }
         }
-        ImGui::EndCombo();
+        if (matchFound)
+        {
+            newNodeRequested.emit(glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), matchingOp);
+        }
     }
     ImGui::PopItemWidth();
+
+    for (auto it = Op::OperatorRegistry::begin(); it != Op::OperatorRegistry::end(); ++it)
+    {
+        if (containsTextCaseInsensitive(it->c_str(), m_inputText) && ImGui::Selectable(it->c_str()))
+        {
+            newNodeRequested.emit(glm::ivec2(m_inputTextboxPos.x, m_inputTextboxPos.y), *it);
+        }
+    }
+
+    ImGui::End();
 }
 
 void Nodegraph::draw()
 {
-    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |
+                                    ImGuiWindowFlags_NoMove |
+                                    ImGuiWindowFlags_NoResize |
+                                    ImGuiWindowFlags_NoSavedSettings |
+                                    ImGuiWindowFlags_NoBackground |
+                                    ImGuiWindowFlags_NoScrollbar |
+                                    ImGuiWindowFlags_NoInputs;
 
     ImGui::SetNextWindowPos(ImVec2(pos().x, pos().y));
     ImGui::SetNextWindowSize(ImVec2(size().x, size().y));
@@ -246,7 +275,7 @@ void Nodegraph::draw()
 
         if (m_shouldDrawTextbox)
         {
-            drawTextBox();
+            drawNodeSelection();
         }
 
         ImGui::SetWindowFontScale(fontScale);

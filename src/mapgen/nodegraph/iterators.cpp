@@ -1,11 +1,44 @@
 #include <memory>
 
 #include "../constants.h"
+#include "../util.h"
 #include "node.h"
 #include "iterators.h"
 
 DepthIterator::DepthIterator() {}
 DepthIterator::DepthIterator(Node *node, GraphDirection direction, IteratorFlags flags, int depth) : m_node(node), m_direction(direction), m_flags(flags), m_depth(depth) {}
+
+DepthIterator::DepthIterator(const DepthIterator &it)
+{
+    m_node = it.m_node;
+    m_direction = it.m_direction;
+    m_flags = it.m_flags;
+    m_depth = it.m_depth;
+    m_connectorIndex = it.m_connectorIndex;
+    m_connectionIndex = it.m_connectionIndex;
+    m_isExhausted = it.m_isExhausted;
+
+    if (it.m_next)
+    {
+        m_next = std::make_shared<DepthIterator>(*it.m_next);
+    }
+}
+DepthIterator &DepthIterator::operator=(const DepthIterator &it)
+{
+    m_node = it.m_node;
+    m_direction = it.m_direction;
+    m_flags = it.m_flags;
+    m_depth = it.m_depth;
+    m_connectorIndex = it.m_connectorIndex;
+    m_connectionIndex = it.m_connectionIndex;
+    m_isExhausted = it.m_isExhausted;
+
+    if (it.m_next)
+    {
+        m_next = std::make_shared<DepthIterator>(*it.m_next);
+    }
+    return *this;
+}
 
 int DepthIterator::depth() const
 {

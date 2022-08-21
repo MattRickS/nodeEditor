@@ -80,3 +80,7 @@ target_link_libraries(imgui GL)
 # mapgen
 add_subdirectory(src)
 include_directories(src)
+
+# tests
+add_subdirectory(tests)
+include_directories(tests)

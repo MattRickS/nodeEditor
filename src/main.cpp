@@ -4,18 +4,21 @@
 #include <GLFW/glfw3.h>
 
 // Not used, directly, but must be included to be added to registry
-#include "operators/add.hpp"
-#include "operators/constant.hpp"
-#include "operators/invert.hpp"
-#include "operators/multiply.hpp"
-#include "operators/normals.hpp"
-#include "operators/offset.hpp"
-#include "operators/perlin.hpp"
-#include "operators/voronoi.hpp"
+#include "mapgen/operators/add.hpp"
+#include "mapgen/operators/constant.hpp"
+#include "mapgen/operators/gradient.hpp"
+#include "mapgen/operators/invert.hpp"
+#include "mapgen/operators/merge.hpp"
+#include "mapgen/operators/multiply.hpp"
+#include "mapgen/operators/normals.hpp"
+#include "mapgen/operators/offset.hpp"
+#include "mapgen/operators/perlin.hpp"
+#include "mapgen/operators/temperature.hpp"
+#include "mapgen/operators/voronoi.hpp"
 
-#include "application.h"
-#include "interface/ui.h"
-#include "scene.h"
+#include "mapgen/application.h"
+#include "mapgen/interface/ui.h"
+#include "mapgen/scene.h"
 
 void glfw_error_callback(int error, const char *description)
 {
