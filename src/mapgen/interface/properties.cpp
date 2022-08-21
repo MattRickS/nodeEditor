@@ -97,8 +97,16 @@ void Properties::drawBoolSetting(Node *node, const Setting &setting)
 }
 void Properties::drawFloatSetting(Node *node, const Setting &setting)
 {
+
+    // ImGuiSliderFlags flags = ImGuiSliderFlags_NoRoundToFormat;
+    ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+    if (setting.hints() & SettingHint_Logarithmic)
+    {
+        flags |= ImGuiSliderFlags_Logarithmic;
+    }
+
     float value = setting.value<float>();
-    if (ImGui::SliderFloat(setting.name().c_str(), &value, setting.min<float>(), setting.max<float>(), "%.3f")) // ImGuiSliderFlags_Logarithmic
+    if (ImGui::SliderFloat(setting.name().c_str(), &value, setting.min<float>(), setting.max<float>(), "%.3f", flags))
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawFloat2Setting(Node *node, const Setting &setting)

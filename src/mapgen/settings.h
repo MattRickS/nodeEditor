@@ -25,8 +25,9 @@ enum SettingType
 enum SettingHint
 {
     SettingHint_None,
-    SettingHint_Channel, // Supports Int
-    SettingHint_Color,   // Supports Float3, Float4
+    SettingHint_Channel,     // Displays a channel selector. Supports Int
+    SettingHint_Color,       // Displays as a color. Supports Float3, Float4
+    SettingHint_Logarithmic, // UI interaction will make it easier to select smaller values. Supports Float
 };
 
 class Setting
