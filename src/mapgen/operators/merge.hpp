@@ -58,10 +58,41 @@ namespace Op
         void defaultSettings(Settings *settings) const override
         {
             // TODO: Needs a combo box for selecting mode
-            settings->registerInt("mode", (int)MergeMode_Over);
+            settings->registerInt("mode",
+                                  (int)MergeMode_Over,
+                                  {{"atop", MergeMode_Atop},
+                                   {"average", MergeMode_Average},
+                                   {"color-burn", MergeMode_ColorBurn},
+                                   {"color-dodge", MergeMode_ColorDodge},
+                                   {"conjoint-over", MergeMode_ConjointOver},
+                                   {"copy", MergeMode_Copy},
+                                   {"difference", MergeMode_Difference},
+                                   {"disjoint-over", MergeMode_DisjointOver},
+                                   {"divide", MergeMode_Divide},
+                                   {"exclusion", MergeMode_Exclusion},
+                                   {"from", MergeMode_From},
+                                   {"geometric", MergeMode_Geometric},
+                                   {"hard-light", MergeMode_HardLight},
+                                   {"hypot", MergeMode_Hypot},
+                                   {"in", MergeMode_In},
+                                   {"mask", MergeMode_Mask},
+                                   {"matte", MergeMode_Matte},
+                                   {"max", MergeMode_Max},
+                                   {"min", MergeMode_Min},
+                                   {"minus", MergeMode_Minus},
+                                   {"multiply", MergeMode_Multiply},
+                                   {"out", MergeMode_Out},
+                                   {"over", MergeMode_Over},
+                                   {"overlay", MergeMode_Overlay},
+                                   {"plus", MergeMode_Plus},
+                                   {"screen", MergeMode_Screen},
+                                   {"soft-light", MergeMode_SoftLight},
+                                   {"stencil", MergeMode_Stencil},
+                                   {"under", MergeMode_Under},
+                                   {"xor", MergeMode_Xor}});
             settings->registerFloat("blend", 1.0f);
             settings->registerBool("alphaMask", true);
-            settings->registerInt("maskChannel", 3);
+            settings->registerInt("maskChannel", 3, {{"red", 0}, {"green", 1}, {"blue", 2}, {"alpha", 3}});
         }
     };
 

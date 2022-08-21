@@ -45,6 +45,12 @@ void Properties::drawNodeSettings(Node *node)
     }
     for (auto it = node->settings()->begin(); it != node->settings()->end(); ++it)
     {
+        if (it->hasChoices())
+        {
+            drawSettingChoices(node, *it);
+            continue;
+        }
+
         switch (it->type())
         {
         case SettingType_Bool:
@@ -84,8 +90,7 @@ void Properties::drawBoolSetting(Node *node, const Setting &setting)
 void Properties::drawFloatSetting(Node *node, const Setting &setting)
 {
     float value = setting.value<float>();
-    // TODO: Setting options for min/max
-    if (ImGui::SliderFloat(setting.name().c_str(), &value, 0, 100, "%.3f")) // ImGuiSliderFlags_Logarithmic
+    if (ImGui::SliderFloat(setting.name().c_str(), &value, setting.min<float>(), setting.max<float>(), "%.3f")) // ImGuiSliderFlags_Logarithmic
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawFloat2Setting(Node *node, const Setting &setting)
@@ -109,7 +114,7 @@ void Properties::drawFloat4Setting(Node *node, const Setting &setting)
 void Properties::drawIntSetting(Node *node, const Setting &setting)
 {
     int value = setting.value<int>();
-    if (ImGui::InputInt(setting.name().c_str(), &value))
+    if (ImGui::InputInt(setting.name().c_str(), &value, setting.min<int>(), setting.max<int>()))
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawInt2Setting(Node *node, const Setting &setting)
@@ -123,4 +128,21 @@ void Properties::drawUIntSetting(Node *node, const Setting &setting)
     unsigned int value = setting.value<unsigned int>();
     if (ImGui::InputScalar(setting.name().c_str(), ImGuiDataType_U32, &value))
         opSettingChanged.emit(node, setting.name(), value);
+}
+
+void Properties::drawSettingChoices(Node *node, const Setting &setting)
+{
+    if (ImGui::BeginCombo(("##Setting" + node->name() + setting.name()).c_str(), setting.currentChoice().c_str()))
+    {
+        for (auto it = setting.choices().cbegin(); it != setting.choices().cend(); ++it)
+        {
+            if (ImGui::Selectable(it->first.c_str(), it->first == setting.currentChoice()))
+            {
+                opSettingChanged.emit(node, setting.name(), it->second);
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+    ImGui::TextUnformatted(setting.name().c_str());
 }

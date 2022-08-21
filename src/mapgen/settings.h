@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 typedef std::variant<bool, unsigned int, int, float, glm::vec2, glm::vec3, glm::vec4, glm::ivec2> SettingValue;
+typedef std::map<std::string, SettingValue> SettingChoices;
 
 enum SettingType
 {
@@ -24,21 +25,35 @@ class Setting
 public:
     Setting();
     Setting(const std::string name, const SettingType type, SettingValue value);
+    Setting(const std::string name, const SettingType type, SettingValue value, SettingChoices choices);
+    Setting(const std::string name, const SettingType type, SettingValue value, SettingValue min, SettingValue max);
     const std::string &name() const;
     SettingType type() const;
 
-    template <typename T>
-    T value() const;
-
-    template <typename T>
-    void setValue(T value);
-
     void set(SettingValue value);
+
+    bool hasChoices() const;
+    const SettingChoices &choices() const;
+    const std::string &currentChoice() const;
+
+    template <typename T>
+    T value() const { return std::get<T>(m_value); }
+    template <typename T>
+    void setValue(T value) { m_value = value; }
+    template <typename T>
+    T min() const { return std::get<T>(m_min); }
+    template <typename T>
+    T max() const { return std::get<T>(m_max); }
 
 private:
     std::string m_name;
     SettingType m_type;
     SettingValue m_value;
+
+    // XXX: Perhaps it would be better to just use void*...
+    SettingValue m_min;
+    SettingValue m_max;
+    SettingChoices m_choices;
 };
 
 class Settings
@@ -73,13 +88,22 @@ public:
 
     // TODO: Add additional registration options and separate set methods
     void registerBool(const std::string name, bool value);
-    void registerUInt(const std::string name, unsigned int value);
-    void registerInt(const std::string name, int value);
-    void registerFloat(const std::string name, float value);
+    void registerUInt(const std::string name, unsigned int value, unsigned int min = 0, unsigned int max = UINT_MAX);
+    void registerInt(const std::string name, int value, int min = INT_MIN, int max = INT_MAX);
+    void registerFloat(const std::string name, float value, float min = 0.0f, float max = 1.0f);
     void registerFloat2(const std::string name, glm::vec2 value);
     void registerFloat3(const std::string name, glm::vec3 value);
     void registerFloat4(const std::string name, glm::vec4 value);
     void registerInt2(const std::string name, glm::ivec2 value);
+
+    void registerBool(const std::string name, bool value, SettingChoices choices);
+    void registerUInt(const std::string name, unsigned int value, SettingChoices choices);
+    void registerInt(const std::string name, int value, SettingChoices choices);
+    void registerFloat(const std::string name, float value, SettingChoices choices);
+    void registerFloat2(const std::string name, glm::vec2 value, SettingChoices choices);
+    void registerFloat3(const std::string name, glm::vec3 value, SettingChoices choices);
+    void registerFloat4(const std::string name, glm::vec4 value, SettingChoices choices);
+    void registerInt2(const std::string name, glm::ivec2 value, SettingChoices choices);
 
     bool getBool(const std::string key) const;
     unsigned int getUInt(const std::string key) const;
