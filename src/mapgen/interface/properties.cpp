@@ -13,6 +13,21 @@ const SettingChoices CHANNEL_CHOICES{
     {"alpha", 3}};
 const float DEFAULT_FLOAT_SLIDER_SPEED = 0.01f;
 
+SettingChoices rangedChannelChoices(const Setting &setting)
+{
+    SettingChoices choices;
+    int min = setting.min<int>();
+    int max = setting.max<int>();
+    for (auto pair : CHANNEL_CHOICES)
+    {
+        if (min <= std::get<int>(pair.second) && std::get<int>(pair.second) <= max)
+        {
+            choices.emplace(pair);
+        }
+    }
+    return choices;
+}
+
 ImGuiSliderFlags sliderFlags(const Setting &setting)
 {
     ImGuiSliderFlags flags = ImGuiSliderFlags_NoRoundToFormat;
@@ -153,7 +168,7 @@ void Properties::drawIntSetting(Node *node, const Setting &setting)
     int value = setting.value<int>();
     if (setting.hints() & SettingHint_Channel)
     {
-        drawChoices(node, setting.name().c_str(), CHANNEL_CHOICES, currentChoice(CHANNEL_CHOICES, value).c_str());
+        drawChoices(node, setting.name().c_str(), rangedChannelChoices(setting), currentChoice(CHANNEL_CHOICES, value).c_str());
     }
     else
     {
