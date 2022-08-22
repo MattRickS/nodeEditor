@@ -229,7 +229,10 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
 
 void Application::onMouseMoved(double xpos, double ypos)
 {
-    updatePixelPreview(xpos, ypos);
+    if (m_ui->viewport()->bounds().contains({xpos, ypos}))
+    {
+        updatePixelPreview(xpos, ypos);
+    }
 
     glm::vec2 cursorPos = glm::vec2(xpos, ypos);
     if (m_panningPanel)

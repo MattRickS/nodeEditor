@@ -40,6 +40,7 @@ public:
 
 protected:
     float m_opPropertiesWidthPercent = 0.25f;
+    float m_viewportHeightPercent = 0.6f;
     size_t m_viewPropertiesHeight = 20;
     Scene *m_scene = nullptr;
     Nodegraph *m_nodegraph;

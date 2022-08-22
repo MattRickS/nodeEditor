@@ -38,7 +38,7 @@ ImGuiSliderFlags sliderFlags(const Setting &setting)
     return flags;
 }
 
-Properties::Properties(Bounds bounds) : Panel(bounds) {}
+Properties::Properties(Window *window, Bounds bounds) : Panel(window, bounds) {}
 
 void Properties::setScene(Scene *scene) { m_scene = scene; }
 void Properties::setNode(NodeID nodeID) { m_nodeID = nodeID; }

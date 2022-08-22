@@ -7,6 +7,7 @@
 #include "../settings.h"
 #include "panel.hpp"
 #include "signal.hpp"
+#include "window.h"
 
 class Properties : public Panel
 {
@@ -15,7 +16,7 @@ public:
     Signal<Node *, glm::ivec2> nodeSizeChanged;
     Signal<bool> pauseToggled;
 
-    Properties(Bounds bounds);
+    Properties(Window *window, Bounds bounds);
 
     void setScene(Scene *scene);
     void setNode(NodeID node);

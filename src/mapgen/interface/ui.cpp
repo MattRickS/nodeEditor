@@ -44,27 +44,19 @@ void UI::recalculateLayout()
 {
     if (m_nodegraph)
     {
-        Bounds bounds = getNodegraphBounds();
-        m_nodegraph->setPos(bounds.pos());
-        m_nodegraph->setSize(bounds.size());
+        m_nodegraph->setBounds(getNodegraphBounds());
     }
     if (m_viewport)
     {
-        Bounds bounds = getViewportBounds();
-        m_viewport->setPos(bounds.pos());
-        m_viewport->setSize(bounds.size());
+        m_viewport->setBounds(getViewportBounds());
     }
     if (m_properties)
     {
-        Bounds bounds = getOperatorPropertiesBounds();
-        m_properties->setPos(bounds.pos());
-        m_properties->setSize(bounds.size());
+        m_properties->setBounds(getOperatorPropertiesBounds());
     }
     if (m_viewProperties)
     {
-        Bounds bounds = getViewportPropertiesBounds();
-        m_viewProperties->setPos(bounds.pos());
-        m_viewProperties->setSize(bounds.size());
+        m_viewProperties->setBounds(getViewportPropertiesBounds());
     }
 }
 
@@ -76,10 +68,10 @@ UI::UI(unsigned int width, unsigned int height, const char *name, const Context 
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    m_nodegraph = new Nodegraph(getNodegraphBounds());
-    m_viewport = new Viewport(getViewportBounds());
-    m_properties = new Properties(getOperatorPropertiesBounds());
-    m_viewProperties = new ViewportProperties(getViewportPropertiesBounds());
+    m_nodegraph = new Nodegraph(this, getNodegraphBounds());
+    m_viewport = new Viewport(this, getViewportBounds());
+    m_properties = new Properties(this, getOperatorPropertiesBounds());
+    m_viewProperties = new ViewportProperties(this, getViewportPropertiesBounds());
 }
 UI::~UI()
 {
@@ -94,6 +86,10 @@ UI::~UI()
     if (m_properties)
     {
         delete m_properties;
+    }
+    if (m_viewProperties)
+    {
+        delete m_viewProperties;
     }
 }
 
@@ -141,7 +137,7 @@ void UI::draw()
 
 Bounds UI::getViewportBounds() const
 {
-    return Bounds(m_width * m_opPropertiesWidthPercent, m_viewPropertiesHeight, m_width, m_height * 0.5f);
+    return Bounds(m_width * m_opPropertiesWidthPercent, m_viewPropertiesHeight, m_width, m_height * m_viewportHeightPercent);
 }
 Bounds UI::getViewportPropertiesBounds() const
 {
@@ -153,7 +149,7 @@ Bounds UI::getOperatorPropertiesBounds() const
 }
 Bounds UI::getNodegraphBounds() const
 {
-    return Bounds(m_width * m_opPropertiesWidthPercent, m_height * 0.5f, m_width, m_height);
+    return Bounds(m_width * m_opPropertiesWidthPercent, m_height * m_viewportHeightPercent, m_width, m_height);
 }
 
 glm::vec2 UI::screenToWorldPos(glm::vec2 screenPos)

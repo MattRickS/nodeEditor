@@ -7,6 +7,7 @@
 #include "../scene.h"
 #include "panel.hpp"
 #include "signal.hpp"
+#include "window.h"
 
 struct PixelPreview
 {
@@ -20,7 +21,7 @@ public:
     Signal<std::string> layerChanged;
     Signal<Channel> channelChanged;
 
-    ViewportProperties(Bounds bounds);
+    ViewportProperties(Window *window, Bounds bounds);
 
     void setPixelPreview(PixelPreview *preview);
     void setScene(Scene *scene);
