@@ -151,24 +151,3 @@ Bounds UI::getNodegraphBounds() const
 {
     return Bounds(m_width * m_opPropertiesWidthPercent, m_height * m_viewportHeightPercent, m_width, m_height);
 }
-
-glm::vec2 UI::screenToWorldPos(glm::vec2 screenPos)
-{
-    Bounds viewportBounds = getViewportBounds();
-    glm::vec2 ndcPos = glm::vec2(
-                           float(screenPos.x - viewportBounds.min().x) / viewportBounds.size().x,
-                           // GL uses inverted Y axis
-                           float(screenPos.y - viewportBounds.max().y) / viewportBounds.size().y) *
-                           2.0f -
-                       1.0f;
-    // This needs inverse matrices
-    glm::vec4 worldPos = glm::inverse(m_viewport->camera().view) * glm::inverse(m_viewport->camera().projection) * glm::vec4(ndcPos, 0, 1);
-    worldPos /= worldPos.w;
-    return glm::vec2(worldPos.x, worldPos.y) * 0.5f + 0.5f;
-}
-glm::vec2 UI::worldToScreenPos(glm::vec2 mapPos)
-{
-    glm::vec2 ndcPos = glm::vec2(mapPos.x / (float)m_width, mapPos.y / (float)m_height);
-    // TODO: Convert to actual screen pos
-    return ndcPos;
-}

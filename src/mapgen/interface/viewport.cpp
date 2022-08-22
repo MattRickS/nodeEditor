@@ -59,3 +59,23 @@ void Viewport::draw()
     m_viewShader.setInt("isolateChannel", (int)channel);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
+
+glm::vec2 Viewport::screenToWorldPos(glm::vec2 screenPos)
+{
+    glm::vec2 ndcPos = glm::vec2(
+                           float(screenPos.x - m_bounds.min().x) / m_bounds.size().x,
+                           // GL uses inverted Y axis
+                           float(screenPos.y - (m_window->height() - m_bounds.max().y)) / m_bounds.size().y) *
+                           2.0f -
+                       1.0f;
+    // This needs inverse matrices
+    glm::vec4 worldPos = glm::inverse(camera().view) * glm::inverse(camera().projection) * glm::vec4(ndcPos, 0, 1);
+    worldPos /= worldPos.w;
+    return glm::vec2(worldPos.x, worldPos.y) * 0.5f + 0.5f;
+}
+glm::vec2 Viewport::worldToScreenPos(glm::vec2 mapPos)
+{
+    glm::vec2 ndcPos = glm::vec2(mapPos.x / (float)m_window->width(), mapPos.y / (float)m_window->height());
+    // TODO: Convert to actual screen pos
+    return ndcPos;
+}

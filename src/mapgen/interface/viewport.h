@@ -30,6 +30,9 @@ public:
     Channel isolatedChannel() const;
     void draw() override;
 
+    glm::vec2 screenToWorldPos(glm::vec2 screenPos);
+    glm::vec2 worldToScreenPos(glm::vec2 mapPos);
+
 protected:
     Shader m_viewShader;
     Camera m_camera;

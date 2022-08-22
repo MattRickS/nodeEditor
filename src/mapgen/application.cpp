@@ -240,7 +240,7 @@ void Application::onMouseMoved(double xpos, double ypos)
         if (m_panningPanel == m_ui->viewport())
         {
             // offset will have an inverted y as screenPos uses topleft=(0,0) but world uses botleft=(0,0)
-            glm::vec2 offset = m_ui->screenToWorldPos(cursorPos) - m_ui->screenToWorldPos(lastCursorPos);
+            glm::vec2 offset = m_ui->viewport()->screenToWorldPos(cursorPos) - m_ui->viewport()->screenToWorldPos(lastCursorPos);
             m_ui->viewport()->camera().view = glm::translate(m_ui->viewport()->camera().view, glm::vec3(2.0f * offset.x, 2.0f * -offset.y, 0.0f));
         }
         else if (m_panningPanel == m_ui->nodegraph())
@@ -340,7 +340,7 @@ void Application::togglePause(bool pause)
 void Application::updatePixelPreview(double xpos, double ypos)
 {
     // Invert the screen y-pos to get world position
-    glm::vec2 worldPos = m_ui->screenToWorldPos({xpos, m_ui->height() - ypos});
+    glm::vec2 worldPos = m_ui->viewport()->screenToWorldPos({xpos, m_ui->height() - ypos});
     const Texture *texptr = currentTexture();
     if (texptr)
     {

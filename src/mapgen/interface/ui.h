@@ -32,9 +32,6 @@ public:
     Bounds getOperatorPropertiesBounds() const;
     Bounds getNodegraphBounds() const;
 
-    glm::vec2 screenToWorldPos(glm::vec2 screenPos);
-    glm::vec2 worldToScreenPos(glm::vec2 mapPos);
-
     // Overriding onWindowResized didn't work for some reason
     void recalculateLayout();
 
