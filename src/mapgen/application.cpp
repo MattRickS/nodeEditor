@@ -21,9 +21,6 @@
 
 Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
 {
-    // prep a buffer for reading the image values
-    buffer = new float[m_scene->Width() * m_scene->Height() * 4];
-
     m_ui->setScene(mapmaker);
     m_ui->viewportProperties()->setPixelPreview(&m_pixelPreview);
 
@@ -39,15 +36,17 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     m_ui->sizeChanged.connect(this, &Application::onResize);
     m_ui->closeRequested.connect(this, &Application::close);
     m_ui->nodegraph()->newNodeRequested.connect(this, &Application::createNode);
+    m_ui->properties()->nodeSizeChanged.connect(this, &Application::onNodeSizeChanged);
     m_ui->properties()->opSettingChanged.connect(this, &Application::updateSetting);
     m_ui->properties()->pauseToggled.connect(this, &Application::togglePause);
+    m_ui->properties()->sceneSizeChanged.connect(this, &Application::onSceneSizeChanged);
     m_ui->viewportProperties()->channelChanged.connect(this, &Application::onChannelChanged);
     m_ui->viewportProperties()->layerChanged.connect(this, &Application::onLayerChanged);
 }
 
 Application::~Application()
 {
-    delete[] buffer;
+    delete[] m_imageBuffer;
 }
 
 void Application::exec()
@@ -56,7 +55,7 @@ void Application::exec()
 
     m_ui->use();
     // Make a quad to be used by the UI context - VAOs are not shared
-    makeQuad(&quadVAO_UI);
+    makeQuad(&m_quadVAO_UI);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -66,11 +65,11 @@ void Application::exec()
         glfwPollEvents();
 
         double now = glfwGetTime();
-        if ((now - lastFrameTime) >= fpsLimit)
+        if ((now - m_lastFrameTime) >= m_fpsLimit)
         {
             m_ui->draw();
             m_ui->display();
-            lastFrameTime = now;
+            m_lastFrameTime = now;
         }
     }
 
@@ -159,8 +158,8 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
     {
         if (action == GLFW_PRESS)
         {
-            lastCursorPos = m_ui->cursorPos();
-            m_panningPanel = panelAtPos(lastCursorPos);
+            m_lastCursorPos = m_ui->cursorPos();
+            m_panningPanel = panelAtPos(m_lastCursorPos);
         }
         else if (action == GLFW_RELEASE)
         {
@@ -228,7 +227,10 @@ void Application::onMouseButtonChanged(int button, int action, [[maybe_unused]] 
 
 void Application::onMouseMoved(double xpos, double ypos)
 {
-    updatePixelPreview(xpos, ypos);
+    if (m_ui->viewport()->bounds().contains({xpos, ypos}))
+    {
+        updatePixelPreview(xpos, ypos);
+    }
 
     glm::vec2 cursorPos = glm::vec2(xpos, ypos);
     if (m_panningPanel)
@@ -236,12 +238,12 @@ void Application::onMouseMoved(double xpos, double ypos)
         if (m_panningPanel == m_ui->viewport())
         {
             // offset will have an inverted y as screenPos uses topleft=(0,0) but world uses botleft=(0,0)
-            glm::vec2 offset = m_ui->screenToWorldPos(cursorPos) - m_ui->screenToWorldPos(lastCursorPos);
+            glm::vec2 offset = m_ui->viewport()->screenToWorldPos(cursorPos) - m_ui->viewport()->screenToWorldPos(m_lastCursorPos);
             m_ui->viewport()->camera().view = glm::translate(m_ui->viewport()->camera().view, glm::vec3(2.0f * offset.x, 2.0f * -offset.y, 0.0f));
         }
         else if (m_panningPanel == m_ui->nodegraph())
         {
-            m_ui->nodegraph()->pan(cursorPos - lastCursorPos);
+            m_ui->nodegraph()->pan(cursorPos - m_lastCursorPos);
         }
     }
 
@@ -250,7 +252,7 @@ void Application::onMouseMoved(double xpos, double ypos)
         Node *node = m_scene->getSelectedNode();
         if (node)
         {
-            glm::vec2 worldOffset = m_ui->nodegraph()->screenToWorldPos(cursorPos) - m_ui->nodegraph()->screenToWorldPos(lastCursorPos);
+            glm::vec2 worldOffset = m_ui->nodegraph()->screenToWorldPos(cursorPos) - m_ui->nodegraph()->screenToWorldPos(m_lastCursorPos);
             node->move(worldOffset);
         }
     }
@@ -273,7 +275,7 @@ void Application::onMouseMoved(double xpos, double ypos)
             setHoverState(it->output(i), cursorPos);
         }
     }
-    lastCursorPos = cursorPos;
+    m_lastCursorPos = cursorPos;
 }
 
 void Application::onMouseScrolled([[maybe_unused]] double xoffset, double yoffset)
@@ -311,6 +313,21 @@ void Application::setSelectedNode(Node *node)
     }
 }
 
+void Application::maybeResizeImageBuffer(glm::ivec2 imageSize)
+{
+    size_t requiredSize = imageSize.x * imageSize.y * 4;
+    if (requiredSize <= m_imageBufferSize)
+    {
+        return;
+    }
+    if (m_imageBuffer)
+    {
+        delete[] m_imageBuffer;
+    }
+    m_imageBufferSize = requiredSize;
+    m_imageBuffer = new float[requiredSize];
+}
+
 // Viewport
 const Texture *Application::currentTexture() const
 {
@@ -336,31 +353,43 @@ void Application::togglePause(bool pause)
 void Application::updatePixelPreview(double xpos, double ypos)
 {
     // Invert the screen y-pos to get world position
-    glm::vec2 worldPos = m_ui->screenToWorldPos({xpos, m_ui->height() - ypos});
-    if (worldPos.x >= 0 && worldPos.x < 1 && worldPos.y >= 0 && worldPos.y < 1)
+    glm::vec2 worldPos = m_ui->viewport()->screenToWorldPos({xpos, m_ui->height() - ypos});
+    const Texture *texptr = currentTexture();
+    if (texptr)
     {
-        int x = worldPos.x * m_scene->Width();
-        int y = worldPos.y * m_scene->Height();
-        m_pixelPreview.pos = {x, y};
-        // TODO: Only reads from buffer. Current framebuffer only has 0-1 values.
-        //       Could mount the texture to a storage buffer, but not sure if that
-        //       will improve retrieved values/performance
-        // glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
-
-        // TODO: If keeping this method, only read the texture data once when
-        // - requested
-        // - active texture has changed / was processed further
-        glActiveTexture(GL_TEXTURE0);
-        const Texture *texptr = currentTexture();
-        if (texptr)
+        float ratio = 0.5f * float(texptr->width) / texptr->height;
+        if (worldPos.x >= (0.5f - ratio) && worldPos.x < (0.5f + ratio) && worldPos.y >= 0 && worldPos.y < 1)
         {
+            // TODO: Only reads from buffer. Current framebuffer only has 0-1 values.
+            //       Could mount the texture to a storage buffer, but not sure if that
+            //       will improve retrieved values/performance
+            // glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
+
+            // TODO: If keeping this method, only read the texture data once when
+            // - requested
+            // - active texture has changed / was processed further
+            glActiveTexture(GL_TEXTURE0);
+
+            int x = (worldPos.x - (0.5f - ratio)) / (2 * ratio) * texptr->width;
+            int y = worldPos.y * texptr->height;
+            m_pixelPreview.pos = {x, y};
+
+            maybeResizeImageBuffer({texptr->width, texptr->height});
+
             glBindTexture(GL_TEXTURE_2D, texptr->ID);
-            glGetTexImage(GL_TEXTURE_2D, 0, texptr->format, GL_FLOAT, buffer);
-            size_t index = (y * m_scene->Width() + x) * texptr->numChannels();
+            glGetTexImage(GL_TEXTURE_2D, 0, texptr->format, GL_FLOAT, m_imageBuffer);
+            size_t index = (y * texptr->width + x) * texptr->numChannels();
             for (size_t i = 0; i < 4; ++i)
-                m_pixelPreview.value[i] = i < texptr->numChannels() ? buffer[index + i] : 0.0f;
+            {
+                m_pixelPreview.value[i] = i < texptr->numChannels() ? m_imageBuffer[index + i] : 0.0f;
+            }
+
+            return;
         }
     }
+    // fallback on empty values
+    m_pixelPreview.pos = {0, 0};
+    m_pixelPreview.value = {0, 0, 0, 0};
 }
 
 void Application::updateProjection()
@@ -444,7 +473,7 @@ void Application::createNode(glm::ivec2 screenPos, std::string nodeType)
     LOG_INFO("Creating: %s", nodeType.c_str());
     m_ui->nodegraph()->finishNodeSelection();
 
-    NodeID nodeID = m_scene->getCurrentGraph()->createNode(nodeType);
+    NodeID nodeID = m_scene->createNode(nodeType);
     glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(screenPos);
     Node *node = m_scene->getNode(nodeID);
     node->setPos(worldPos);
@@ -473,4 +502,15 @@ void Application::updateSetting(Node *node, std::string key, SettingValue value)
     node->updateSetting(key, value);
     // Must also set the scene as dirty so that the graph is re-evaluated
     m_scene->setDirty();
+}
+
+void Application::onNodeSizeChanged(Node *node, glm::ivec2 imageSize)
+{
+    node->setImageSize(imageSize);
+    m_scene->setDirty();
+}
+
+void Application::onSceneSizeChanged(glm::ivec2 defaultImageSize)
+{
+    m_scene->setDefaultImageSize(defaultImageSize);
 }

@@ -8,6 +8,7 @@
 #include "../scene.h"
 #include "../shader.h"
 #include "panel.hpp"
+#include "window.h"
 
 struct Camera
 {
@@ -19,7 +20,7 @@ struct Camera
 class Viewport : public Panel
 {
 public:
-    Viewport(Bounds bounds);
+    Viewport(Window *window, Bounds bounds);
 
     Camera &camera();
     void setLayer(std::string layer);
@@ -28,6 +29,9 @@ public:
     void toggleIsolateChannel(Channel channel);
     Channel isolatedChannel() const;
     void draw() override;
+
+    glm::vec2 screenToWorldPos(glm::vec2 screenPos);
+    glm::vec2 worldToScreenPos(glm::vec2 mapPos);
 
 protected:
     Shader m_viewShader;

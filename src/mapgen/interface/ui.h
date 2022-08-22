@@ -32,14 +32,12 @@ public:
     Bounds getOperatorPropertiesBounds() const;
     Bounds getNodegraphBounds() const;
 
-    glm::vec2 screenToWorldPos(glm::vec2 screenPos);
-    glm::vec2 worldToScreenPos(glm::vec2 mapPos);
-
     // Overriding onWindowResized didn't work for some reason
     void recalculateLayout();
 
 protected:
     float m_opPropertiesWidthPercent = 0.25f;
+    float m_viewportHeightPercent = 0.6f;
     size_t m_viewPropertiesHeight = 20;
     Scene *m_scene = nullptr;
     Nodegraph *m_nodegraph;

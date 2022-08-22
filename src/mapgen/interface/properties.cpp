@@ -11,7 +11,7 @@ const SettingChoices CHANNEL_CHOICES{
     {"green", 1},
     {"blue", 2},
     {"alpha", 3}};
-const float DEFAULT_FLOAT_SLIDER_SPEED = 0.01f;
+const float MAX_FLOAT_SLIDER_SPEED = 1.0f;
 
 SettingChoices rangedChannelChoices(const Setting &setting)
 {
@@ -38,7 +38,12 @@ ImGuiSliderFlags sliderFlags(const Setting &setting)
     return flags;
 }
 
-Properties::Properties(Bounds bounds) : Panel(bounds) {}
+float sliderSpeed(float min, float max)
+{
+    return std::min(MAX_FLOAT_SLIDER_SPEED, min + (max - min) * 0.01f);
+}
+
+Properties::Properties(Window *window, Bounds bounds) : Panel(window, bounds) {}
 
 void Properties::setScene(Scene *scene) { m_scene = scene; }
 void Properties::setNode(NodeID nodeID) { m_nodeID = nodeID; }
@@ -53,7 +58,14 @@ void Properties::draw()
 
     if (m_scene)
     {
-        ImGui::Text("Operator Settings");
+        ImGui::TextUnformatted("Scene Settings");
+        glm::ivec2 sceneImageSize = m_scene->defaultImageSize();
+        if (ImGui::DragInt2("defaultImageSize", (int *)&sceneImageSize))
+            sceneSizeChanged.emit(sceneImageSize);
+
+        ImGui::Separator();
+
+        ImGui::TextUnformatted("Operator Settings");
         Node *node = m_scene->getCurrentGraph()->node(m_nodeID);
         if (node)
         {
@@ -76,6 +88,13 @@ void Properties::drawNodeSettings(Node *node)
     if (!node)
     {
         return;
+    }
+
+    if (node->definesImageSize())
+    {
+        glm::ivec2 imageSize = node->imageSize();
+        if (ImGui::DragInt2("imageSize", (int *)&imageSize))
+            nodeSizeChanged.emit(node, imageSize);
     }
     for (auto it = node->settings()->begin(); it != node->settings()->end(); ++it)
     {
@@ -129,8 +148,10 @@ void Properties::drawFloatSetting(Node *node, const Setting &setting)
 }
 void Properties::drawFloat2Setting(Node *node, const Setting &setting)
 {
+    float min = setting.min<float>();
+    float max = setting.max<float>();
     glm::vec2 value = setting.value<glm::vec2>();
-    if (ImGui::DragFloat2(setting.name().c_str(), (float *)&value, DEFAULT_FLOAT_SLIDER_SPEED, setting.min<float>(), setting.max<float>(), "%.3f", sliderFlags(setting)))
+    if (ImGui::DragFloat2(setting.name().c_str(), (float *)&value, sliderSpeed(min, max), min, max, "%.3f", sliderFlags(setting)))
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawFloat3Setting(Node *node, const Setting &setting)
@@ -144,7 +165,9 @@ void Properties::drawFloat3Setting(Node *node, const Setting &setting)
         return;
     }
 
-    if (ImGui::DragFloat3(setting.name().c_str(), (float *)&value, DEFAULT_FLOAT_SLIDER_SPEED, setting.min<float>(), setting.max<float>(), "%.3f", sliderFlags(setting)))
+    float min = setting.min<float>();
+    float max = setting.max<float>();
+    if (ImGui::DragFloat3(setting.name().c_str(), (float *)&value, sliderSpeed(min, max), min, max, "%.3f", sliderFlags(setting)))
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawFloat4Setting(Node *node, const Setting &setting)
@@ -160,7 +183,9 @@ void Properties::drawFloat4Setting(Node *node, const Setting &setting)
         return;
     }
 
-    if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value, DEFAULT_FLOAT_SLIDER_SPEED, setting.min<float>(), setting.max<float>(), "%.3f", sliderFlags(setting)))
+    float min = setting.min<float>();
+    float max = setting.max<float>();
+    if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value, sliderSpeed(min, max), min, max, "%.3f", sliderFlags(setting)))
         opSettingChanged.emit(node, setting.name(), value);
 }
 void Properties::drawIntSetting(Node *node, const Setting &setting)

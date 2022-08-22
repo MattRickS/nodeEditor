@@ -28,7 +28,7 @@ const ImU32 COLOR_PROCESSING = IM_COL32(100, 150, 100, 255);
 const ImU32 COLOR_PROCESSED = IM_COL32(100, 255, 100, 255);
 const ImU32 COLOR_ERROR = IM_COL32(255, 100, 100, 255);
 
-Nodegraph::Nodegraph(Bounds bounds) : Panel(bounds) {}
+Nodegraph::Nodegraph(Window *window, Bounds bounds) : Panel(window, bounds) {}
 
 void Nodegraph::setScene(Scene *scene) { m_scene = scene; }
 

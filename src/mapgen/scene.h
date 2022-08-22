@@ -22,8 +22,10 @@ public:
     ~Scene();
 
     const Context *context() const;
-    unsigned int Width() const;
-    unsigned int Height() const;
+    glm::ivec2 defaultImageSize() const;
+    void setDefaultImageSize(glm::ivec2 imageSize);
+
+    NodeID createNode(std::string nodeType);
 
     // Gets the graph currently being processed
     Graph *getCurrentGraph();
@@ -74,8 +76,7 @@ public:
 
 protected:
     Context m_context;
-    std::atomic<unsigned int> m_width;
-    std::atomic<unsigned int> m_height;
+    glm::ivec2 m_defaultImageSize;
     GLuint m_quadVAO;
     Graph m_graph;
 

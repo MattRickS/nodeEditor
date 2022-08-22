@@ -21,7 +21,7 @@ namespace Op
         std::string name() const override { return "PerlinNoise"; }
         void defaultSettings(Settings *settings) const override
         {
-            settings->registerFloat3("offset", glm::vec3(1));
+            settings->registerFloat3("offset", glm::vec3(1), FLT_MIN, FLT_MAX);
             settings->registerInt("octaves", 8, 1, 16);
             settings->registerFloat("frequency", 0.003f, 0.0f, 1.0f, SettingHint_Logarithmic);
             settings->registerFloat("amplitude", 1.0f, 0.01f, 100.0f, SettingHint_Logarithmic);

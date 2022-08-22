@@ -9,7 +9,7 @@
 #include "connector.h"
 #include "node.h"
 
-Node::Node(NodeID id, Op::Operator *op) : m_id(id), m_op(op)
+Node::Node(NodeID id, Op::Operator *op, glm::ivec2 imageSize) : m_id(id), m_op(op), m_imageSize(imageSize)
 {
     m_bounds = Bounds{0, 0, 100, 25};
     if (op)
@@ -60,6 +60,46 @@ NodeID Node::id() const { return m_id; }
 std::string Node::name() const { return m_name; }
 State Node::state() const { return m_state; }
 const RenderSet *Node::renderSet() const { return &m_renderSet; }
+
+bool Node::definesImageSize() const
+{
+    return numInputs() == 0;
+}
+
+glm::ivec2 Node::imageSize() const
+{
+    if (definesImageSize())
+    {
+        return m_imageSize;
+    }
+    else if (m_inputTextures.empty())
+    {
+        return {0, 0};
+    }
+    else
+    {
+        return {m_inputTextures[0]->width, m_inputTextures[0]->height};
+    }
+}
+size_t Node::width() const
+{
+    return imageSize().x;
+}
+size_t Node::height() const
+{
+    return imageSize().y;
+}
+bool Node::setImageSize(glm::ivec2 imageSize)
+{
+    if (!definesImageSize())
+    {
+        LOG_ERROR("Cannot set image size for node %s", name().c_str());
+        return false;
+    }
+    m_imageSize = imageSize;
+    setDirty(true);
+    return true;
+}
 
 // Maybe settings needs a redo so that the register methods are on the node, and the settings object it exposes is immutable
 // This ensures settings are only updated through updateSetting() so that the dirty bit can be set
@@ -258,10 +298,8 @@ const RenderSet *Node::evaluateInputs()
 
 void Node::evaluateOutputs()
 {
-    // TODO: These will eventually need to be picked up from input metadata
-    //       or via some alternate mechanism if the node has no inputs (eg,
-    //       it only creates content)
-    unsigned int width = 1024, height = 1024;
+    unsigned int width = this->width(), height = this->height();
+
     for (size_t i = 0; i < numOutputs(); ++i)
     {
         if (m_outputTextures.size() <= i)

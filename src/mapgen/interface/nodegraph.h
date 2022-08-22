@@ -10,6 +10,7 @@
 #include "../scene.h"
 #include "panel.hpp"
 #include "signal.hpp"
+#include "window.h"
 
 constexpr size_t MAX_NODE_SEARCH_SIZE = 64;
 
@@ -18,7 +19,7 @@ class Nodegraph : public Panel
 public:
     Signal<glm::ivec2, std::string> newNodeRequested;
 
-    Nodegraph(Bounds bounds);
+    Nodegraph(Window *window, Bounds bounds);
 
     void setScene(Scene *scene);
 

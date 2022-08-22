@@ -5,7 +5,7 @@
 #include "../util.h"
 #include "viewproperties.h"
 
-ViewportProperties::ViewportProperties(Bounds bounds) : Panel(bounds) {}
+ViewportProperties::ViewportProperties(Window *window, Bounds bounds) : Panel(window, bounds) {}
 
 void ViewportProperties::setPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void ViewportProperties::setScene(Scene *scene) { m_scene = scene; }

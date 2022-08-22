@@ -7,14 +7,17 @@
 #include "../settings.h"
 #include "panel.hpp"
 #include "signal.hpp"
+#include "window.h"
 
 class Properties : public Panel
 {
 public:
     Signal<Node *, std::string, SettingValue> opSettingChanged;
+    Signal<Node *, glm::ivec2> nodeSizeChanged;
+    Signal<glm::ivec2> sceneSizeChanged; // TODO: Possibly should be global settings
     Signal<bool> pauseToggled;
 
-    Properties(Bounds bounds);
+    Properties(Window *window, Bounds bounds);
 
     void setScene(Scene *scene);
     void setNode(NodeID node);

@@ -24,15 +24,16 @@ protected:
     PixelPreview m_pixelPreview;
 
     Panel *m_panningPanel = nullptr;
-    glm::vec2 lastCursorPos;
+    glm::vec2 m_lastCursorPos;
     bool m_isDragging = false;
-    float *buffer;
+    float *m_imageBuffer = nullptr;
+    size_t m_imageBufferSize = 0;
 
     // FPS limiting as vsync does not appear to be working
-    double lastFrameTime = 0;
-    double fpsLimit = 1.0 / 60.0;
+    double m_lastFrameTime = 0;
+    double m_fpsLimit = 1.0 / 60.0;
 
-    GLuint quadVAO_UI;
+    GLuint m_quadVAO_UI;
     const float m_camNear = 0.1f;
     const float m_camFar = 100.0f;
 
@@ -46,6 +47,7 @@ protected:
     void onResize(int width, int height);
 
     void setSelectedNode(Node *node);
+    void maybeResizeImageBuffer(glm::ivec2 imageSize);
 
     // Viewport
     const Texture *currentTexture() const;
@@ -64,4 +66,6 @@ protected:
     void deleteSelectedNode();
     void setViewNode(Node *node);
     void updateSetting(Node *node, std::string key, SettingValue value);
+    void onNodeSizeChanged(Node *node, glm::ivec2 imageSize);
+    void onSceneSizeChanged(glm::ivec2 defaultImageSize);
 };
