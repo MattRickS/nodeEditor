@@ -22,7 +22,7 @@
 Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
 {
     // prep a buffer for reading the image values
-    buffer = new float[m_scene->width() * m_scene->height() * 4];
+    buffer = new float[m_scene->dimensions().x * m_scene->dimensions().y * 4];
 
     m_ui->setScene(mapmaker);
     m_ui->viewportProperties()->setPixelPreview(&m_pixelPreview);
@@ -455,7 +455,7 @@ void Application::createNode(glm::ivec2 screenPos, std::string nodeType)
     LOG_INFO("Creating: %s", nodeType.c_str());
     m_ui->nodegraph()->finishNodeSelection();
 
-    NodeID nodeID = m_scene->getCurrentGraph()->createNode(nodeType);
+    NodeID nodeID = m_scene->createNode(nodeType);
     glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(screenPos);
     Node *node = m_scene->getNode(nodeID);
     node->setPos(worldPos);

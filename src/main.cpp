@@ -32,8 +32,7 @@ int main()
     if (!glfwInit())
         return 1;
 
-    // TODO: The quad transform/vertices need to be scaled in the x-axis to match the image ratio
-    Scene scene(1024, 1024);
+    Scene scene(1920, 1080);
     if (!scene.context()->isInitialised())
         return 1;
 

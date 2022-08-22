@@ -14,7 +14,7 @@ typedef unsigned int NodeID;
 class Node : public GraphElement
 {
 public:
-    Node(NodeID id, Op::Operator *op);
+    Node(NodeID id, Op::Operator *op, glm::ivec2 dimensions = glm::ivec2(1024, 1024));
     ~Node();
 
     friend bool operator==(const Node &a, const Node &b);
@@ -61,7 +61,7 @@ protected:
     std::string m_name;
     Op::Operator *m_op;
     Settings m_settings;
-    glm::ivec2 m_dimensions{1024, 1024};
+    glm::ivec2 m_dimensions;
     std::vector<InputConnector> m_inputs;
     std::vector<OutputConnector> m_outputs;
 

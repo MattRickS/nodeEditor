@@ -15,13 +15,13 @@ Graph::const_value_iterator Graph::cend() const { return m_nodes.cend(); }
 Graph::reverse_value_iterator Graph::rbegin() { return m_nodes.rbegin(); }
 Graph::reverse_value_iterator Graph::rend() { return m_nodes.rend(); }
 
-NodeID Graph::createNode(std::string name)
+NodeID Graph::createNode(std::string nodeType, glm::ivec2 dimensions)
 {
     NodeID nodeID = ++lastID;
     m_nodes.emplace(
         std::piecewise_construct,
         std::forward_as_tuple(nodeID),
-        std::forward_as_tuple(nodeID, Op::OperatorRegistry::create(name)));
+        std::forward_as_tuple(nodeID, Op::OperatorRegistry::create(nodeType), dimensions));
     return nodeID;
 }
 bool Graph::deleteNode(NodeID nodeID)

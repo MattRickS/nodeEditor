@@ -22,8 +22,9 @@ public:
     ~Scene();
 
     const Context *context() const;
-    unsigned int width() const;
-    unsigned int height() const;
+    glm::ivec2 dimensions() const;
+
+    NodeID createNode(std::string nodeType);
 
     // Gets the graph currently being processed
     Graph *getCurrentGraph();
@@ -74,8 +75,7 @@ public:
 
 protected:
     Context m_context;
-    std::atomic<unsigned int> m_width;
-    std::atomic<unsigned int> m_height;
+    glm::ivec2 m_defaultDimensions;
     GLuint m_quadVAO;
     Graph m_graph;
 

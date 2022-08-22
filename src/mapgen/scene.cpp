@@ -13,7 +13,7 @@
 #include "scene.h"
 #include "util.h"
 
-Scene::Scene(unsigned int width, unsigned int height) : m_context("Scene"), m_width(width), m_height(height)
+Scene::Scene(unsigned int width, unsigned int height) : m_context("Scene"), m_defaultDimensions(width, height)
 {
 }
 Scene::~Scene()
@@ -25,9 +25,12 @@ Scene::~Scene()
 }
 
 const Context *Scene::context() const { return &m_context; }
-unsigned int Scene::width() const { return m_width.load(); }
-unsigned int Scene::height() const { return m_height.load(); }
+glm::ivec2 Scene::dimensions() const { return m_defaultDimensions; }
 
+NodeID Scene::createNode(std::string nodeType)
+{
+    return getCurrentGraph()->createNode(nodeType, m_defaultDimensions);
+}
 Graph *Scene::getCurrentGraph() { return &m_graph; }
 Node *Scene::getCurrentNode() { return m_currNode; }
 Node *Scene::getViewNode() { return m_viewNode.load(); }

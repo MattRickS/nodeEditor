@@ -9,7 +9,7 @@
 #include "connector.h"
 #include "node.h"
 
-Node::Node(NodeID id, Op::Operator *op) : m_id(id), m_op(op)
+Node::Node(NodeID id, Op::Operator *op, glm::ivec2 dimensions) : m_id(id), m_op(op), m_dimensions(dimensions)
 {
     m_bounds = Bounds{0, 0, 100, 25};
     if (op)

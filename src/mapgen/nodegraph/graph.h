@@ -46,7 +46,7 @@ public:
     reverse_value_iterator rbegin();
     reverse_value_iterator rend();
 
-    NodeID createNode(std::string name);
+    NodeID createNode(std::string name, glm::ivec2 dimensions);
     bool deleteNode(NodeID nodeID);
     Node *node(NodeID nodeID);
     size_t numNodes() const;
