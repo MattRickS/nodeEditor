@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <unordered_map>
 
 const std::string DEFAULT_LAYER = "RGBA";
 const std::string SCENE_SETTING_IMAGE_SIZE = "imageSize";
@@ -29,4 +30,18 @@ enum class State
     Processing,
     Processed,
     Error,
+};
+
+enum FileType
+{
+    FileType_None,
+    FileType_PNG,
+    FileType_HDR
+};
+
+const std::string EXTENSION_HDR = ".hdr";
+const std::string EXTENSION_PNG = ".png";
+const std::unordered_map<FileType, std::string> FILE_TYPES{
+    {FileType_HDR, EXTENSION_HDR},
+    {FileType_PNG, EXTENSION_PNG},
 };

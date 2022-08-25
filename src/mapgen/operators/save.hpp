@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "../constants.h"
 #include "../operator.h"
 #include "../settings.h"
 #include "../util.h"
@@ -29,12 +30,52 @@ namespace Op
         void defaultSettings(Settings *const settings) const override
         {
             settings->registerString("filepath", "");
+            settings->registerInt("format", FileType_PNG, {{"png", FileType_PNG}, {"hdr", FileType_HDR}});
         }
+
+        int saveAsPNG(const std::string &filepath, const Texture *texture)
+        {
+            // Copy image data off the GPU to a buffer for writing
+            // TODO: Better scope protection around the delete
+            unsigned char *pixels = new unsigned char[texture->width() * texture->height() * texture->numChannels()];
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture->id());
+            glGetTexImage(GL_TEXTURE_2D, 0, texture->format(), GL_UNSIGNED_BYTE, pixels);
+
+            stbi_flip_vertically_on_write(true);
+            int result = stbi_write_png((filepath + EXTENSION_PNG).c_str(),
+                                        texture->width(),
+                                        texture->height(),
+                                        texture->numChannels(),
+                                        pixels,
+                                        texture->numChannels() * texture->width());
+            delete[] pixels;
+            return result;
+        }
+
+        int saveAsHDR(const std::string &filepath, const Texture *texture)
+        {
+            // Copy image data off the GPU to a buffer for writing
+            // TODO: Better scope protection around the delete
+            float *pixels = new float[texture->width() * texture->height() * texture->numChannels()];
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture->id());
+            glGetTexImage(GL_TEXTURE_2D, 0, texture->format(), GL_FLOAT, pixels);
+
+            stbi_flip_vertically_on_write(true);
+            int result = stbi_write_hdr((filepath + EXTENSION_HDR).c_str(),
+                                        texture->width(),
+                                        texture->height(),
+                                        texture->numChannels(),
+                                        pixels);
+            delete[] pixels;
+            return result;
+        }
+
         bool process(const std::vector<Texture *> &inputs,
                      [[maybe_unused]] const std::vector<Texture *> &outputs,
                      const Settings *const settings) override
         {
-            // TODO: Output formats - need to support HDR at least
             std::string filepath = settings->getString("filepath");
             if (filepath.empty())
             {
@@ -42,23 +83,23 @@ namespace Op
                 return false;
             }
 
-            LOG_INFO("Saving to: %s", filepath.c_str());
-
-            // Copy image data off the GPU to a buffer for writing
-            // TODO: Better scope protection around the delete
-            unsigned char *pixels = new unsigned char[inputs[0]->width() * inputs[0]->height() * inputs[0]->numChannels()];
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, inputs[0]->id());
-            glGetTexImage(GL_TEXTURE_2D, 0, inputs[0]->format(), GL_UNSIGNED_BYTE, pixels);
-
-            stbi_flip_vertically_on_write(true);
-            int result = stbi_write_png(filepath.c_str(),
-                                        inputs[0]->width(),
-                                        inputs[0]->height(),
-                                        inputs[0]->numChannels(),
-                                        pixels,
-                                        inputs[0]->numChannels() * inputs[0]->width());
-            delete[] pixels;
+            // TODO: Need at least one format that supports negative values.
+            //       PNG is unsigned char with alpha
+            //       HDR is float with no alpha
+            int result;
+            FileType filetype = FileType(settings->getInt("format"));
+            switch (filetype)
+            {
+            case FileType_PNG:
+                result = saveAsPNG(filepath, inputs[0]);
+                break;
+            case FileType_HDR:
+                result = saveAsHDR(filepath, inputs[0]);
+                break;
+            default:
+                setError("Unknown format: " + std::to_string(filetype));
+                return false;
+            }
 
             if (result == 0)
             {
