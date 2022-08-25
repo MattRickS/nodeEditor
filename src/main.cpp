@@ -8,6 +8,7 @@
 #include "mapgen/operators/constant.hpp"
 #include "mapgen/operators/gradient.hpp"
 #include "mapgen/operators/invert.hpp"
+#include "mapgen/operators/load.hpp"
 #include "mapgen/operators/merge.hpp"
 #include "mapgen/operators/multiply.hpp"
 #include "mapgen/operators/normals.hpp"

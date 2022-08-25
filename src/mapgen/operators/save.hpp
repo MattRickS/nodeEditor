@@ -30,7 +30,7 @@ namespace Op
         {
             settings->registerString("filepath", "");
         }
-        bool process([[maybe_unused]] const std::vector<Texture *> &inputs,
+        bool process(const std::vector<Texture *> &inputs,
                      [[maybe_unused]] const std::vector<Texture *> &outputs,
                      const Settings *settings) override
         {
@@ -45,19 +45,19 @@ namespace Op
 
             // Copy image data off the GPU to a buffer for writing
             // TODO: Better scope protection around the delete
-            unsigned char *imageData = new unsigned char[inputs[0]->width * inputs[0]->height * inputs[0]->numChannels()];
+            unsigned char *pixels = new unsigned char[inputs[0]->width * inputs[0]->height * inputs[0]->numChannels()];
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, inputs[0]->ID);
-            glGetTexImage(GL_TEXTURE_2D, 0, inputs[0]->format, GL_UNSIGNED_BYTE, imageData);
+            glGetTexImage(GL_TEXTURE_2D, 0, inputs[0]->format, GL_UNSIGNED_BYTE, pixels);
 
             stbi_flip_vertically_on_write(true);
             int result = stbi_write_png(filepath.c_str(),
                                         inputs[0]->width,
                                         inputs[0]->height,
                                         inputs[0]->numChannels(),
-                                        imageData,
+                                        pixels,
                                         inputs[0]->numChannels() * inputs[0]->width);
-            delete[] imageData;
+            delete[] pixels;
 
             if (result == 0)
             {
