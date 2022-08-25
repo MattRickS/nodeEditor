@@ -16,3 +16,7 @@ install:
 	sudo apt install ${DEPENDENCIES}
 	cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
 	make -C build mapgen
+
+PHONY: run
+run:
+	./build/src/mapgen

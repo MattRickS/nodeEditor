@@ -6,7 +6,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 # TODO: Generate a header dynamically from discovered operators
 if(CMAKE_COMPILER_IS_GNUCXX)
     message(STATUS "GCC detected, adding compile flags")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra")
+
+    # Missing field initializers needed for stb_image_write, see https://github.com/nothings/stb/issues/1099
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra -Wno-missing-field-initializers")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx -mavx2 -mfma")
