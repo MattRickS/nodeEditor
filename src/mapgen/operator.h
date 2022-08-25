@@ -39,9 +39,9 @@ namespace Op
         /* Returns the layers the operator outputs. Defaults to a single output for the default layer. */
         virtual std::vector<Output> outputs() const;
         /* Returns the texture size the output layers should be */
-        virtual glm::ivec2 outputImageSize(const std::vector<Texture *> &inputs, const Settings *const sceneSettings);
+        virtual glm::ivec2 outputImageSize(const std::vector<Texture *> &inputs, const Settings *const sceneSettings, const Settings *const opSettings);
         /* Populates the default settings for the operator (if any). Defaults to no settings. */
-        virtual void defaultSettings(Settings *settings) const;
+        virtual void defaultSettings(Settings *const settings) const;
         /*
         Called once before any calls to process are made.
 
@@ -53,7 +53,7 @@ namespace Op
         @param settings Pointer to the settings to use when processing. Will contain any settings
             defined in `defaultSettings`.
         */
-        virtual void preprocess(const std::vector<Texture *> &inputs, const std::vector<Texture *> &outputs, const Settings *settings);
+        virtual void preprocess(const std::vector<Texture *> &inputs, const std::vector<Texture *> &outputs, const Settings *const settings);
         /*
         Called by the framework to populate the outputs.
 
@@ -67,7 +67,7 @@ namespace Op
         */
         virtual bool process(const std::vector<Texture *> &inputs,
                              const std::vector<Texture *> &outputs,
-                             const Settings *settings) = 0;
+                             const Settings *const settings) = 0;
         /*
         Operator should implement to reset any internal state.
 
@@ -97,7 +97,7 @@ namespace Op
         BaseComputeShaderOp(const char *computeShader);
         bool process(const std::vector<Texture *> &inputs,
                      const std::vector<Texture *> &outputs,
-                     const Settings *settings) override;
+                     const Settings *const settings) override;
     };
 
     class OperatorRegistry

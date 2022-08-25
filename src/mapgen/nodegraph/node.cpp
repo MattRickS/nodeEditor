@@ -71,7 +71,7 @@ bool Node::recalculateImageSize(const Settings *sceneSettings)
     {
         return false;
     }
-    glm::ivec2 imageSize = m_op->outputImageSize(m_inputTextures, sceneSettings);
+    glm::ivec2 imageSize = m_op->outputImageSize(m_inputTextures, sceneSettings, &m_settings);
     if (imageSize == m_imageSize)
     {
         return false;

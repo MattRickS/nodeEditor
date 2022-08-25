@@ -56,7 +56,7 @@ namespace Op
         {
             return {{"A"}, {"B"}, {"Mask", false}};
         }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
             // TODO: Needs a combo box for selecting mode
             settings->registerInt("mode",

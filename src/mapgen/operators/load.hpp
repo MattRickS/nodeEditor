@@ -22,6 +22,18 @@ namespace Op
         {
             return {{}};
         }
+        glm::ivec2 outputImageSize([[maybe_unused]] const std::vector<Texture *> &inputs, [[maybe_unused]] const Settings *const sceneSettings, const Settings *const opSettings) override
+        {
+            std::string filepath = opSettings->getString("filepath");
+            int width, height, numChannels, ok;
+            ok = stbi_info(filepath.c_str(), &width, &height, &numChannels);
+            if (!ok)
+            {
+                setError("Unable to read input file");
+                return {};
+            }
+            return {width, height};
+        }
         void defaultSettings(Settings *settings) const override
         {
             settings->registerString("filepath", "");
@@ -37,10 +49,7 @@ namespace Op
                 return false;
             }
 
-            // This is how the operator should define it's required output
-            //   int x,y,n,ok;
-            //   ok = stbi_info(filename, &x, &y, &n);
-
+            stbi_set_flip_vertically_on_load(true);
             int width, height, numChannels;
             unsigned char *pixels = stbi_load(filepath.c_str(), &width, &height, &numChannels, 4);
 

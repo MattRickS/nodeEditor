@@ -26,13 +26,13 @@ namespace Op
         {
             return {};
         }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
             settings->registerString("filepath", "");
         }
         bool process(const std::vector<Texture *> &inputs,
                      [[maybe_unused]] const std::vector<Texture *> &outputs,
-                     const Settings *settings) override
+                     const Settings *const settings) override
         {
             std::string filepath = settings->getString("filepath");
             if (filepath.empty())

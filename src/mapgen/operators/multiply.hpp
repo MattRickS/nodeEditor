@@ -21,7 +21,7 @@ namespace Op
         {
             return {{}};
         }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
             settings->registerBool("red", true);
             settings->registerBool("green", true);

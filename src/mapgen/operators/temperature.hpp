@@ -25,7 +25,7 @@ namespace Op
         {
             return {{"Temperature"}};
         }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
             settings->registerUInt("loBand", 0);
             settings->registerUInt("hiBand", 0);

@@ -19,7 +19,7 @@ namespace Op
         PerlinNoise() : BaseComputeShaderOp("src/mapgen/operators/perlin.glsl") {}
 
         std::string name() const override { return "PerlinNoise"; }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
             settings->registerFloat3("offset", glm::vec3(1), FLT_MIN, FLT_MAX);
             settings->registerInt("octaves", 8, 1, 16);

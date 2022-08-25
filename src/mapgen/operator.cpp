@@ -11,7 +11,7 @@ namespace Op
 {
     std::vector<Input> Operator::inputs() const { return {}; }
     std::vector<Output> Operator::outputs() const { return {{}}; }
-    glm::ivec2 Operator::outputImageSize(const std::vector<Texture *> &inputs, const Settings *const sceneSettings)
+    glm::ivec2 Operator::outputImageSize(const std::vector<Texture *> &inputs, const Settings *const sceneSettings, [[maybe_unused]] const Settings *const opSettings)
     {
         if (!inputs.empty())
         {
@@ -20,7 +20,7 @@ namespace Op
         LOG_DEBUG("Using scene image size for %s", name().c_str());
         return sceneSettings->getInt2(SCENE_SETTING_IMAGE_SIZE);
     }
-    void Operator::defaultSettings([[maybe_unused]] Settings *settings) const {}
+    void Operator::defaultSettings([[maybe_unused]] Settings *const settings) const {}
 
     void Operator::preprocess([[maybe_unused]] const std::vector<Texture *> &inputs, [[maybe_unused]] const std::vector<Texture *> &outputs, [[maybe_unused]] const Settings *settings) {}
     const std::string &Operator::error() { return m_error; }
@@ -32,7 +32,7 @@ namespace Op
     BaseComputeShaderOp::BaseComputeShaderOp(const char *computeShader) : shader(computeShader) {}
     bool BaseComputeShaderOp::process(const std::vector<Texture *> &inputs,
                                       const std::vector<Texture *> &outputs,
-                                      const Settings *settings)
+                                      const Settings *const settings)
     {
         // Setup shader
         shader.use();

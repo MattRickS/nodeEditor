@@ -16,7 +16,7 @@ namespace Op
 
         VoronoiNoise() : BaseComputeShaderOp("src/mapgen/operators/voronoi.glsl") {}
         std::string name() const override { return "Voronoi"; }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
             settings->registerInt2("offset", glm::ivec2(0));
             settings->registerFloat("size", 100.0f, 1.0f, 2048.0f);

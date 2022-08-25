@@ -22,7 +22,7 @@ namespace Op
         {
         }
         std::string name() const override { return "Erosion"; }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
             settings->registerUInt("iterations", 1);
         }
@@ -35,14 +35,14 @@ namespace Op
             // First output is default
             return {{}, {"water"}, {"flow"}, {"sediment"}};
         }
-        void preprocess(const std::vector<Texture *> &inputs, const std::vector<Texture *> &outputs, const Settings *settings) override
+        void preprocess(const std::vector<Texture *> &inputs, const std::vector<Texture *> &outputs, const Settings *const settings) override
         {
             // Copy the input textures into the outputs so they can be bound as read-write.
             auto heightptr = inputs[0];
             glCopyImageSubData(heightptr->id(), GL_TEXTURE_2D, 0, 0, 0, 0,
                                outputs[0]->id(), GL_TEXTURE_2D, 0, 0, 0, 0, heightptr->width(), heightptr->height(), 1);
         }
-        bool process(const std::vector<Texture *> &inputs, const std::vector<Texture *> &outputs, const Settings *settings) override
+        bool process(const std::vector<Texture *> &inputs, const std::vector<Texture *> &outputs, const Settings *const settings) override
         {
             ++m_iterations;
             erosionShader.use();
