@@ -357,7 +357,7 @@ void Application::updatePixelPreview(double xpos, double ypos)
     const Texture *texptr = currentTexture();
     if (texptr)
     {
-        float ratio = 0.5f * float(texptr->width) / texptr->height;
+        float ratio = 0.5f * float(texptr->width()) / texptr->height();
         if (worldPos.x >= (0.5f - ratio) && worldPos.x < (0.5f + ratio) && worldPos.y >= 0 && worldPos.y < 1)
         {
             // TODO: Only reads from buffer. Current framebuffer only has 0-1 values.
@@ -370,15 +370,15 @@ void Application::updatePixelPreview(double xpos, double ypos)
             // - active texture has changed / was processed further
             glActiveTexture(GL_TEXTURE0);
 
-            int x = (worldPos.x - (0.5f - ratio)) / (2 * ratio) * texptr->width;
-            int y = worldPos.y * texptr->height;
+            int x = (worldPos.x - (0.5f - ratio)) / (2 * ratio) * texptr->width();
+            int y = worldPos.y * texptr->height();
             m_pixelPreview.pos = {x, y};
 
-            maybeResizeImageBuffer({texptr->width, texptr->height});
+            maybeResizeImageBuffer({texptr->width(), texptr->height()});
 
-            glBindTexture(GL_TEXTURE_2D, texptr->ID);
-            glGetTexImage(GL_TEXTURE_2D, 0, texptr->format, GL_FLOAT, m_imageBuffer);
-            size_t index = (y * texptr->width + x) * texptr->numChannels();
+            glBindTexture(GL_TEXTURE_2D, texptr->id());
+            glGetTexImage(GL_TEXTURE_2D, 0, texptr->format(), GL_FLOAT, m_imageBuffer);
+            size_t index = (y * texptr->width() + x) * texptr->numChannels();
             for (size_t i = 0; i < 4; ++i)
             {
                 m_pixelPreview.value[i] = i < texptr->numChannels() ? m_imageBuffer[index + i] : 0.0f;

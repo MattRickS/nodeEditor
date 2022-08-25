@@ -76,10 +76,10 @@ namespace Op
             // Optional inputs might be a nullptr
             if (inTex)
             {
-                LOG_DEBUG("Binding input %lu to ID: %u", i, inTex->ID);
+                LOG_DEBUG("Binding input %lu to ID: %u", i, inTex->id());
                 glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, inTex->ID);
-                glBindImageTexture(i, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
+                glBindTexture(GL_TEXTURE_2D, inTex->id());
+                glBindImageTexture(i, inTex->id(), 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
                 // TODO: Needs to check if it's optional, otherwise this setting won't exist
                 // Internal naming convention for disabling optional inputs
                 shader.setBool("_ignoreImage" + std::to_string(i), false);
@@ -93,13 +93,13 @@ namespace Op
         }
 
         auto outTex = outputs[0];
-        LOG_DEBUG("Binding output %lu to ID: %u", i, outTex->ID);
+        LOG_DEBUG("Binding output %lu to ID: %u", i, outTex->id());
         glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, outTex->ID);
-        glBindImageTexture(i, outTex->ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
+        glBindTexture(GL_TEXTURE_2D, outTex->id());
+        glBindImageTexture(i, outTex->id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
 
         // Render
-        glDispatchCompute(ceil(outTex->width / 8), ceil(outTex->height / 4), 1);
+        glDispatchCompute(ceil(outTex->width() / 8), ceil(outTex->height() / 4), 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         return true;

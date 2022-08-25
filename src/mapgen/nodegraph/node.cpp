@@ -78,7 +78,7 @@ glm::ivec2 Node::imageSize() const
     }
     else
     {
-        return {m_inputTextures[0]->width, m_inputTextures[0]->height};
+        return {m_inputTextures[0]->width(), m_inputTextures[0]->height()};
     }
 }
 size_t Node::width() const
@@ -306,11 +306,11 @@ void Node::evaluateOutputs()
         {
             m_outputTextures.emplace_back(new Texture(width, height));
         }
-        else if (m_outputTextures[i]->width != width || m_outputTextures[i]->height != height)
+        else if (m_outputTextures[i]->width() != width || m_outputTextures[i]->height() != height)
         {
             m_outputTextures[i]->resize(width, height);
         }
         auto it = m_renderSet.insert_or_assign(m_outputs[i].layer(), m_outputTextures[i]);
-        LOG_DEBUG("%s output ID %u to layer %s", (it.second ? "Inserted" : "Assigned"), m_outputTextures[i]->ID, m_outputs[i].layer().c_str());
+        LOG_DEBUG("%s output ID %u to layer %s", (it.second ? "Inserted" : "Assigned"), m_outputTextures[i]->id(), m_outputs[i].layer().c_str());
     }
 }

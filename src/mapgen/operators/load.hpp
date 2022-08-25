@@ -45,8 +45,8 @@ namespace Op
             unsigned char *pixels = stbi_load(filepath.c_str(), &width, &height, &numChannels, 4);
 
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, outputs[0]->ID);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, outputs[0]->width, outputs[0]->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+            glBindTexture(GL_TEXTURE_2D, outputs[0]->id());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, outputs[0]->width(), outputs[0]->height(), GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
             return true;
         }

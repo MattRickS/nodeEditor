@@ -39,8 +39,8 @@ namespace Op
         {
             // Copy the input textures into the outputs so they can be bound as read-write.
             auto heightptr = inputs[0];
-            glCopyImageSubData(heightptr->ID, GL_TEXTURE_2D, 0, 0, 0, 0,
-                               outputs[0]->ID, GL_TEXTURE_2D, 0, 0, 0, 0, heightptr->width, heightptr->height, 1);
+            glCopyImageSubData(heightptr->id(), GL_TEXTURE_2D, 0, 0, 0, 0,
+                               outputs[0]->id(), GL_TEXTURE_2D, 0, 0, 0, 0, heightptr->width(), heightptr->height(), 1);
         }
         bool process(const std::vector<Texture *> &inputs, const std::vector<Texture *> &outputs, const Settings *settings) override
         {
@@ -52,11 +52,11 @@ namespace Op
             for (size_t i = 0; i < outputs.size(); ++i)
             {
                 glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, outputs[i]->ID);
-                glBindImageTexture(i, outputs[i]->ID, 0, GL_FALSE, 0, GL_READ_WRITE, outputs[i]->internalFormat());
+                glBindTexture(GL_TEXTURE_2D, outputs[i]->id());
+                glBindImageTexture(i, outputs[i]->id(), 0, GL_FALSE, 0, GL_READ_WRITE, outputs[i]->internalFormat());
             }
 
-            glDispatchCompute(ceil(outputs[0]->width / 8), ceil(outputs[0]->height / 4), 1);
+            glDispatchCompute(ceil(outputs[0]->width() / 8), ceil(outputs[0]->height() / 4), 1);
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
             return m_iterations == settings->getUInt("iterations");
         }
