@@ -13,6 +13,16 @@ const SettingChoices CHANNEL_CHOICES{
     {"alpha", 3}};
 const float MAX_FLOAT_SLIDER_SPEED = 1.0f;
 
+// TODO: Figure out why the CMake include for this source file isn't working
+namespace ImGui
+{
+    // ImGui::InputText() with std::string
+    // Because text input needs dynamic resizing, we need to setup a callback to grow the capacity
+    IMGUI_API bool InputText(const char *label, std::string *str, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void *user_data = NULL);
+    IMGUI_API bool InputTextMultiline(const char *label, std::string *str, const ImVec2 &size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void *user_data = NULL);
+    IMGUI_API bool InputTextWithHint(const char *label, const char *hint, std::string *str, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void *user_data = NULL);
+}
+
 SettingChoices rangedChannelChoices(const Setting &setting)
 {
     SettingChoices choices;
@@ -130,6 +140,9 @@ void Properties::drawNodeSettings(Node *node)
         case SettingType_UInt:
             drawUIntSetting(node, *it);
             break;
+        case SettingType_String:
+            drawStringSetting(node, *it);
+            break;
         }
     }
 }
@@ -211,6 +224,12 @@ void Properties::drawUIntSetting(Node *node, const Setting &setting)
 {
     unsigned int value = setting.value<unsigned int>();
     if (ImGui::InputScalar(setting.name().c_str(), ImGuiDataType_U32, &value))
+        opSettingChanged.emit(node, setting.name(), value);
+}
+void Properties::drawStringSetting(Node *node, const Setting &setting)
+{
+    std::string value = setting.value<std::string>();
+    if (ImGui::InputText(setting.name().c_str(), &value, ImGuiInputTextFlags_EnterReturnsTrue))
         opSettingChanged.emit(node, setting.name(), value);
 }
 

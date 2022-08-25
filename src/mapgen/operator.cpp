@@ -62,6 +62,10 @@ namespace Op
                 shader.setUInt(it->name(), it->value<unsigned int>());
                 LOG_DEBUG("Setting %s to %u", it->name().c_str(), it->value<unsigned int>());
                 break;
+            case SettingType_String:
+                // glsl has no string type
+                LOG_WARNING("Ignoring string setting %s", it->name().c_str());
+                break;
             }
         }
 

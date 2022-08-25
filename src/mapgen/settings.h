@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-typedef std::variant<bool, unsigned int, int, float, glm::vec2, glm::vec3, glm::vec4, glm::ivec2> SettingValue;
+typedef std::variant<bool, unsigned int, int, float, glm::vec2, glm::vec3, glm::vec4, glm::ivec2, std::string> SettingValue;
 typedef std::map<std::string, SettingValue> SettingChoices;
 
 const std::string &currentChoice(SettingChoices choices, SettingValue value);
@@ -21,6 +21,7 @@ enum SettingType
     SettingType_Int,
     SettingType_Int2,
     SettingType_UInt,
+    SettingType_String
 };
 
 enum SettingHint
@@ -100,6 +101,8 @@ public:
     void registerFloat4(const std::string name, glm::vec4 value, SettingChoices choices);
     void registerInt2(const std::string name, glm::ivec2 value, SettingHint hints = SettingHint_None);
     void registerInt2(const std::string name, glm::ivec2 value, SettingChoices choices);
+    void registerString(const std::string name, std::string value, SettingHint hints = SettingHint_None);
+    void registerString(const std::string name, std::string value, SettingChoices choices);
 
     bool getBool(const std::string key) const;
     unsigned int getUInt(const std::string key) const;
@@ -109,6 +112,7 @@ public:
     glm::vec3 getFloat3(const std::string key) const;
     glm::vec4 getFloat4(const std::string key) const;
     glm::ivec2 getInt2(const std::string key) const;
+    std::string getString(const std::string key) const;
 
 protected:
     std::vector<Setting> m_settings;
