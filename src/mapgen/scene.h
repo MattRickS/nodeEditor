@@ -11,6 +11,7 @@
 #include "nodegraph/graph.h"
 #include "operator.h"
 #include "renders.h"
+#include "settings.h"
 
 /*
 Scene owns no textures, each node owns the textures it generates.
@@ -76,9 +77,9 @@ public:
 
 protected:
     Context m_context;
-    glm::ivec2 m_defaultImageSize;
     GLuint m_quadVAO;
     Graph m_graph;
+    Settings m_settings;
 
     // Thread variables. Lock is required for non-atomic states and the `stopped`
     // condition variable for pausing the thread.

@@ -36,7 +36,6 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     m_ui->sizeChanged.connect(this, &Application::onResize);
     m_ui->closeRequested.connect(this, &Application::close);
     m_ui->nodegraph()->newNodeRequested.connect(this, &Application::createNode);
-    m_ui->properties()->nodeSizeChanged.connect(this, &Application::onNodeSizeChanged);
     m_ui->properties()->opSettingChanged.connect(this, &Application::updateSetting);
     m_ui->properties()->pauseToggled.connect(this, &Application::togglePause);
     m_ui->properties()->sceneSizeChanged.connect(this, &Application::onSceneSizeChanged);
@@ -501,12 +500,6 @@ void Application::updateSetting(Node *node, std::string key, SettingValue value)
 {
     node->updateSetting(key, value);
     // Must also set the scene as dirty so that the graph is re-evaluated
-    m_scene->setDirty();
-}
-
-void Application::onNodeSizeChanged(Node *node, glm::ivec2 imageSize)
-{
-    node->setImageSize(imageSize);
     m_scene->setDirty();
 }
 

@@ -38,6 +38,8 @@ namespace Op
         virtual std::vector<Input> inputs() const;
         /* Returns the layers the operator outputs. Defaults to a single output for the default layer. */
         virtual std::vector<Output> outputs() const;
+        /* Returns the texture size the output layers should be */
+        virtual glm::ivec2 outputImageSize(const std::vector<Texture *> &inputs, const Settings *const sceneSettings);
         /* Populates the default settings for the operator (if any). Defaults to no settings. */
         virtual void defaultSettings(Settings *settings) const;
         /*

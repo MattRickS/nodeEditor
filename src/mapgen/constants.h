@@ -2,6 +2,7 @@
 #include <string>
 
 const std::string DEFAULT_LAYER = "RGBA";
+const std::string SCENE_SETTING_IMAGE_SIZE = "imageSize";
 
 enum Channel
 {

@@ -13,7 +13,6 @@ class Properties : public Panel
 {
 public:
     Signal<Node *, std::string, SettingValue> opSettingChanged;
-    Signal<Node *, glm::ivec2> nodeSizeChanged;
     Signal<glm::ivec2> sceneSizeChanged; // TODO: Possibly should be global settings
     Signal<bool> pauseToggled;
 

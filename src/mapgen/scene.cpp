@@ -13,8 +13,9 @@
 #include "scene.h"
 #include "util.h"
 
-Scene::Scene(unsigned int width, unsigned int height) : m_context("Scene"), m_defaultImageSize(width, height)
+Scene::Scene(unsigned int width, unsigned int height) : m_context("Scene")
 {
+    m_settings.registerInt2(SCENE_SETTING_IMAGE_SIZE, {width, height});
 }
 Scene::~Scene()
 {
@@ -25,12 +26,28 @@ Scene::~Scene()
 }
 
 const Context *Scene::context() const { return &m_context; }
-glm::ivec2 Scene::defaultImageSize() const { return m_defaultImageSize; }
-void Scene::setDefaultImageSize(glm::ivec2 imageSize) { m_defaultImageSize = imageSize; }
+glm::ivec2 Scene::defaultImageSize() const { return m_settings.getInt2(SCENE_SETTING_IMAGE_SIZE); }
+void Scene::setDefaultImageSize(glm::ivec2 imageSize)
+{
+    m_settings.get(SCENE_SETTING_IMAGE_SIZE)->set(imageSize);
+    bool changed = false;
+    for (auto it = getCurrentGraph()->begin(); it != getCurrentGraph()->end(); ++it)
+    {
+        if (it->recalculateImageSize(&m_settings))
+        {
+            it->setDirty(true);
+            changed = true;
+        }
+    }
+    if (changed)
+    {
+        setDirty();
+    }
+}
 
 NodeID Scene::createNode(std::string nodeType)
 {
-    return getCurrentGraph()->createNode(nodeType, m_defaultImageSize);
+    return getCurrentGraph()->createNode(nodeType);
 }
 Graph *Scene::getCurrentGraph() { return &m_graph; }
 Node *Scene::getCurrentNode() { return m_currNode; }
@@ -159,7 +176,7 @@ void Scene::process()
         }
 
         // If the node completed processing, advance to the next node
-        if (m_currNode->processStep())
+        if (m_currNode->processStep(&m_settings))
         {
             m_currNode = calculateCurrentNode();
         }

@@ -2,6 +2,7 @@
 
 #include <GL/glew.h>
 
+#include "constants.h"
 #include "operator.h"
 #include "renders.h"
 #include "util.h"
@@ -10,6 +11,15 @@ namespace Op
 {
     std::vector<Input> Operator::inputs() const { return {}; }
     std::vector<Output> Operator::outputs() const { return {{}}; }
+    glm::ivec2 Operator::outputImageSize(const std::vector<Texture *> &inputs, const Settings *const sceneSettings)
+    {
+        if (!inputs.empty())
+        {
+            return {inputs[0]->width(), inputs[0]->height()};
+        }
+        LOG_DEBUG("Using scene image size for %s", name().c_str());
+        return sceneSettings->getInt2(SCENE_SETTING_IMAGE_SIZE);
+    }
     void Operator::defaultSettings([[maybe_unused]] Settings *settings) const {}
 
     void Operator::preprocess([[maybe_unused]] const std::vector<Texture *> &inputs, [[maybe_unused]] const std::vector<Texture *> &outputs, [[maybe_unused]] const Settings *settings) {}

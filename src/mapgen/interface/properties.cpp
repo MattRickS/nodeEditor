@@ -100,12 +100,6 @@ void Properties::drawNodeSettings(Node *node)
         return;
     }
 
-    if (node->definesImageSize())
-    {
-        glm::ivec2 imageSize = node->imageSize();
-        if (ImGui::DragInt2("imageSize", (int *)&imageSize))
-            nodeSizeChanged.emit(node, imageSize);
-    }
     for (auto it = node->settings()->begin(); it != node->settings()->end(); ++it)
     {
         if (it->hasChoices())

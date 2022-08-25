@@ -9,7 +9,7 @@
 #include "connector.h"
 #include "node.h"
 
-Node::Node(NodeID id, Op::Operator *op, glm::ivec2 imageSize) : m_id(id), m_op(op), m_imageSize(imageSize)
+Node::Node(NodeID id, Op::Operator *op) : m_id(id), m_op(op)
 {
     m_bounds = Bounds{0, 0, 100, 25};
     if (op)
@@ -61,43 +61,22 @@ std::string Node::name() const { return m_name; }
 State Node::state() const { return m_state; }
 const RenderSet *Node::renderSet() const { return &m_renderSet; }
 
-bool Node::definesImageSize() const
-{
-    return numInputs() == 0;
-}
-
 glm::ivec2 Node::imageSize() const
 {
-    if (definesImageSize())
-    {
-        return m_imageSize;
-    }
-    else if (m_inputTextures.empty())
-    {
-        return {0, 0};
-    }
-    else
-    {
-        return {m_inputTextures[0]->width(), m_inputTextures[0]->height()};
-    }
+    return m_imageSize;
 }
-size_t Node::width() const
+bool Node::recalculateImageSize(const Settings *sceneSettings)
 {
-    return imageSize().x;
-}
-size_t Node::height() const
-{
-    return imageSize().y;
-}
-bool Node::setImageSize(glm::ivec2 imageSize)
-{
-    if (!definesImageSize())
+    if (!m_op)
     {
-        LOG_ERROR("Cannot set image size for node %s", name().c_str());
+        return false;
+    }
+    glm::ivec2 imageSize = m_op->outputImageSize(m_inputTextures, sceneSettings);
+    if (imageSize == m_imageSize)
+    {
         return false;
     }
     m_imageSize = imageSize;
-    setDirty(true);
     return true;
 }
 
@@ -166,7 +145,7 @@ void Node::reset()
         m_op->reset();
     }
 }
-bool Node::processStep()
+bool Node::processStep(const Settings *const sceneSettings)
 {
     bool isComplete = false;
     switch (m_state)
@@ -175,7 +154,7 @@ bool Node::processStep()
     case State::Preprocessing:
         m_state = State::Preprocessing;
         LOG_DEBUG("Preprocessing %s", name().c_str());
-        preprocess();
+        preprocess(sceneSettings);
         // In case state changed during preprocessing (shouldn't be possible), discard result
         if (m_state == State::Preprocessing)
         {
@@ -184,7 +163,7 @@ bool Node::processStep()
         break;
     case State::Processing:
         LOG_DEBUG("Processing %s", name().c_str());
-        isComplete = process();
+        isComplete = process(sceneSettings);
         if (m_state == State::Processing)
         {
             m_state = State::Processed;
@@ -200,7 +179,7 @@ bool Node::processStep()
     }
     return isComplete;
 }
-bool Node::preprocess()
+bool Node::preprocess(const Settings *sceneSettings)
 {
     if (!m_op)
     {
@@ -225,6 +204,8 @@ bool Node::preprocess()
         m_renderSet.clear();
     }
 
+    // Update the output size and ensure there are matching output textures
+    recalculateImageSize(sceneSettings);
     evaluateOutputs();
 
     m_op->preprocess(m_inputTextures, m_outputTextures, &m_settings);
@@ -235,7 +216,7 @@ bool Node::preprocess()
     }
     return true;
 }
-bool Node::process()
+bool Node::process([[maybe_unused]] const Settings *const sceneSettings)
 {
     if (!m_op)
     {
@@ -298,7 +279,7 @@ const RenderSet *Node::evaluateInputs()
 
 void Node::evaluateOutputs()
 {
-    unsigned int width = this->width(), height = this->height();
+    unsigned int width = m_imageSize.x, height = m_imageSize.y;
 
     for (size_t i = 0; i < numOutputs(); ++i)
     {
