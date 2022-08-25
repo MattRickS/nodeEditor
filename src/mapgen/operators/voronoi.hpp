@@ -6,7 +6,7 @@
 
 namespace Op
 {
-    class VoronoiNoise : public BaseComputeShaderOp
+    class VoronoiNoise : public ContentCreatorComputeShaderOp
     {
     public:
         static VoronoiNoise *create()
@@ -14,10 +14,11 @@ namespace Op
             return new VoronoiNoise();
         }
 
-        VoronoiNoise() : BaseComputeShaderOp("src/mapgen/operators/voronoi.glsl") {}
+        VoronoiNoise() : ContentCreatorComputeShaderOp("src/mapgen/operators/voronoi.glsl") {}
         std::string name() const override { return "Voronoi"; }
         void defaultSettings(Settings *const settings) const override
         {
+            ContentCreatorComputeShaderOp::defaultSettings(settings);
             settings->registerInt2("offset", glm::ivec2(0));
             settings->registerFloat("size", 100.0f, 1.0f, 2048.0f);
             settings->registerFloat("skew", 0.5f);

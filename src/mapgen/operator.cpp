@@ -114,4 +114,22 @@ namespace Op
 
         return true;
     }
+
+    ContentCreatorComputeShaderOp::ContentCreatorComputeShaderOp(const char *computeShader) : BaseComputeShaderOp(computeShader) {}
+
+    void ContentCreatorComputeShaderOp::defaultSettings(Settings *const settings) const
+    {
+        settings->registerInt2("imageSize", glm::ivec2(0));
+    }
+    glm::ivec2 ContentCreatorComputeShaderOp::outputImageSize([[maybe_unused]] const std::vector<Texture *> &inputs, const Settings *const sceneSettings, const Settings *const opSettings)
+    {
+        glm::ivec2 imageSize = opSettings->getInt2("imageSize");
+        if (imageSize.x != 0 && imageSize.y != 0)
+        {
+            // TODO: Changing this quickly in the UI causes artifacts at the edge of the image.
+            //       Possibly GPU calls going out of order, aggregating setting changes with a small delay may fix
+            return imageSize;
+        }
+        return BaseComputeShaderOp::outputImageSize(inputs, sceneSettings, opSettings);
+    }
 }

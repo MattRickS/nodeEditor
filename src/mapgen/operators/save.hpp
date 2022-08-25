@@ -34,6 +34,7 @@ namespace Op
                      [[maybe_unused]] const std::vector<Texture *> &outputs,
                      const Settings *const settings) override
         {
+            // TODO: Output formats - need to support HDR at least
             std::string filepath = settings->getString("filepath");
             if (filepath.empty())
             {
@@ -61,7 +62,7 @@ namespace Op
 
             if (result == 0)
             {
-                setError("Failed to write output with code");
+                setError("Failed to write output with code: " + std::to_string(result));
                 return false;
             }
 

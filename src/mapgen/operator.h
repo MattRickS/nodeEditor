@@ -95,9 +95,18 @@ namespace Op
         Shader shader;
 
         BaseComputeShaderOp(const char *computeShader);
-        bool process(const std::vector<Texture *> &inputs,
-                     const std::vector<Texture *> &outputs,
-                     const Settings *const settings) override;
+        virtual bool process(const std::vector<Texture *> &inputs,
+                             const std::vector<Texture *> &outputs,
+                             const Settings *const settings);
+    };
+
+    class ContentCreatorComputeShaderOp : public BaseComputeShaderOp
+    {
+    public:
+        ContentCreatorComputeShaderOp(const char *computeShader);
+
+        virtual void defaultSettings(Settings *const settings) const;
+        virtual glm::ivec2 outputImageSize([[maybe_unused]] const std::vector<Texture *> &inputs, const Settings *const sceneSettings, const Settings *const opSettings);
     };
 
     class OperatorRegistry
