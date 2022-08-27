@@ -13,7 +13,6 @@ class Properties : public Panel
 {
 public:
     Signal<Node *, std::string, SettingValue> opSettingChanged;
-    Signal<Node *, glm::ivec2> nodeSizeChanged;
     Signal<glm::ivec2> sceneSizeChanged; // TODO: Possibly should be global settings
     Signal<bool> pauseToggled;
 
@@ -37,6 +36,7 @@ protected:
     void drawIntSetting(Node *node, const Setting &setting);
     void drawInt2Setting(Node *node, const Setting &setting);
     void drawUIntSetting(Node *node, const Setting &setting);
+    void drawStringSetting(Node *node, const Setting &setting);
     void drawSettingChoices(Node *node, const Setting &setting);
     void drawChoices(Node *node, const char *name, const SettingChoices &choices, const char *currChoice);
 };

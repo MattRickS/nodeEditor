@@ -1,8 +1,8 @@
 # TODO: Double check which are actually needed for current dependencies
 DEPENDENCIES="libfreetype-dev"
 
-PHONY: mapgen
-mapgen:
+PHONY: debug
+debug:
 	cmake -DCMAKE_BUILD_TYPE=Debug -S . -B build
 	make -C build mapgen
 
@@ -16,3 +16,7 @@ install:
 	sudo apt install ${DEPENDENCIES}
 	cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
 	make -C build mapgen
+
+PHONY: run
+run:
+	./build/src/mapgen

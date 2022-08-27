@@ -2,6 +2,7 @@
 
 #include <GL/glew.h>
 
+#include "constants.h"
 #include "operator.h"
 #include "renders.h"
 #include "util.h"
@@ -10,7 +11,16 @@ namespace Op
 {
     std::vector<Input> Operator::inputs() const { return {}; }
     std::vector<Output> Operator::outputs() const { return {{}}; }
-    void Operator::defaultSettings([[maybe_unused]] Settings *settings) const {}
+    glm::ivec2 Operator::outputImageSize(const std::vector<Texture *> &inputs, const Settings *const sceneSettings, [[maybe_unused]] const Settings *const opSettings)
+    {
+        if (!inputs.empty())
+        {
+            return {inputs[0]->width(), inputs[0]->height()};
+        }
+        LOG_DEBUG("Using scene image size for %s", name().c_str());
+        return sceneSettings->getInt2(SCENE_SETTING_IMAGE_SIZE);
+    }
+    void Operator::defaultSettings([[maybe_unused]] Settings *const settings) const {}
 
     void Operator::preprocess([[maybe_unused]] const std::vector<Texture *> &inputs, [[maybe_unused]] const std::vector<Texture *> &outputs, [[maybe_unused]] const Settings *settings) {}
     const std::string &Operator::error() { return m_error; }
@@ -22,7 +32,7 @@ namespace Op
     BaseComputeShaderOp::BaseComputeShaderOp(const char *computeShader) : shader(computeShader) {}
     bool BaseComputeShaderOp::process(const std::vector<Texture *> &inputs,
                                       const std::vector<Texture *> &outputs,
-                                      const Settings *settings)
+                                      const Settings *const settings)
     {
         // Setup shader
         shader.use();
@@ -62,6 +72,10 @@ namespace Op
                 shader.setUInt(it->name(), it->value<unsigned int>());
                 LOG_DEBUG("Setting %s to %u", it->name().c_str(), it->value<unsigned int>());
                 break;
+            case SettingType_String:
+                // glsl has no string type
+                LOG_WARNING("Ignoring string setting %s", it->name().c_str());
+                break;
             }
         }
 
@@ -72,10 +86,10 @@ namespace Op
             // Optional inputs might be a nullptr
             if (inTex)
             {
-                LOG_DEBUG("Binding input %lu to ID: %u", i, inTex->ID);
+                LOG_DEBUG("Binding input %lu to ID: %u", i, inTex->id());
                 glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, inTex->ID);
-                glBindImageTexture(i, inTex->ID, 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
+                glBindTexture(GL_TEXTURE_2D, inTex->id());
+                glBindImageTexture(i, inTex->id(), 0, GL_FALSE, 0, GL_READ_ONLY, inTex->internalFormat());
                 // TODO: Needs to check if it's optional, otherwise this setting won't exist
                 // Internal naming convention for disabling optional inputs
                 shader.setBool("_ignoreImage" + std::to_string(i), false);
@@ -89,15 +103,33 @@ namespace Op
         }
 
         auto outTex = outputs[0];
-        LOG_DEBUG("Binding output %lu to ID: %u", i, outTex->ID);
+        LOG_DEBUG("Binding output %lu to ID: %u", i, outTex->id());
         glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, outTex->ID);
-        glBindImageTexture(i, outTex->ID, 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
+        glBindTexture(GL_TEXTURE_2D, outTex->id());
+        glBindImageTexture(i, outTex->id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
 
         // Render
-        glDispatchCompute(ceil(outTex->width / 8), ceil(outTex->height / 4), 1);
+        glDispatchCompute(ceil(outTex->width() / 8), ceil(outTex->height() / 4), 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         return true;
+    }
+
+    ContentCreatorComputeShaderOp::ContentCreatorComputeShaderOp(const char *computeShader) : BaseComputeShaderOp(computeShader) {}
+
+    void ContentCreatorComputeShaderOp::defaultSettings(Settings *const settings) const
+    {
+        settings->registerInt2("imageSize", glm::ivec2(0));
+    }
+    glm::ivec2 ContentCreatorComputeShaderOp::outputImageSize([[maybe_unused]] const std::vector<Texture *> &inputs, const Settings *const sceneSettings, const Settings *const opSettings)
+    {
+        glm::ivec2 imageSize = opSettings->getInt2("imageSize");
+        if (imageSize.x != 0 && imageSize.y != 0)
+        {
+            // TODO: Changing this quickly in the UI causes artifacts at the edge of the image.
+            //       Possibly GPU calls going out of order, aggregating setting changes with a small delay may fix
+            return imageSize;
+        }
+        return BaseComputeShaderOp::outputImageSize(inputs, sceneSettings, opSettings);
     }
 }

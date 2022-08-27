@@ -22,7 +22,7 @@ namespace Op
         {
             return {{}};
         }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
             settings->registerFloat("scale", true, 0.01f, 100.0f);
             settings->registerInt("channel", ::Channel_Red, 0, 3, SettingHint_Channel);

@@ -21,7 +21,7 @@ namespace Op
         {
             return {{}};
         }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
             settings->registerInt2("offset", glm::ivec2(0));
         }

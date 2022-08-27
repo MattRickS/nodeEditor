@@ -14,7 +14,7 @@ typedef unsigned int NodeID;
 class Node : public GraphElement
 {
 public:
-    Node(NodeID id, Op::Operator *op, glm::ivec2 imageSize = glm::ivec2(1024, 1024));
+    Node(NodeID id, Op::Operator *op);
     ~Node();
 
     friend bool operator==(const Node &a, const Node &b);
@@ -27,11 +27,8 @@ public:
 
     // A node's imageSize is taken from it's first input. These methods can be
     // used to assign default imageSize if it has no inputs.
-    virtual bool definesImageSize() const;
     glm::ivec2 imageSize() const;
-    size_t width() const;
-    size_t height() const;
-    bool setImageSize(glm::ivec2 imageSize);
+    bool recalculateImageSize(const Settings *sceneSettings);
 
     // Maybe settings needs a redo so that the register methods are on the node, and the settings object it exposes is immutable
     // This ensures settings are only updated through updateSetting() so that the dirty bit can be set
@@ -51,9 +48,9 @@ public:
     void setDirty(bool dirty = true);
 
     void reset();
-    bool processStep();
-    bool preprocess();
-    bool process();
+    bool processStep(const Settings *const sceneSettings);
+    bool preprocess(const Settings *const sceneSettings);
+    bool process(const Settings *const sceneSettings);
 
 protected:
     // Core properties

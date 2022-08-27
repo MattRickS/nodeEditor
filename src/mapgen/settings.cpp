@@ -122,6 +122,11 @@ void Settings::registerInt2(const std::string name, glm::ivec2 value, SettingHin
     validateUniqueSetting(name);
     m_settings.emplace_back(name, SettingType_Int2, value, hints);
 }
+void Settings::registerString(const std::string name, std::string value, SettingHint hints)
+{
+    validateUniqueSetting(name);
+    m_settings.emplace_back(name, SettingType_String, value, hints);
+}
 
 void Settings::registerBool(const std::string name, bool value, SettingChoices choices)
 {
@@ -163,6 +168,11 @@ void Settings::registerInt2(const std::string name, glm::ivec2 value, SettingCho
     validateUniqueSetting(name);
     m_settings.emplace_back(name, SettingType_Int2, value, choices);
 }
+void Settings::registerString(const std::string name, std::string value, SettingChoices choices)
+{
+    validateUniqueSetting(name);
+    m_settings.emplace_back(name, SettingType_String, value, choices);
+}
 
 bool Settings::getBool(const std::string key) const
 {
@@ -195,4 +205,8 @@ glm::vec4 Settings::getFloat4(const std::string key) const
 glm::ivec2 Settings::getInt2(const std::string key) const
 {
     return get(key)->value<glm::ivec2>();
+}
+std::string Settings::getString(const std::string key) const
+{
+    return get(key)->value<std::string>();
 }

@@ -8,7 +8,7 @@
 
 namespace Op
 {
-    class PerlinNoise : public BaseComputeShaderOp
+    class PerlinNoise : public ContentCreatorComputeShaderOp
     {
     public:
         static PerlinNoise *create()
@@ -16,11 +16,12 @@ namespace Op
             return new PerlinNoise();
         }
 
-        PerlinNoise() : BaseComputeShaderOp("src/mapgen/operators/perlin.glsl") {}
+        PerlinNoise() : ContentCreatorComputeShaderOp("src/mapgen/operators/perlin.glsl") {}
 
         std::string name() const override { return "PerlinNoise"; }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
+            ContentCreatorComputeShaderOp::defaultSettings(settings);
             settings->registerFloat3("offset", glm::vec3(1), FLT_MIN, FLT_MAX);
             settings->registerInt("octaves", 8, 1, 16);
             settings->registerFloat("frequency", 0.003f, 0.0f, 1.0f, SettingHint_Logarithmic);

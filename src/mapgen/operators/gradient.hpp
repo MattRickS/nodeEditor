@@ -7,7 +7,7 @@
 
 namespace Op
 {
-    class Gradient : public BaseComputeShaderOp
+    class Gradient : public ContentCreatorComputeShaderOp
     {
     public:
         static Gradient *create()
@@ -15,10 +15,11 @@ namespace Op
             return new Gradient();
         }
 
-        Gradient() : BaseComputeShaderOp("src/mapgen/operators/gradient.glsl") {}
+        Gradient() : ContentCreatorComputeShaderOp("src/mapgen/operators/gradient.glsl") {}
         std::string name() const override { return "Gradient"; }
-        void defaultSettings(Settings *settings) const override
+        void defaultSettings(Settings *const settings) const override
         {
+            ContentCreatorComputeShaderOp::defaultSettings(settings);
             settings->registerFloat2("start", glm::vec2(0));
             settings->registerFloat2("end", glm::vec2(100));
             settings->registerFloat4("startColour", glm::vec4(1), 0.0f, 1.0f, SettingHint_Color);
