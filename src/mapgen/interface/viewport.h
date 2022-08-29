@@ -24,7 +24,6 @@ public:
 
     Camera &camera();
     void setLayer(std::string layer);
-    void setNode(NodeID nodeID);
     void setScene(Scene *scene);
     void toggleIsolateChannel(Channel channel);
     Channel isolatedChannel() const;
@@ -38,6 +37,5 @@ protected:
     Camera m_camera;
     Channel m_isolateChannel = Channel_All;
     Scene *m_scene = nullptr;
-    NodeID m_nodeID = 0;
     std::string m_layer = DEFAULT_LAYER;
 };

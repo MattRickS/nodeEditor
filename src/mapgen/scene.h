@@ -1,6 +1,7 @@
 #pragma once
 #include <atomic>
 #include <condition_variable>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -11,6 +12,7 @@
 #include "nodegraph/graph.h"
 #include "operator.h"
 #include "renders.h"
+#include "serializer.h"
 #include "settings.h"
 
 /*
@@ -19,7 +21,7 @@ Scene owns no textures, each node owns the textures it generates.
 class Scene
 {
 public:
-    Scene(unsigned int width, unsigned int height);
+    Scene();
     ~Scene();
 
     const Context *context() const;
@@ -30,6 +32,7 @@ public:
 
     // Gets the graph currently being processed
     Graph *getCurrentGraph();
+    Graph const *getCurrentGraph() const;
     // Gets the node that is currently rendering
     Node *getCurrentNode();
     // Gets the node that the scene is trying to render
@@ -38,6 +41,8 @@ public:
     Node *getSelectedNode();
     // Gets a node from the scene by ID
     Node *getNode(NodeID nodeID);
+    // Clears the scene to a fresh state
+    void clear();
 
     void setDirty();
     /*
@@ -58,8 +63,7 @@ public:
     */
     void setPaused(bool paused);
     /*
-    Whether or not the thread is marked as paused.
-    The thread might still be processing it's last operation.
+    Whether or not the thread is paused by the user
     */
     bool isPaused();
     /*
@@ -75,6 +79,9 @@ public:
     */
     bool processOne();
 
+    bool serialize(Serializer *serializer) const;
+    bool deserialize(Deserializer *deserializer);
+
 protected:
     Context m_context;
     GLuint m_quadVAO;
@@ -88,15 +95,15 @@ protected:
     std::condition_variable m_condition;
 
     // State (threaded)
-    std::atomic<Node *> m_viewNode = nullptr;
-    std::atomic<bool> m_resizing = false;
     std::atomic<bool> m_paused = false;
-    std::atomic<bool> m_awake = true;
+    std::atomic<bool> m_internalPause = true;
     std::atomic<bool> m_stopped = false;
     std::atomic<bool> m_processOne = false;
     std::atomic<bool> m_isDirty = false;
     // This is only ever read and written to by the thread
     Node *m_currNode = nullptr;
+
+    void registerSettings(Settings *settings) const;
 
     /*
     Checks if any changes were made that would require an operator to be reset.
@@ -116,14 +123,14 @@ protected:
     */
     bool isActive();
     /*
-    Make the process go to sleep until state is changed
+    Prevents processing even if the user has left the Scene unpaused
     */
-    void setAwake(bool idle);
+    void setInternalPause(bool paused);
 
     /*
     Calculates the next node to process based on current state and view node.
     */
-    Node *calculateCurrentNode() const;
+    Node *calculateCurrentNode(Node *viewNode) const;
     /*
     Checks scene state and resets any nodes marked as dirty (or downstream of a dirty node)
     */

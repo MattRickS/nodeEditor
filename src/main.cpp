@@ -34,7 +34,7 @@ int main()
     if (!glfwInit())
         return 1;
 
-    Scene scene(1920, 1080);
+    Scene scene;
     if (!scene.context()->isInitialised())
         return 1;
 

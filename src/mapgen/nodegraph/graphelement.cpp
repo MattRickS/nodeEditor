@@ -1,5 +1,8 @@
 #include "graphelement.h"
 
+GraphElement::GraphElement() {}
+GraphElement::GraphElement(Bounds bounds) : m_bounds(bounds) {}
+
 void GraphElement::setSelectFlag(SelectFlag flag)
 {
     m_selectState = SelectFlag(m_selectState | flag);

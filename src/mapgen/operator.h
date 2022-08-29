@@ -1,4 +1,5 @@
 #pragma once
+// TODO: Needs to register using the Op defined type
 #define REGISTER_OPERATOR(op_name, create_func) \
     bool op_name##_registered = OperatorRegistry::registerOperator(#op_name, (create_func))
 

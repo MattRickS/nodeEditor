@@ -68,4 +68,7 @@ protected:
     void updateSetting(Node *node, std::string key, SettingValue value);
     void onNodeSizeChanged(Node *node, glm::ivec2 imageSize);
     void onSceneSizeChanged(glm::ivec2 defaultImageSize);
+    void onNewSceneRequested();
+    void onLoadRequested(const std::string &filepath);
+    void onSaveRequested(const std::string &filepath);
 };

@@ -2,6 +2,8 @@
 #include <string>
 #include <map>
 
+#include "../serializer.h"
+#include "../settings.h"
 #include "node.h"
 
 class Graph
@@ -46,16 +48,21 @@ public:
     reverse_value_iterator rbegin();
     reverse_value_iterator rend();
 
-    NodeID createNode(std::string name);
+    NodeID createNode(const std::string &nodeType);
     bool deleteNode(NodeID nodeID);
     Node *node(NodeID nodeID);
     size_t numNodes() const;
     Bounds bounds() const;
+    void clear();
+
+    bool serialize(Serializer *serializer) const;
+    bool deserialize(Deserializer *deserializer);
 
 protected:
     static NodeID lastID;
     std::map<NodeID, Node> m_nodes;
 
+    void createNode(NodeID nodeID, const std::string &nodeType);
     void validateUniqueSetting(const std::string &name) const;
     void validateKeyExists(const std::string &name) const;
 };

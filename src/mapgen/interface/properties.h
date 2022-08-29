@@ -15,17 +15,19 @@ public:
     Signal<Node *, std::string, SettingValue> opSettingChanged;
     Signal<glm::ivec2> sceneSizeChanged; // TODO: Possibly should be global settings
     Signal<bool> pauseToggled;
+    Signal<> newSceneRequested;
+    Signal<const std::string &> saveRequested;
+    Signal<const std::string &> loadRequested;
 
     Properties(Window *window, Bounds bounds);
 
     void setScene(Scene *scene);
-    void setNode(NodeID node);
 
     void draw() override;
 
 protected:
     Scene *m_scene = nullptr;
-    NodeID m_nodeID;
+    std::string m_saveLoadPath = "/tmp/scene.scene";
 
     void drawNodeSettings(Node *node);
     void drawBoolSetting(Node *node, const Setting &setting);

@@ -56,7 +56,6 @@ float sliderSpeed(float min, float max)
 Properties::Properties(Window *window, Bounds bounds) : Panel(window, bounds) {}
 
 void Properties::setScene(Scene *scene) { m_scene = scene; }
-void Properties::setNode(NodeID nodeID) { m_nodeID = nodeID; }
 void Properties::draw()
 {
     static bool p_open = NULL;
@@ -76,12 +75,29 @@ void Properties::draw()
         ImGui::Separator();
 
         ImGui::TextUnformatted("Operator Settings");
-        Node *node = m_scene->getCurrentGraph()->node(m_nodeID);
+        Node *node = m_scene->getSelectedNode();
         if (node)
         {
             drawNodeSettings(node);
         }
 
+        ImGui::SetCursorPos({ImGui::GetCursorPosX(), m_bounds.max().y - 70});
+        ImGui::InputText("Filepath##Scene", &m_saveLoadPath, ImGuiInputTextFlags_EnterReturnsTrue);
+        if (ImGui::Button("New"))
+        {
+            newSceneRequested.emit();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Save"))
+        {
+            saveRequested.emit(m_saveLoadPath);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Load"))
+        {
+            loadRequested.emit(m_saveLoadPath);
+        }
+        ImGui::SameLine();
         bool isPaused = m_scene->isPaused();
         if (ImGui::Button(isPaused ? "Play" : "Pause"))
         {
@@ -100,7 +116,7 @@ void Properties::drawNodeSettings(Node *node)
         return;
     }
 
-    for (auto it = node->settings()->begin(); it != node->settings()->end(); ++it)
+    for (auto it = node->settings()->cbegin(); it != node->settings()->cend(); ++it)
     {
         if (it->hasChoices())
         {
@@ -235,7 +251,7 @@ void Properties::drawSettingChoices(Node *node, const Setting &setting)
 void Properties::drawChoices(Node *node, const char *name, const SettingChoices &choices, const char *currChoice)
 {
     std::ostringstream s;
-    s << name << "##Setting" << node->name().c_str();
+    s << name << "##Setting" << node->type().c_str();
     if (ImGui::BeginCombo(s.str().c_str(), currChoice))
     {
         for (auto it = choices.cbegin(); it != choices.cend(); ++it)

@@ -12,7 +12,6 @@ public:
     Texture(Texture &&other) noexcept;            // Move constructor
     Texture &operator=(const Texture &other);     // Copy Assignment
     Texture &operator=(Texture &&other) noexcept; // Move assignment
-    // TODO: Texture(const char* path) {} stbi load
 
     GLuint id() const { return m_id; }
     GLuint width() const { return m_width; }

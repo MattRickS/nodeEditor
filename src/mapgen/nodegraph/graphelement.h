@@ -6,6 +6,9 @@
 class GraphElement
 {
 public:
+    GraphElement();
+    GraphElement(Bounds bounds);
+
     void setSelectFlag(SelectFlag flag);
     bool hasSelectFlag(SelectFlag flag) const;
     void clearSelectFlag(SelectFlag flag);

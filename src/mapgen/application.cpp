@@ -15,6 +15,7 @@
 #include "operator.h"
 #include "renders.h"
 #include "scene.h"
+#include "serializer.h"
 #include "settings.h"
 #include "shader.h"
 #include "util.h"
@@ -39,6 +40,9 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     m_ui->properties()->opSettingChanged.connect(this, &Application::updateSetting);
     m_ui->properties()->pauseToggled.connect(this, &Application::togglePause);
     m_ui->properties()->sceneSizeChanged.connect(this, &Application::onSceneSizeChanged);
+    m_ui->properties()->newSceneRequested.connect(this, &Application::onNewSceneRequested);
+    m_ui->properties()->loadRequested.connect(this, &Application::onLoadRequested);
+    m_ui->properties()->saveRequested.connect(this, &Application::onSaveRequested);
     m_ui->viewportProperties()->channelChanged.connect(this, &Application::onChannelChanged);
     m_ui->viewportProperties()->layerChanged.connect(this, &Application::onLayerChanged);
 }
@@ -308,7 +312,6 @@ void Application::setSelectedNode(Node *node)
     if (node)
     {
         node->setSelectFlag(SelectFlag_Select);
-        m_ui->properties()->setNode(node->id());
     }
 }
 
@@ -493,7 +496,6 @@ void Application::deleteSelectedNode()
 void Application::setViewNode(Node *node)
 {
     m_scene->setViewNode(node);
-    m_ui->viewport()->setNode(node->id());
 }
 
 void Application::updateSetting(Node *node, std::string key, SettingValue value)
@@ -506,4 +508,82 @@ void Application::updateSetting(Node *node, std::string key, SettingValue value)
 void Application::onSceneSizeChanged(glm::ivec2 defaultImageSize)
 {
     m_scene->setDefaultImageSize(defaultImageSize);
+}
+
+void Application::onNewSceneRequested()
+{
+    m_scene->clear();
+}
+void Application::onLoadRequested(const std::string &filepath)
+{
+    if (filepath.empty())
+    {
+        return;
+    }
+
+    std::ifstream file{filepath};
+    if (!file.is_open())
+    {
+        LOG_ERROR("Failed to open: %s", filepath.c_str());
+        return;
+    }
+
+    // Read the file into a buffer that a stringstream can read from
+    file.seekg(0, std::ios::end);
+    std::streampos filesize = file.tellg();
+    file.seekg(0, std::ios::beg);
+    std::vector<char> buffer(filesize);
+    file.read(buffer.data(), filesize);
+
+    std::stringstream ss;
+    ss.rdbuf()->pubsetbuf(buffer.data(), filesize);
+
+    StreamDeserializer deserializer{&ss};
+    std::string property;
+    int version;
+    if (deserializer.readProperty(property) && property == KEY_VERSION && deserializer.readInt(version))
+    {
+        deserializer.setVersion(version);
+    }
+    else
+    {
+        LOG_ERROR("Invalid file, must contain a leading version identifier");
+        return;
+    }
+
+    // Scene deserialization only modifies state if fully deserialized
+    if (!m_scene->deserialize(&deserializer))
+    {
+        LOG_ERROR("Failed to load from: %s", filepath.c_str())
+    }
+
+    // Would be closed in destructor anyway, just being a good citizen
+    file.close();
+}
+void Application::onSaveRequested(const std::string &filepath)
+{
+    if (filepath.empty() || !m_scene)
+    {
+        return;
+    }
+
+    std::ofstream stream{filepath};
+    if (!stream.is_open())
+    {
+        LOG_ERROR("Invalid filepath");
+        return;
+    }
+    StreamSerializer serializer{&stream};
+    serializer.writePropertyInt(KEY_VERSION, VERSION);
+    if (serializer.isOk() && m_scene->serialize(&serializer))
+    {
+        LOG_INFO("Saved scene to %s", filepath.c_str());
+    }
+    else
+    {
+        LOG_ERROR("Failed to save scene to: %s", filepath.c_str());
+    }
+
+    // Would be closed in destructor anyway, just being a good citizen
+    stream.close();
 }

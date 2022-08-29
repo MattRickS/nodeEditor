@@ -120,7 +120,7 @@ ImU32 Nodegraph::connColor(const Connector *connector) const
     {
         return COLOR_HOVER;
     }
-    if (connector->type() == Connector::Input && !static_cast<const InputConnector *>(connector)->isRequired())
+    if (connector->type() == Connector::Input && !connector->isRequired())
     {
         return COLOR_CONNECTOR_OPTIONAL;
     }
@@ -154,7 +154,7 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
 
     for (size_t i = 0; i < node->numInputs(); ++i)
     {
-        InputConnector *conn = node->input(i);
+        Connector *conn = node->input(i);
         Bounds b = graphElementBounds(conn);
 
         for (size_t j = 0; j < conn->numConnections(); ++j)
@@ -178,7 +178,7 @@ void Nodegraph::drawNode(ImDrawList *drawList, Node *node)
     ImGui::SetWindowFontScale(fontScale);
 
     drawList->AddRectFilled(ImVec2(bounds.min().x, bounds.min().y), ImVec2(bounds.max().x, bounds.max().y), nodeColor(node), m_nodeRounding);
-    drawList->AddText(ImVec2(bounds.min().x, bounds.min().y), COLOR_TEXT, node->name().c_str());
+    drawList->AddText(ImVec2(bounds.min().x, bounds.min().y), COLOR_TEXT, node->type().c_str());
 
     if (node && node->hasSelectFlag(SelectFlag_Select))
     {

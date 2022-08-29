@@ -16,7 +16,6 @@ Viewport::Viewport(Window *window, Bounds bounds) : Panel(window, bounds), m_vie
 
 Camera &Viewport::camera() { return m_camera; }
 void Viewport::setLayer(std::string layer) { m_layer = layer; }
-void Viewport::setNode(NodeID nodeID) { m_nodeID = nodeID; }
 void Viewport::setScene(Scene *scene) { m_scene = scene; }
 void Viewport::toggleIsolateChannel(Channel channel)
 {
@@ -37,9 +36,9 @@ void Viewport::draw()
     Channel channel = m_isolateChannel;
     glm::mat4 model{1.0f};
     // Takes node and layer so it can read the texture live as it's processed
-    if (m_scene && m_nodeID && !m_layer.empty())
+    if (m_scene && !m_layer.empty())
     {
-        Node *node = m_scene->getCurrentGraph()->node(m_nodeID);
+        Node *node = m_scene->getViewNode();
         if (node)
         {
             auto it = node->renderSet()->find(m_layer);

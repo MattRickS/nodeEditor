@@ -4,14 +4,13 @@
 #include "connector.h"
 #include "node.h"
 
-Connector::Connector(Node *node, Type type, size_t index, int maxConnections) : m_node(node), m_type(type), m_index(index), m_maxConnections(maxConnections)
+Connector::Connector(Node *node, Type type, size_t index, const std::string &name, int maxConnections, bool isRequired) : GraphElement({0, 0, 15, 8}), m_node(node), m_type(type), m_index(index), m_name(name), m_maxConnections(maxConnections), m_required(isRequired)
 {
-    m_bounds = Bounds(0, 0, 15, 8);
 }
 
 bool Connector::connect(Connector *connector)
 {
-    if (!m_node || !connector->node() || connector->m_node == m_node || m_type == connector->type() || isFull() || connector->isFull())
+    if (connector->m_node == m_node || m_type == connector->type() || isFull() || connector->isFull())
         return false;
 
     m_connected.push_back(connector);
@@ -53,19 +52,11 @@ bool Connector::disconnectConnection(std::vector<Connector *>::reverse_iterator 
 }
 bool Connector::disconnect(Connector *connector)
 {
-    if (!m_node || !connector->node())
-        return false;
-
     auto it = std::find(m_connected.rbegin(), m_connected.rend(), connector);
     return disconnectConnection(it);
 }
 void Connector::disconnectAll()
 {
-    if (!m_node)
-    {
-        return;
-    }
-
     for (auto it = m_connected.rbegin(); it != m_connected.rend(); ++it)
     {
         disconnectConnection(it);
@@ -78,16 +69,13 @@ int Connector::maxConnections() const { return m_maxConnections; }
 Connector *Connector::connection(size_t index) const { return m_connected[index]; }
 Node *Connector::node() const { return m_node; }
 bool Connector::isFull() const { return m_maxConnections > 0 && m_connected.size() >= (size_t)m_maxConnections; }
+bool Connector::isRequired() const { return m_required; }
 const std::string &Connector::layer() const { return m_layer; }
+const std::string &Connector::name() const { return m_name; }
 void Connector::setLayer(const std::string &layer) { m_layer = layer; }
 Bounds Connector::bounds() const
 {
-    // Should always be associated with a node, but if not, use the default size
-    if (!m_node)
-    {
-        return m_bounds;
-    }
-
+    // XXX: Node ref is still pointing to the old Node when copied/movied
     // Return the bounds relative to the node
     Bounds nodeBounds = node()->bounds();
     if (type() == Connector::Input)
@@ -106,14 +94,4 @@ Bounds Connector::bounds() const
             glm::vec2(nodeBounds.min().x + outputSpacing, nodeBounds.max().y),
             glm::vec2(nodeBounds.min().x + outputSpacing + m_bounds.size().x, nodeBounds.max().y + m_bounds.size().y)};
     }
-}
-
-InputConnector::InputConnector(Node *node, size_t index, std::string name, bool required) : Connector(node, Input, index, 1), m_name(name), m_required(required) {}
-
-const std::string &InputConnector::name() const { return m_name; }
-bool InputConnector::isRequired() const { return m_required; }
-
-OutputConnector::OutputConnector(Node *node, size_t index, std::string layerName) : Connector(node, Output, index)
-{
-    m_layer = layerName;
 }

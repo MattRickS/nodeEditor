@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -17,7 +18,7 @@ public:
         Output
     };
 
-    Connector(Node *node, Type type, size_t index, int maxConnections = -1);
+    Connector(Node *node, Type type, size_t index, const std::string &name, int maxConnections = -1, bool isRequired = true);
 
     bool connect(Connector *connector);
     bool disconnect(Connector *connector);
@@ -29,7 +30,9 @@ public:
     Connector *connection(size_t index) const;
     Node *node() const;
     bool isFull() const;
+    bool isRequired() const;
     const std::string &layer() const;
+    const std::string &name() const;
     void setLayer(const std::string &layer);
     Bounds bounds() const override;
 
@@ -37,34 +40,13 @@ protected:
     Node *m_node;
     Type m_type;
     size_t m_index;
+    std::string m_name;
     int m_maxConnections = -1;
     std::vector<Connector *> m_connected;
     std::string m_layer = DEFAULT_LAYER;
+    bool m_required = true;
 
     bool disconnectConnection(std::vector<Connector *>::reverse_iterator it);
-};
 
-class InputConnector : public Connector
-{
-public:
-    InputConnector(Node *node, size_t index, std::string name, bool required = true);
-
-    const std::string &name() const;
-    bool isRequired() const;
-
-protected:
-    std::string m_name;
-    bool m_required = true;
-};
-
-class OutputConnector : public Connector
-{
-public:
-    OutputConnector(Node *node, size_t index, std::string layerName);
-};
-
-struct Connection
-{
-    InputConnector *input;
-    OutputConnector *output;
+    friend class Node;
 };

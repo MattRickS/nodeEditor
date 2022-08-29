@@ -2,6 +2,19 @@
 #include <string>
 #include <unordered_map>
 
+const unsigned int VERSION = 1;
+const unsigned int DEFAULT_WIDTH = 1024;
+const unsigned int DEFAULT_HEIGHT = 1024;
+const std::string KEY_VERSION = "version";
+const std::string KEY_GRAPH = "Graph";
+const std::string KEY_NODES = "nodes";
+const std::string KEY_SETTINGS = "settings";
+const std::string KEY_INPUTS = "inputs";
+const std::string KEY_INPUT = "i";
+const std::string KEY_NODE_ID = "id";
+const std::string KEY_NODE_POS = "pos";
+const std::string KEY_NODE_FLAGS = "flags";
+
 const std::string DEFAULT_LAYER = "RGBA";
 const std::string SCENE_SETTING_IMAGE_SIZE = "imageSize";
 
@@ -37,6 +50,20 @@ enum FileType
     FileType_None,
     FileType_PNG,
     FileType_HDR
+};
+
+enum SerializeType
+{
+    SerializeType_Object,
+    SerializeType_Bool,
+    SerializeType_Float,
+    SerializeType_Float2,
+    SerializeType_Float3,
+    SerializeType_Float4,
+    SerializeType_Int,
+    SerializeType_Int2,
+    SerializeType_UInt,
+    SerializeType_String
 };
 
 const std::string EXTENSION_HDR = ".hdr";

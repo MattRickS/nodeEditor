@@ -1,10 +1,12 @@
 #pragma once
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "../constants.h"
 #include "../operator.h"
 #include "../renders.h"
+#include "../serializer.h"
 #include "../settings.h"
 #include "connector.h"
 #include "graphelement.h"
@@ -17,11 +19,16 @@ public:
     Node(NodeID id, Op::Operator *op);
     ~Node();
 
+    Node(Node &&node) noexcept;            // Move constructor
+    Node(const Node &node);                // Copy constructor
+    Node &operator=(Node &&node) noexcept; // Move assignment
+    Node &operator=(const Node &node);     // Copy assignment
+
     friend bool operator==(const Node &a, const Node &b);
     friend bool operator!=(const Node &a, const Node &b);
 
     NodeID id() const;
-    std::string name() const;
+    const std::string &type() const;
     State state() const;
     const RenderSet *renderSet() const;
 
@@ -32,18 +39,19 @@ public:
 
     // Maybe settings needs a redo so that the register methods are on the node, and the settings object it exposes is immutable
     // This ensures settings are only updated through updateSetting() so that the dirty bit can be set
-    Settings *settings();
-    void updateSetting(std::string name, SettingValue value);
+    Settings const *settings() const;
+    void updateSetting(const std::string &name, SettingValue value);
 
-    void addInput(std::string name = "", bool required = true);
+    void addInput(const std::string &name = "", bool required = true);
     size_t numInputs() const;
-    InputConnector *input(size_t index);
+    Connector *input(size_t index);
+    Connector const *input(size_t index) const;
 
-    bool addOutput(std::string layerName = DEFAULT_LAYER);
+    bool addOutput(const std::string &layerName = DEFAULT_LAYER);
     size_t numOutputs() const;
-    OutputConnector *output(size_t index);
+    Connector *output(size_t index);
 
-    void setError(std::string errorMsg);
+    void setError(const std::string &errorMsg);
     bool isDirty() const;
     void setDirty(bool dirty = true);
 
@@ -52,15 +60,18 @@ public:
     bool preprocess(const Settings *const sceneSettings);
     bool process(const Settings *const sceneSettings);
 
+    bool serialize(Serializer *serializer) const;
+    bool deserialize(Deserializer *deserializer);
+
 protected:
     // Core properties
     NodeID m_id;
     std::string m_name;
-    Op::Operator *m_op;
+    std::unique_ptr<Op::Operator> m_op;
     Settings m_settings;
     glm::ivec2 m_imageSize;
-    std::vector<InputConnector> m_inputs;
-    std::vector<OutputConnector> m_outputs;
+    std::vector<Connector> m_inputs;
+    std::vector<Connector> m_outputs;
 
     // State properties
     State m_state = State::Unprocessed;
