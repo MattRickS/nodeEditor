@@ -89,7 +89,7 @@ Bounds Connector::bounds() const
     else
     {
         size_t numOutputs = node()->numOutputs();
-        float outputSpacing = (nodeBounds.size().x - numOutputs * m_bounds.size().x) / float(numOutputs + 1);
+        float outputSpacing = (index() + 1) * nodeBounds.size().x / float(numOutputs + 1) - m_bounds.size().x * 0.5f;
         return {
             glm::vec2(nodeBounds.min().x + outputSpacing, nodeBounds.max().y),
             glm::vec2(nodeBounds.min().x + outputSpacing + m_bounds.size().x, nodeBounds.max().y + m_bounds.size().y)};

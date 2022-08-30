@@ -232,6 +232,7 @@ bool Node::addOutput(const std::string &layerName)
                            Connector::Output,
                            numOutputs(),
                            "output_" + std::to_string(numOutputs()));
+    m_outputs.back().setLayer(layerName);
     return true;
 }
 size_t Node::numOutputs() const { return m_outputs.size(); }
