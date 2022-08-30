@@ -73,40 +73,73 @@ void Properties::draw()
             sceneSizeChanged.emit(sceneImageSize);
 
         ImGui::Separator();
+        Node *node = m_scene->getSelectedNode();
+
+        if (node)
+        {
+            // Instead of this, could just have a shuffle node for extracting a layer
+            for (size_t i = 0; i < node->numInputs(); ++i)
+            {
+                Connector *conn = node->input(i);
+                if (conn->numConnections() > 0)
+                {
+                    const RenderSet *inRenders = conn->connection(0)->node()->renderSet();
+                    if (inRenders->size() > 1)
+                    {
+                        if (ImGui::BeginCombo(conn->name().c_str(), conn->layer().c_str()))
+                        {
+                            for (auto it = inRenders->cbegin(); it != inRenders->cend(); ++it)
+                            {
+                                if (ImGui::Selectable(it->first.c_str(), it->first == conn->layer()))
+                                {
+                                    inputLayerChanged.emit(conn, it->first);
+                                }
+                            }
+                            ImGui::EndCombo();
+                        }
+                    }
+                }
+            }
+        }
 
         ImGui::TextUnformatted("Operator Settings");
-        Node *node = m_scene->getSelectedNode();
         if (node)
         {
             drawNodeSettings(node);
         }
 
-        ImGui::SetCursorPos({ImGui::GetCursorPosX(), m_bounds.max().y - 70});
-        ImGui::InputText("Filepath##Scene", &m_saveLoadPath, ImGuiInputTextFlags_EnterReturnsTrue);
-        if (ImGui::Button("New"))
-        {
-            newSceneRequested.emit();
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Save"))
-        {
-            saveRequested.emit(m_saveLoadPath);
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Load"))
-        {
-            loadRequested.emit(m_saveLoadPath);
-        }
-        ImGui::SameLine();
-        bool isPaused = m_scene->isPaused();
-        if (ImGui::Button(isPaused ? "Play" : "Pause"))
-        {
-            pauseToggled.emit(!isPaused);
-        }
+        drawGlobalProperties();
     }
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::End();
+}
+
+void Properties::drawGlobalProperties()
+{
+    ImGui::SetCursorPos({ImGui::GetCursorPosX(), m_bounds.max().y - 70});
+    ImGui::Separator();
+    ImGui::InputText("Filepath##Scene", &m_saveLoadPath, ImGuiInputTextFlags_EnterReturnsTrue);
+    if (ImGui::Button("New"))
+    {
+        newSceneRequested.emit();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save"))
+    {
+        saveRequested.emit(m_saveLoadPath);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Load"))
+    {
+        loadRequested.emit(m_saveLoadPath);
+    }
+    ImGui::SameLine();
+    bool isPaused = m_scene->isPaused();
+    if (ImGui::Button(isPaused ? "Play" : "Pause"))
+    {
+        pauseToggled.emit(!isPaused);
+    }
 }
 
 void Properties::drawNodeSettings(Node *node)

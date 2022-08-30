@@ -68,4 +68,5 @@ protected:
     void onNewSceneRequested();
     void onLoadRequested(const std::string &filepath);
     void onSaveRequested(const std::string &filepath);
+    void onInputLayerChanged(Connector *connector, const std::string &layer);
 };

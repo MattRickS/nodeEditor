@@ -14,6 +14,7 @@ class Properties : public Panel
 public:
     Signal<Node *, std::string, SettingValue> opSettingChanged;
     Signal<glm::ivec2> sceneSizeChanged; // TODO: Possibly should be global settings
+    Signal<Connector *, const std::string &> inputLayerChanged;
     Signal<bool> pauseToggled;
     Signal<> newSceneRequested;
     Signal<const std::string &> saveRequested;
@@ -28,6 +29,8 @@ public:
 protected:
     Scene *m_scene = nullptr;
     std::string m_saveLoadPath = "/tmp/scene.scene";
+
+    void drawGlobalProperties();
 
     void drawNodeSettings(Node *node);
     void drawBoolSetting(Node *node, const Setting &setting);

@@ -39,6 +39,7 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     m_ui->nodegraph()->newNodeRequested.connect(this, &Application::createNode);
     m_ui->properties()->opSettingChanged.connect(this, &Application::updateSetting);
     m_ui->properties()->pauseToggled.connect(this, &Application::togglePause);
+    m_ui->properties()->inputLayerChanged.connect(this, &Application::onInputLayerChanged);
     m_ui->properties()->sceneSizeChanged.connect(this, &Application::onSceneSizeChanged);
     m_ui->properties()->newSceneRequested.connect(this, &Application::onNewSceneRequested);
     m_ui->properties()->loadRequested.connect(this, &Application::onLoadRequested);
@@ -548,4 +549,11 @@ void Application::onSaveRequested(const std::string &filepath)
 
     // Would be closed in destructor anyway, just being a good citizen
     stream.close();
+}
+
+void Application::onInputLayerChanged(Connector *connector, const std::string &layer)
+{
+    connector->setLayer(layer);
+    connector->node()->setDirty(true);
+    m_scene->setDirty();
 }
