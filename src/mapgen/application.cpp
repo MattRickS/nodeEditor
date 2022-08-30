@@ -47,11 +47,6 @@ Application::Application(Scene *mapmaker, UI *ui) : m_scene(mapmaker), m_ui(ui)
     m_ui->viewportProperties()->layerChanged.connect(this, &Application::onLayerChanged);
 }
 
-Application::~Application()
-{
-    delete[] m_imageBuffer;
-}
-
 void Application::exec()
 {
     m_scene->startProcessing();
@@ -315,21 +310,6 @@ void Application::setSelectedNode(Node *node)
     }
 }
 
-void Application::maybeResizeImageBuffer(glm::ivec2 imageSize)
-{
-    size_t requiredSize = imageSize.x * imageSize.y * 4;
-    if (requiredSize <= m_imageBufferSize)
-    {
-        return;
-    }
-    if (m_imageBuffer)
-    {
-        delete[] m_imageBuffer;
-    }
-    m_imageBufferSize = requiredSize;
-    m_imageBuffer = new float[requiredSize];
-}
-
 // Viewport
 const Texture *Application::currentTexture() const
 {
@@ -362,30 +342,12 @@ void Application::updatePixelPreview(double xpos, double ypos)
         float ratio = 0.5f * float(texptr->width()) / texptr->height();
         if (worldPos.x >= (0.5f - ratio) && worldPos.x < (0.5f + ratio) && worldPos.y >= 0 && worldPos.y < 1)
         {
-            // TODO: Only reads from buffer. Current framebuffer only has 0-1 values.
-            //       Could mount the texture to a storage buffer, but not sure if that
-            //       will improve retrieved values/performance
-            // glReadPixels(xpos, ypos, 1, 1, GL_RGBA, GL_FLOAT, &m_pixelPreview.value);
-
-            // TODO: If keeping this method, only read the texture data once when
-            // - requested
-            // - active texture has changed / was processed further
-            glActiveTexture(GL_TEXTURE0);
-
             int x = (worldPos.x - (0.5f - ratio)) / (2 * ratio) * texptr->width();
             int y = worldPos.y * texptr->height();
             m_pixelPreview.pos = {x, y};
 
-            maybeResizeImageBuffer({texptr->width(), texptr->height()});
-
-            glBindTexture(GL_TEXTURE_2D, texptr->id());
-            glGetTexImage(GL_TEXTURE_2D, 0, texptr->format(), GL_FLOAT, m_imageBuffer);
-            size_t index = (y * texptr->width() + x) * texptr->numChannels();
-            for (size_t i = 0; i < 4; ++i)
-            {
-                m_pixelPreview.value[i] = i < texptr->numChannels() ? m_imageBuffer[index + i] : 0.0f;
-            }
-
+            m_textureReader.setTexture(texptr);
+            m_pixelPreview.value = m_textureReader.readPixel(x, y);
             return;
         }
     }

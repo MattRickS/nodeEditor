@@ -14,7 +14,6 @@ class Application
 {
 public:
     Application(Scene *scene, UI *ui);
-    ~Application();
     void exec();
     void close();
 
@@ -22,12 +21,11 @@ protected:
     Scene *m_scene;
     UI *m_ui;
     PixelPreview m_pixelPreview;
+    TextureReader m_textureReader;
 
     Panel *m_panningPanel = nullptr;
     glm::vec2 m_lastCursorPos;
     bool m_isDragging = false;
-    float *m_imageBuffer = nullptr;
-    size_t m_imageBufferSize = 0;
 
     // FPS limiting as vsync does not appear to be working
     double m_lastFrameTime = 0;
@@ -47,7 +45,6 @@ protected:
     void onResize(int width, int height);
 
     void setSelectedNode(Node *node);
-    void maybeResizeImageBuffer(glm::ivec2 imageSize);
 
     // Viewport
     const Texture *currentTexture() const;

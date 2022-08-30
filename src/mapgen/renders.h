@@ -2,6 +2,7 @@
 #include <map>
 
 #include <GL/glew.h>
+#include <glm/glm.hpp>
 
 class Texture
 {
@@ -27,6 +28,30 @@ protected:
     unsigned int m_width, m_height;
     GLenum m_format = GL_RGBA;
     GLuint m_id = 0;
+    float *m_buffer = nullptr;
+    size_t m_bufferSize = 0;
+
+    void ensureInternalBuffer();
+    void readDataFromGPU();
+};
+
+class TextureReader
+{
+public:
+    ~TextureReader();
+
+    const Texture *texture();
+    void setTexture(const Texture *texture);
+    glm::vec4 readPixel(int x, int y);
+
+protected:
+    const Texture *m_texture = nullptr;
+    float *m_buffer = nullptr;
+    size_t m_bufferSize = 0;
+
+    bool ensureInternalBuffer();
+    bool readDataFromGPU();
+    void deleteInternalBuffer();
 };
 
 typedef std::map<std::string, Texture *> RenderSet;
