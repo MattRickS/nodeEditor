@@ -33,6 +33,15 @@ void UI::onMouseScrolled(double xoffset, double yoffset)
     mouseScrolled.emit(xoffset, yoffset);
 }
 
+void UI::onKeyChanged(int key, int scancode, int action, int mods)
+{
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.WantCaptureKeyboard)
+        return;
+
+    keyChanged.emit(key, scancode, action, mods);
+}
+
 // TODO: Get this working as a virtual override of onWindowResized
 void UI::recalculateLayout()
 {

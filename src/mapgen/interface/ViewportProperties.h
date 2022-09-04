@@ -23,6 +23,7 @@ public:
 
     ViewportProperties(Window *window, Bounds bounds);
 
+    void setChannel(Channel channel);
     void setPixelPreview(PixelPreview *preview);
     void setScene(Scene *scene);
 

@@ -16,13 +16,9 @@
 Viewport::Viewport(Window *window, Bounds bounds) : Panel(window, bounds), m_viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs") {}
 
 Camera &Viewport::camera() { return m_camera; }
+void Viewport::setChannel(Channel channel) { m_isolateChannel = channel; }
 void Viewport::setLayer(std::string layer) { m_layer = layer; }
 void Viewport::setScene(Scene *scene) { m_scene = scene; }
-void Viewport::toggleIsolateChannel(Channel channel)
-{
-    m_isolateChannel = (m_isolateChannel == channel) ? Channel_All : channel;
-}
-Channel Viewport::isolatedChannel() const { return m_isolateChannel; }
 
 void Viewport::draw()
 {

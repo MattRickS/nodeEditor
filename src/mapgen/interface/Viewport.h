@@ -24,10 +24,9 @@ public:
     Viewport(Window *window, Bounds bounds);
 
     Camera &camera();
+    void setChannel(Channel channel);
     void setLayer(std::string layer);
     void setScene(Scene *scene);
-    void toggleIsolateChannel(Channel channel);
-    Channel isolatedChannel() const;
     void draw() override;
 
     glm::vec2 screenToWorldPos(glm::vec2 screenPos);

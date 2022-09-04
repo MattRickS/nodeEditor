@@ -48,4 +48,5 @@ protected:
     virtual void onMouseMoved(double xpos, double ypos);
     virtual void onMouseButtonChanged(int button, int action, int mods);
     virtual void onMouseScrolled(double xoffset, double yoffset);
+    virtual void onKeyChanged(int key, int scancode, int action, int mods);
 };

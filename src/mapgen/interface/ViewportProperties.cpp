@@ -9,6 +9,7 @@
 
 ViewportProperties::ViewportProperties(Window *window, Bounds bounds) : Panel(window, bounds) {}
 
+void ViewportProperties::setChannel(Channel channel) { m_channel = channel; }
 void ViewportProperties::setPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void ViewportProperties::setScene(Scene *scene) { m_scene = scene; }
 

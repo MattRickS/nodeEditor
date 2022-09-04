@@ -81,7 +81,7 @@ void Application::close()
 // Signals
 void Application::onChannelChanged(Channel channel)
 {
-    m_ui->viewport()->toggleIsolateChannel(channel);
+    m_ui->viewport()->setChannel(channel);
 }
 
 void Application::onLayerChanged(std::string layerName)
@@ -119,16 +119,16 @@ void Application::onKeyChanged(int key, [[maybe_unused]] int scancode, int actio
             }
             break;
         case GLFW_KEY_R:
-            m_ui->viewport()->toggleIsolateChannel(Channel_Red);
+            toggleIsolateChannel(Channel_Red);
             break;
         case GLFW_KEY_G:
-            m_ui->viewport()->toggleIsolateChannel(Channel_Green);
+            toggleIsolateChannel(Channel_Green);
             break;
         case GLFW_KEY_B:
-            m_ui->viewport()->toggleIsolateChannel(Channel_Blue);
+            toggleIsolateChannel(Channel_Blue);
             break;
         case GLFW_KEY_A:
-            m_ui->viewport()->toggleIsolateChannel(Channel_Alpha);
+            toggleIsolateChannel(Channel_Alpha);
             break;
         case GLFW_KEY_RIGHT:
             m_scene->processOne();
@@ -363,6 +363,13 @@ void Application::updateProjection()
                                    vAperture * camera.focal,
                                    m_camNear,
                                    m_camFar);
+}
+
+void Application::toggleIsolateChannel(Channel channel)
+{
+    m_viewChannel = (m_viewChannel == channel) ? Channel_All : channel;
+    m_ui->viewport()->setChannel(m_viewChannel);
+    m_ui->viewportProperties()->setChannel(m_viewChannel);
 }
 
 // Nodegraph

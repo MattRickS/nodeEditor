@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
+#include "constants.h"
 #include "interface/Panel.hpp"
 #include "interface/Viewport.h"
 #include "interface/UI.h"
@@ -24,6 +25,7 @@ protected:
     UI *m_ui;
     PixelPreview m_pixelPreview;
     TextureReader m_textureReader;
+    Channel m_viewChannel = Channel_All;
 
     Panel *m_panningPanel = nullptr;
     glm::vec2 m_lastCursorPos;
@@ -53,6 +55,7 @@ protected:
     void togglePause(bool pause);
     void updatePixelPreview(double xpos, double ypos);
     void updateProjection();
+    void toggleIsolateChannel(Channel channel);
 
     // Nodegraph
     bool elementContainsPos(GraphElement *el, glm::vec2 pos) const;
