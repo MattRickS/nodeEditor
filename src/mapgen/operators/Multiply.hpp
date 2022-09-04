@@ -23,10 +23,7 @@ namespace Op
         }
         void registerSettings(Settings *const settings) const override
         {
-            settings->registerBool("red", true);
-            settings->registerBool("green", true);
-            settings->registerBool("blue", true);
-            settings->registerBool("alpha", false);
+            settings->registerInt("channelMask", ChannelMask_RGB, ChannelMask_Red, ChannelMask_Alpha, SettingHint_ChannelMask);
             settings->registerFloat("multiplier", 1.0f);
         }
     };

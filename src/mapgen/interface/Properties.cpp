@@ -224,6 +224,40 @@ void Properties::drawIntSetting(Node *node, const Setting &setting)
     {
         drawChoices(node, setting.name().c_str(), rangedChannelChoices(setting), currentChoice(CHANNEL_CHOICES, value).c_str());
     }
+    else if (setting.hints() & SettingHint_ChannelMask)
+    {
+        // TODO: bitset?
+        ChannelMask mask = ChannelMask(value);
+        bool red = bool(mask & ChannelMask_Red);
+        bool green = bool(mask & ChannelMask_Green);
+        bool blue = bool(mask & ChannelMask_Blue);
+        bool alpha = bool(mask & ChannelMask_Alpha);
+
+        bool modified = ImGui::Checkbox("r", &red);
+        ImGui::SameLine();
+        modified |= ImGui::Checkbox("g", &green);
+        ImGui::SameLine();
+        modified |= ImGui::Checkbox("b", &blue);
+        ImGui::SameLine();
+        modified |= ImGui::Checkbox("a", &alpha);
+        ImGui::SameLine();
+        if (modified)
+        {
+            int newMask = ChannelMask_None;
+            if (red)
+                newMask |= ChannelMask_Red;
+            if (green)
+                newMask |= ChannelMask_Green;
+            if (blue)
+                newMask |= ChannelMask_Blue;
+            if (alpha)
+                newMask |= ChannelMask_Alpha;
+            LOG_DEBUG("NEW MASK: %i", newMask)
+            opSettingChanged.emit(node, setting.name(), newMask);
+        }
+
+        ImGui::TextUnformatted(setting.name().c_str());
+    }
     else
     {
         if (ImGui::InputInt(setting.name().c_str(), &value, setting.min<int>(), setting.max<int>()))

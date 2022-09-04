@@ -28,6 +28,18 @@ enum Channel
     Channel_Last
 };
 
+enum ChannelMask
+{
+    ChannelMask_None = 0,
+    ChannelMask_Red = 1 << 0,
+    ChannelMask_Green = 1 << 1,
+    ChannelMask_Blue = 1 << 2,
+    ChannelMask_Alpha = 1 << 3,
+    ChannelMask_RGB = ChannelMask_Red | ChannelMask_Green | ChannelMask_Blue,
+    ChannelMask_RGBA = ChannelMask_RGB | ChannelMask_Alpha,
+    ChannelMask_Last
+};
+
 enum SelectFlag
 {
     SelectFlag_None = 0,
