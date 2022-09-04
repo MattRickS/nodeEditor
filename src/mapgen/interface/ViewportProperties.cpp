@@ -34,7 +34,7 @@ void ViewportProperties::draw()
                 Op::RenderSetOperator const *op = dynamic_cast<Op::RenderSetOperator const *>(selectedNode->op());
                 if (op)
                 {
-                    const RenderSet *renderSet = op->renderSet();
+                    const RenderSet_c *renderSet = op->renderSet();
                     for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
                     {
                         bool isSelected = (m_layer == it->first);

@@ -23,7 +23,7 @@ namespace Op
         virtual ~RenderSetOperator();
 
         /* The RenderSet this Operator generates. May include pointers to upstream textures if the layer was not modified. */
-        RenderSet const *renderSet() const;
+        RenderSet_c const *renderSet() const;
         /* Retrieves the Texture pointer from the output RenderSet, or nullptr if layer does not exist. */
         Texture const *layer(const std::string &layer) const;
 
@@ -54,6 +54,6 @@ namespace Op
     protected:
         bool m_renderSetConfigured = false;
         RenderSet m_outputs;
-        RenderSet m_renderSet;
+        RenderSet_c m_renderSet;
     };
 }

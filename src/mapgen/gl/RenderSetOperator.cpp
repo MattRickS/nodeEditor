@@ -13,7 +13,7 @@ namespace Op
         }
     }
 
-    RenderSet const *RenderSetOperator::renderSet() const { return &m_renderSet; }
+    RenderSet_c const *RenderSetOperator::renderSet() const { return &m_renderSet; }
 
     Texture const *RenderSetOperator::layer(const std::string &layer) const
     {

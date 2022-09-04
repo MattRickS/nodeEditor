@@ -36,3 +36,4 @@ protected:
 };
 
 typedef std::map<std::string, Texture *> RenderSet;
+typedef std::map<const std::string, Texture const *> RenderSet_c;

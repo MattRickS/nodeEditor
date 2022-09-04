@@ -6,6 +6,7 @@
 // Not used, directly, but must be included to be added to registry
 #include "mapgen/operators/Add.hpp"
 #include "mapgen/operators/Constant.hpp"
+#include "mapgen/operators/CopyLayer.hpp"
 #include "mapgen/operators/Gradient.hpp"
 #include "mapgen/operators/Invert.hpp"
 #include "mapgen/operators/Load.hpp"
