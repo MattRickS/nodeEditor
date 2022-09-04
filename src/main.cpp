@@ -4,23 +4,23 @@
 #include <GLFW/glfw3.h>
 
 // Not used, directly, but must be included to be added to registry
-#include "mapgen/operators/add.hpp"
-#include "mapgen/operators/constant.hpp"
-#include "mapgen/operators/gradient.hpp"
-#include "mapgen/operators/invert.hpp"
-#include "mapgen/operators/load.hpp"
-#include "mapgen/operators/merge.hpp"
-#include "mapgen/operators/multiply.hpp"
-#include "mapgen/operators/normals.hpp"
-#include "mapgen/operators/offset.hpp"
-#include "mapgen/operators/perlin.hpp"
-#include "mapgen/operators/save.hpp"
-#include "mapgen/operators/temperature.hpp"
-#include "mapgen/operators/voronoi.hpp"
+#include "mapgen/operators/Add.hpp"
+#include "mapgen/operators/Constant.hpp"
+#include "mapgen/operators/Gradient.hpp"
+#include "mapgen/operators/Invert.hpp"
+#include "mapgen/operators/Load.hpp"
+#include "mapgen/operators/Merge.hpp"
+#include "mapgen/operators/Multiply.hpp"
+#include "mapgen/operators/Normals.hpp"
+#include "mapgen/operators/Offset.hpp"
+#include "mapgen/operators/Perlin.hpp"
+#include "mapgen/operators/Save.hpp"
+#include "mapgen/operators/Temperature.hpp"
+#include "mapgen/operators/Voronoi.hpp"
 
-#include "mapgen/application.h"
-#include "mapgen/interface/ui.h"
-#include "mapgen/scene.h"
+#include "mapgen/Application.h"
+#include "mapgen/interface/UI.h"
+#include "mapgen/gl/RenderScene.h"
 
 void glfw_error_callback(int error, const char *description)
 {
@@ -34,7 +34,7 @@ int main()
     if (!glfwInit())
         return 1;
 
-    Scene scene;
+    RenderScene scene;
     if (!scene.context()->isInitialised())
         return 1;
 

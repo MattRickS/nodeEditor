@@ -36,15 +36,6 @@ enum SelectFlag
     SelectFlag_View = 1 << 2,
 };
 
-enum class State
-{
-    Unprocessed,
-    Preprocessing,
-    Processing,
-    Processed,
-    Error,
-};
-
 enum FileType
 {
     FileType_None,
