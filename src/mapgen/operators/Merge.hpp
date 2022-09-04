@@ -58,7 +58,6 @@ namespace Op
         }
         void registerSettings(Settings *const settings) const override
         {
-            // TODO: Needs a combo box for selecting mode
             settings->registerInt("mode",
                                   (int)MergeMode_Over,
                                   {{"atop", MergeMode_Atop},

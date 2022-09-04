@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 
+const float PI = 3.14159265358979f;
 const unsigned int VERSION = 1;
 const unsigned int DEFAULT_WIDTH = 1024;
 const unsigned int DEFAULT_HEIGHT = 1024;

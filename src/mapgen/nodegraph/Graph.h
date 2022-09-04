@@ -62,7 +62,7 @@ protected:
     static NodeID lastID;
     std::map<NodeID, Node> m_nodes;
 
-    void createNode(NodeID nodeID, const std::string &nodeType);
+    bool createNode(NodeID nodeID, const std::string &nodeType);
     void validateUniqueSetting(const std::string &name) const;
     void validateKeyExists(const std::string &name) const;
 };

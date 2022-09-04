@@ -67,10 +67,7 @@ namespace Op
                 const Texture *texture = inputs[i]->layer(DEFAULT_LAYER);
                 if (texture)
                 {
-                    LOG_DEBUG("Binding input %lu to ID: %u", i, texture->id());
-                    glActiveTexture(GL_TEXTURE0 + i);
-                    glBindTexture(GL_TEXTURE_2D, texture->id());
-                    glBindImageTexture(i, texture->id(), 0, GL_FALSE, 0, GL_READ_ONLY, texture->internalFormat());
+                    bindImage(i, texture, GL_READ_ONLY);
                     // Internal naming convention for disabling optional inputs in the shader
                     if (!definedInputs[i].required)
                     {
@@ -95,15 +92,12 @@ namespace Op
         for (size_t j = 0; j < definedOutputs.size(); ++j)
         {
             Texture *outTex = ensureOutputLayer(definedOutputs[j].layer, definedOutputs[j].imageSize);
-            LOG_DEBUG("Binding output %lu to ID: %u", j, outTex->id());
-            glActiveTexture(GL_TEXTURE0 + i + j);
-            glBindTexture(GL_TEXTURE_2D, outTex->id());
-            glBindImageTexture(i + j, outTex->id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, outTex->internalFormat());
+            bindImage(i + j, outTex, GL_WRITE_ONLY);
             imageSize = glm::max(imageSize, definedOutputs[j].imageSize);
         }
 
         // Render
-        glDispatchCompute(ceil(imageSize.x / 8), ceil(imageSize.y / 4), 1);
+        glDispatchCompute(ceil(imageSize.x / 8.0f), ceil(imageSize.y / 4.0f), 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
         glFinish();
 

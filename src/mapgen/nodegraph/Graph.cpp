@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 
+#include "../log.h"
 #include "Node.h"
 #include "OperatorRegistry.hpp"
 
@@ -15,12 +16,14 @@ Graph::const_value_iterator Graph::cend() const { return m_nodes.cend(); }
 Graph::reverse_value_iterator Graph::rbegin() { return m_nodes.rbegin(); }
 Graph::reverse_value_iterator Graph::rend() { return m_nodes.rend(); }
 
-void Graph::createNode(NodeID nodeID, const std::string &nodeType)
+bool Graph::createNode(NodeID nodeID, const std::string &nodeType)
 {
+    Op::Operator *op = Op::OperatorRegistry::create(nodeType);
     m_nodes.emplace(
         std::piecewise_construct,
         std::forward_as_tuple(nodeID),
-        std::forward_as_tuple(nodeID, Op::OperatorRegistry::create(nodeType)));
+        std::forward_as_tuple(nodeID, op));
+    return bool(op);
 }
 NodeID Graph::createNode(const std::string &nodeType)
 {
@@ -112,19 +115,26 @@ bool Graph::deserialize(Deserializer *deserializer)
             while (ok && deserializer->readProperty(nodeType))
             {
                 // Create a temporary node to deserialize into
-                createNode(0, nodeType);
-                Node &node = m_nodes.at(NodeID(0));
-                ok = ok && deserializer->startReadObject();
-                ok = ok && node.deserialize(deserializer);
-                ok = ok && deserializer->finishReadObject();
-                // Correct the node's key or remove it
+                ok = ok && createNode(0, nodeType);
                 if (ok)
                 {
-                    auto handler = m_nodes.extract(0);
-                    handler.key() = node.id();
-                    m_nodes.insert(std::move(handler));
+                    Node &node = m_nodes.at(NodeID(0));
+                    ok = ok && deserializer->startReadObject();
+                    ok = ok && node.deserialize(deserializer);
+                    ok = ok && deserializer->finishReadObject();
+                    // Correct the node's key or remove it
+                    if (ok)
+                    {
+                        auto handler = m_nodes.extract(0);
+                        handler.key() = node.id();
+                        m_nodes.insert(std::move(handler));
+                    }
                 }
                 else
+                {
+                    LOG_ERROR("Failed to create node type: %s", nodeType.c_str())
+                }
+                if (!ok)
                 {
                     m_nodes.erase(0);
                 }

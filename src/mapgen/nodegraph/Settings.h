@@ -10,6 +10,8 @@
 
 typedef std::variant<bool, unsigned int, int, float, glm::vec2, glm::vec3, glm::vec4, glm::ivec2, std::string> SettingValue;
 typedef std::map<std::string, SettingValue> SettingChoices;
+const float DEFAULT_FLOAT_MIN = -1.0f;
+const float DEFAULT_FLOAT_MAX = 1.0f;
 
 const std::string &currentChoice(SettingChoices choices, SettingValue value);
 
@@ -100,13 +102,13 @@ public:
     void registerUInt(const std::string &name, unsigned int value, SettingChoices choices);
     void registerInt(const std::string &name, int value, int min = INT_MIN, int max = INT_MAX, SettingHint hints = SettingHint_None);
     void registerInt(const std::string &name, int value, SettingChoices choices);
-    void registerFloat(const std::string &name, float value, float min = 0.0f, float max = 1.0f, SettingHint hints = SettingHint_None);
+    void registerFloat(const std::string &name, float value, float min = DEFAULT_FLOAT_MIN, float max = DEFAULT_FLOAT_MAX, SettingHint hints = SettingHint_None);
     void registerFloat(const std::string &name, float value, SettingChoices choices);
-    void registerFloat2(const std::string &name, glm::vec2 value, float min = 0.0f, float max = 1.0f, SettingHint hints = SettingHint_None);
+    void registerFloat2(const std::string &name, glm::vec2 value, float min = DEFAULT_FLOAT_MIN, float max = DEFAULT_FLOAT_MAX, SettingHint hints = SettingHint_None);
     void registerFloat2(const std::string &name, glm::vec2 value, SettingChoices choices);
-    void registerFloat3(const std::string &name, glm::vec3 value, float min = 0.0f, float max = 1.0f, SettingHint hints = SettingHint_None);
+    void registerFloat3(const std::string &name, glm::vec3 value, float min = DEFAULT_FLOAT_MIN, float max = DEFAULT_FLOAT_MAX, SettingHint hints = SettingHint_None);
     void registerFloat3(const std::string &name, glm::vec3 value, SettingChoices choices);
-    void registerFloat4(const std::string &name, glm::vec4 value, float min = 0.0f, float max = 1.0f, SettingHint hints = SettingHint_None);
+    void registerFloat4(const std::string &name, glm::vec4 value, float min = DEFAULT_FLOAT_MIN, float max = DEFAULT_FLOAT_MAX, SettingHint hints = SettingHint_None);
     void registerFloat4(const std::string &name, glm::vec4 value, SettingChoices choices);
     void registerInt2(const std::string &name, glm::ivec2 value, SettingHint hints = SettingHint_None);
     void registerInt2(const std::string &name, glm::ivec2 value, SettingChoices choices);

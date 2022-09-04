@@ -42,9 +42,7 @@ namespace Op
             unsigned char *pixels = stbi_load(filepath.c_str(), &width, &height, &numChannels, 4);
 
             Texture *texture = ensureOutputLayer(DEFAULT_LAYER, {width, height});
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture->id());
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture->width(), texture->height(), GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+            texture->write(pixels, texture->width(), texture->height());
         }
 
         void loadHDR(const std::string &filepath)
@@ -54,9 +52,7 @@ namespace Op
             float *pixels = stbi_loadf(filepath.c_str(), &width, &height, &numChannels, 4);
 
             Texture *texture = ensureOutputLayer(DEFAULT_LAYER, {width, height});
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture->id());
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture->width(), texture->height(), GL_RGBA, GL_FLOAT, pixels);
+            texture->write(pixels, texture->width(), texture->height());
         }
 
         bool process([[maybe_unused]] const std::vector<RenderSetOperator const *> &inputs, Settings const *settings, [[maybe_unused]] Settings const *sceneSettings) override

@@ -50,7 +50,7 @@ namespace Op
         {
             m_outputs.emplace(layer, new Texture(imageSize.x, imageSize.y));
             tex = m_outputs[layer];
-            LOG_DEBUG("Created output ID %u for layer %s", m_outputs[layer]->id(), layer.c_str());
+            LOG_DEBUG("Created output ID %u for layer %s with size (%u, %u)", m_outputs[layer]->id(), layer.c_str(), imageSize.x, imageSize.y);
         }
         else if (it->second->width() != (unsigned int)imageSize.x || it->second->height() != (unsigned int)imageSize.y)
         {
@@ -116,5 +116,13 @@ namespace Op
         }
 
         return process(renderSets, settings, sceneSettings);
+    }
+
+    void RenderSetOperator::bindImage(size_t index, Texture const *texture, GLenum access)
+    {
+        LOG_DEBUG("Binding image index %lu to ID: %u", index, texture->id());
+        glActiveTexture(GL_TEXTURE0 + index);
+        glBindTexture(GL_TEXTURE_2D, texture->id());
+        glBindImageTexture(index, texture->id(), 0, GL_FALSE, 0, access, texture->internalFormat());
     }
 }

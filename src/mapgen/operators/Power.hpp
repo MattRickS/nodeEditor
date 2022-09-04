@@ -8,15 +8,15 @@
 
 namespace Op
 {
-    class Multiply : public ComputeShaderOperator
+    class Power : public ComputeShaderOperator
     {
     public:
-        static Multiply *create()
+        static Power *create()
         {
-            return new Multiply();
+            return new Power();
         }
 
-        Multiply() : ComputeShaderOperator("src/mapgen/operators/Multiply.glsl") {}
+        Power() : ComputeShaderOperator("src/mapgen/operators/Power.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{}};
@@ -24,9 +24,9 @@ namespace Op
         void registerSettings(Settings *const settings) const override
         {
             settings->registerInt("channelMask", ChannelMask_RGB, ChannelMask_Red, ChannelMask_Alpha, SettingHint_ChannelMask);
-            settings->registerFloat("multiplier", 1.0f, -5.0f, 5.0f);
+            settings->registerFloat("exponent", 2.0f, 0.0f, 10.0f);
         }
     };
 
-    REGISTER_OPERATOR(Multiply, Multiply::create);
+    REGISTER_OPERATOR(Power, Power::create);
 }

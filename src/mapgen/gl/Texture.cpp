@@ -115,3 +115,48 @@ GLint Texture::internalFormat(GLenum format) const
 }
 
 GLint Texture::internalFormat() const { return internalFormat(m_format); }
+
+float *Texture::read() const
+{
+    float *buffer = new float[width() * height() * numChannels()];
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, id());
+    glGetTexImage(GL_TEXTURE_2D, 0, format(), GL_FLOAT, buffer);
+    return buffer;
+}
+float *Texture::read(Channel channel) const
+{
+    float *buffer = new float[width() * height()];
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, id());
+
+    GLenum format;
+    switch (channel)
+    {
+    case Channel_Red:
+        format = GL_RED;
+        break;
+    case Channel_Green:
+        format = GL_GREEN;
+        break;
+    case Channel_Blue:
+        format = GL_BLUE;
+        break;
+    default:
+        throw "Unknown channel";
+    }
+    glGetTexImage(GL_TEXTURE_2D, 0, format, GL_FLOAT, buffer);
+    return buffer;
+}
+void Texture::write(float *pixels, unsigned int width, unsigned int height, unsigned int posx, unsigned int posy)
+{
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_id);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, posx, posy, width, height, GL_RGBA, GL_FLOAT, pixels);
+}
+void Texture::write(unsigned char *pixels, unsigned int width, unsigned int height, unsigned int posx, unsigned int posy)
+{
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_id);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, posx, posy, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+}

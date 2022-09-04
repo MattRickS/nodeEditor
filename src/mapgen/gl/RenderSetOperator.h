@@ -55,5 +55,7 @@ namespace Op
         bool m_renderSetConfigured = false;
         RenderSet m_outputs;
         RenderSet_c m_renderSet;
+
+        void bindImage(size_t index, Texture const *texture, GLenum access);
     };
 }

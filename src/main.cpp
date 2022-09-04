@@ -5,9 +5,12 @@
 
 // Not used, directly, but must be included to be added to registry
 #include "mapgen/operators/Add.hpp"
+#include "mapgen/operators/CheckerBoard.hpp"
 #include "mapgen/operators/Constant.hpp"
+#include "mapgen/operators/ConvolveTexture.hpp"
 #include "mapgen/operators/CopyLayer.hpp"
 #include "mapgen/operators/ExtractLayer.hpp"
+#include "mapgen/operators/Gaussian.hpp"
 #include "mapgen/operators/Gradient.hpp"
 #include "mapgen/operators/Invert.hpp"
 #include "mapgen/operators/Load.hpp"
@@ -16,6 +19,7 @@
 #include "mapgen/operators/Normals.hpp"
 #include "mapgen/operators/Offset.hpp"
 #include "mapgen/operators/Perlin.hpp"
+#include "mapgen/operators/Power.hpp"
 #include "mapgen/operators/Save.hpp"
 #include "mapgen/operators/Temperature.hpp"
 #include "mapgen/operators/Voronoi.hpp"
