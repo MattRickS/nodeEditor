@@ -71,6 +71,12 @@ Texture &Texture::operator=(Texture &&other) noexcept
     return *this;
 }
 
+GLuint Texture::id() const { return m_id; }
+unsigned int Texture::width() const { return m_width; }
+unsigned int Texture::height() const { return m_height; }
+glm::ivec2 Texture::imageSize() const { return {m_width, m_height}; }
+GLuint Texture::format() const { return m_format; }
+
 void Texture::resize(unsigned int width, unsigned int height)
 {
     m_width = width;

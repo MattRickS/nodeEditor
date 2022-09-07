@@ -82,11 +82,13 @@ void Application::close()
 void Application::onChannelChanged(Channel channel)
 {
     m_ui->viewport()->setChannel(channel);
+    m_ui->viewportProperties()->setChannel(channel);
 }
 
 void Application::onLayerChanged(std::string layerName)
 {
     m_ui->viewport()->setLayer(layerName);
+    m_ui->viewportProperties()->setLayer(layerName);
 }
 
 void Application::onKeyChanged(int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mode)

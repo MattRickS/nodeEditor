@@ -16,10 +16,11 @@ public:
     Texture &operator=(const Texture &other);     // Copy Assignment
     Texture &operator=(Texture &&other) noexcept; // Move assignment
 
-    GLuint id() const { return m_id; }
-    unsigned int width() const { return m_width; }
-    unsigned int height() const { return m_height; }
-    GLuint format() const { return m_format; }
+    GLuint id() const;
+    unsigned int width() const;
+    unsigned int height() const;
+    glm::ivec2 imageSize() const;
+    GLuint format() const;
 
     void resize(unsigned int width, unsigned int height);
     size_t numChannels() const;

@@ -24,6 +24,7 @@ public:
     ViewportProperties(Window *window, Bounds bounds);
 
     void setChannel(Channel channel);
+    void setLayer(const std::string &layer);
     void setPixelPreview(PixelPreview *preview);
     void setScene(Scene *scene);
 

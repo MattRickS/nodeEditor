@@ -10,6 +10,7 @@
 ViewportProperties::ViewportProperties(Window *window, Bounds bounds) : Panel(window, bounds) {}
 
 void ViewportProperties::setChannel(Channel channel) { m_channel = channel; }
+void ViewportProperties::setLayer(const std::string &layer) { m_layer = layer; }
 void ViewportProperties::setPixelPreview(PixelPreview *preview) { m_pixelPreview = preview; }
 void ViewportProperties::setScene(Scene *scene) { m_scene = scene; }
 
@@ -24,31 +25,34 @@ void ViewportProperties::draw()
     ImGui::SetNextWindowSize(ImVec2(size().x, size().y));
     ImGui::Begin("Viewport Properties", &p_open, flags);
 
-    ImGui::PushItemWidth(150.0f);
-    if (ImGui::BeginCombo("##Layer", m_layer.c_str()))
+    const RenderSet_c *renderSet = nullptr;
+    if (m_scene)
     {
-        if (m_scene)
+        Node *viewNode = m_scene->getViewNode();
+        if (viewNode)
         {
-            Node *selectedNode = m_scene->getSelectedNode();
-            if (selectedNode)
+            Op::RenderSetOperator const *op = dynamic_cast<Op::RenderSetOperator const *>(viewNode->op());
+            if (op)
             {
-                Op::RenderSetOperator const *op = dynamic_cast<Op::RenderSetOperator const *>(selectedNode->op());
-                if (op)
+                renderSet = op->renderSet();
+            }
+        }
+    }
+    ImGui::PushItemWidth(150.0f);
+    if (ImGui::BeginCombo("##Layer", renderSet ? m_layer.c_str() : "--"))
+    {
+        if (renderSet)
+        {
+            for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
+            {
+                bool isSelected = (m_layer == it->first);
+                if (ImGui::Selectable(it->first.c_str(), isSelected))
                 {
-                    const RenderSet_c *renderSet = op->renderSet();
-                    for (auto it = renderSet->cbegin(); it != renderSet->cend(); ++it)
-                    {
-                        bool isSelected = (m_layer == it->first);
-                        if (ImGui::Selectable(it->first.c_str(), isSelected))
-                        {
-                            m_layer = it->first;
-                            layerChanged.emit(it->first);
-                        }
-                        if (isSelected)
-                        {
-                            ImGui::SetItemDefaultFocus();
-                        }
-                    }
+                    layerChanged.emit(it->first);
+                }
+                if (isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
                 }
             }
         }
@@ -58,7 +62,7 @@ void ViewportProperties::draw()
 
     ImGui::SameLine();
     ImGui::PushItemWidth(100.0f);
-    if (ImGui::BeginCombo("##Channel", getChannelName(m_channel)))
+    if (ImGui::BeginCombo("##Channel", renderSet ? getChannelName(m_channel) : "--"))
     {
         for (int channel = Channel_All; channel != Channel_Last; ++channel)
         {
