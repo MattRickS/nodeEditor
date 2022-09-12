@@ -24,6 +24,7 @@
 #include "mapgen/operators/Pixel.hpp"
 #include "mapgen/operators/Power.hpp"
 #include "mapgen/operators/Save.hpp"
+#include "mapgen/operators/Shuffle.hpp"
 #include "mapgen/operators/Temperature.hpp"
 #include "mapgen/operators/Voronoi.hpp"
 

@@ -233,13 +233,15 @@ void Properties::drawIntSetting(Node *node, const Setting &setting)
         bool blue = bool(mask & ChannelMask_Blue);
         bool alpha = bool(mask & ChannelMask_Alpha);
 
-        bool modified = ImGui::Checkbox("r", &red);
+        using namespace std::string_literals;
+
+        bool modified = ImGui::Checkbox(("r##"s + setting.name()).c_str(), &red);
         ImGui::SameLine();
-        modified |= ImGui::Checkbox("g", &green);
+        modified |= ImGui::Checkbox(("g##"s + setting.name()).c_str(), &green);
         ImGui::SameLine();
-        modified |= ImGui::Checkbox("b", &blue);
+        modified |= ImGui::Checkbox(("b##"s + setting.name()).c_str(), &blue);
         ImGui::SameLine();
-        modified |= ImGui::Checkbox("a", &alpha);
+        modified |= ImGui::Checkbox(("a##"s + setting.name()).c_str(), &alpha);
         ImGui::SameLine();
         if (modified)
         {
@@ -252,7 +254,6 @@ void Properties::drawIntSetting(Node *node, const Setting &setting)
                 newMask |= ChannelMask_Blue;
             if (alpha)
                 newMask |= ChannelMask_Alpha;
-            LOG_DEBUG("NEW MASK: %i", newMask)
             opSettingChanged.emit(node, setting.name(), newMask);
         }
 

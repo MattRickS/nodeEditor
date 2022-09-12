@@ -14,7 +14,7 @@ namespace Op
     {
         return {{}};
     }
-    bool PingPongOperator::process(const std::vector<RenderSetOperator const *> &inputs, Settings const *settings, [[maybe_unused]] Settings const *sceneSettings)
+    bool PingPongOperator::process(const std::vector<RenderSetOperator const *> &inputs, [[maybe_unused]] Settings const *settings, [[maybe_unused]] Settings const *sceneSettings)
     {
         LOG_DEBUG("Ping pong iteration: %d", m_iteration)
         m_shader.use();
