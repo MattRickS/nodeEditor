@@ -442,9 +442,21 @@ void Application::createNode(glm::ivec2 screenPos, std::string nodeType)
     m_ui->nodegraph()->finishNodeSelection();
 
     NodeID nodeID = m_scene->createNode(nodeType);
-    glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(screenPos);
     Node *node = m_scene->getNode(nodeID);
-    node->setPos(worldPos);
+
+    // Connect to the selected node if possible
+    Node *selectedNode = m_scene->getSelectedNode();
+    if (selectedNode && node->numInputs() > 0 && selectedNode->numOutputs() > 0)
+    {
+        node->setPos(selectedNode->bounds().pos() + glm::vec2(0, node->bounds().size().y * 2));
+        node->input(0)->connect(selectedNode->output(0));
+    }
+    // Otherwise create at the current screen position
+    else
+    {
+        glm::vec2 worldPos = m_ui->nodegraph()->screenToWorldPos(screenPos);
+        node->setPos(worldPos);
+    }
     setSelectedNode(node);
 }
 
