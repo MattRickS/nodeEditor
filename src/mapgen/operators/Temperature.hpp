@@ -27,9 +27,8 @@ namespace Op
         }
         void registerSettings(Settings *const settings) const override
         {
-            settings->registerInt("loBand", 0, 0, 2048);
-            settings->registerInt("hiBand", 0, 0, 2048);
-            settings->registerFloat("falloff", 0.5f);
+            settings->registerFloat("loFalloff", 0.5f, 0.0f, 1.0f);
+            settings->registerFloat("hiFalloff", 0.5f, 0.0f, 1.0f);
             settings->registerFloat("heightMult", 1.0f, 0.0f, 1.0f);
             settings->registerFloat("waterMult", 1.0f, 0.0f, 1.0f);
         }
