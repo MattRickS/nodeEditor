@@ -26,6 +26,7 @@
 #include "mapgen/operators/Save.hpp"
 #include "mapgen/operators/Shuffle.hpp"
 #include "mapgen/operators/Temperature.hpp"
+#include "mapgen/operators/VectorBand.hpp"
 #include "mapgen/operators/Voronoi.hpp"
 
 #include "mapgen/Application.h"

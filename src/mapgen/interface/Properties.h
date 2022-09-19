@@ -28,7 +28,7 @@ public:
 
 protected:
     RenderScene *m_scene = nullptr;
-    std::string m_saveLoadPath = "/tmp/scene.scene";
+    std::string m_saveLoadPath = "/home/mshaw/git/mapGen/.scratch/scenes/scene.scene";
 
     void drawGlobalProperties();
 
@@ -38,6 +38,7 @@ protected:
     void drawFloat2Setting(Node *node, const Setting &setting);
     void drawFloat3Setting(Node *node, const Setting &setting);
     void drawFloat4Setting(Node *node, const Setting &setting);
+    void drawFloat2ArraySetting(Node *node, const Setting &setting);
     void drawIntSetting(Node *node, const Setting &setting);
     void drawInt2Setting(Node *node, const Setting &setting);
     void drawUIntSetting(Node *node, const Setting &setting);

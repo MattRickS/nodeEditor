@@ -13,6 +13,7 @@ namespace Op
         m_shader.use();
 
         // Add all settings to the shader. Assumes identical names.
+        size_t binding = 0;
         for (auto it = settings->cbegin(); it != settings->cend(); ++it)
         {
             switch (it->type())
@@ -36,6 +37,9 @@ namespace Op
             case SettingType_Float4:
                 m_shader.setVec4(it->name(), it->value<glm::vec4>());
                 LOG_DEBUG("Setting %s to (%.3f, %.3f, %.3f, %.3f)", it->name().c_str(), it->value<glm::vec4>().x, it->value<glm::vec4>().y, it->value<glm::vec4>().z, it->value<glm::vec4>().w);
+                break;
+            case SettingType_Float2Array:
+                bindSSBO(binding++, *it);
                 break;
             case SettingType_Int:
                 m_shader.setInt(it->name(), it->value<int>());
@@ -97,10 +101,32 @@ namespace Op
         }
 
         // Render
+        render(imageSize);
+
+        return true;
+    }
+
+    void ComputeShaderOperator::render(glm::ivec2 imageSize)
+    {
         glDispatchCompute(ceil(imageSize.x / 8.0f), ceil(imageSize.y / 4.0f), 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
         glFinish();
-
-        return true;
+    }
+    void ComputeShaderOperator::bindSSBO(size_t index, const Setting &setting)
+    {
+        // SSBOs are only created once
+        if (index >= m_ssbos.size())
+        {
+            m_ssbos.emplace_back();
+        }
+        // index in the vector and it's binding point are the same
+        if (m_ssbos[index].load(setting, index))
+        {
+            LOG_DEBUG("Setting %s bound to index %lu", setting.name().c_str(), index);
+        }
+        else
+        {
+            LOG_WARNING("Failed to bind setting %s to SSBO index %lu", setting.name().c_str(), index);
+        }
     }
 }

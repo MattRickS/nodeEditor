@@ -122,6 +122,11 @@ void Settings::registerFloat4(const std::string &name, glm::vec4 value, float mi
     validateUniqueSetting(name);
     m_settings.emplace_back(name, SettingType_Float4, value, min, max, hints);
 }
+void Settings::registerFloat2Array(const std::string &name, std::vector<glm::vec2> value, float min, float max, SettingHint hints)
+{
+    validateUniqueSetting(name);
+    m_settings.emplace_back(name, SettingType_Float2Array, value, min, max, hints);
+}
 void Settings::registerInt2(const std::string &name, glm::ivec2 value, SettingHint hints)
 {
     validateUniqueSetting(name);
@@ -243,6 +248,10 @@ bool Settings::serialize(Serializer *serializer, bool editedOnly) const
         case SettingType_Float4:
             ok = ok && serializer->writePropertyFloat4(it->name(), it->value<glm::vec4>());
             break;
+        // case SettingType_Float2Array:
+        //     // TODO: Write setting name, numTotalValues, each individual float
+        //     // ok = ok && serializer->writeFloat
+        //     break;
         case SettingType_Int:
             ok = ok && serializer->writePropertyInt(it->name(), it->value<int>());
             break;

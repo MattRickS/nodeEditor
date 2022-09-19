@@ -6,6 +6,8 @@
 
 #include "Properties.h"
 
+using namespace std::string_literals;
+
 const SettingChoices CHANNEL_CHOICES{
     {"red", 0},
     {"green", 1},
@@ -147,6 +149,9 @@ void Properties::drawNodeSettings(Node *node)
         case SettingType_Float4:
             drawFloat4Setting(node, *it);
             break;
+        case SettingType_Float2Array:
+            drawFloat2ArraySetting(node, *it);
+            break;
         case SettingType_Int:
             drawIntSetting(node, *it);
             break;
@@ -217,6 +222,38 @@ void Properties::drawFloat4Setting(Node *node, const Setting &setting)
     if (ImGui::DragFloat4(setting.name().c_str(), (float *)&value, sliderSpeed(min, max), min, max, "%.3f", sliderFlags(setting)))
         opSettingChanged.emit(node, setting.name(), value);
 }
+void Properties::drawFloat2ArraySetting(Node *node, const Setting &setting)
+{
+    // Needs a reference
+    std::vector<glm::vec2> value = setting.value<std::vector<glm::vec2>>();
+    size_t size = value.size();
+    if (ImGui::InputScalar((setting.name() + "##size").c_str(), ImGuiDataType_U32, &size))
+    {
+        value.resize(size);
+        // TODO: Completely change properties so that it's a "wasUpdated" signal that emits a reference to the old value
+        //       It's then up to any listeners to take a copy of the old value if they need to keep it.
+        opSettingChanged.emit(node, setting.name(), value);
+    }
+
+    float min = setting.min<float>();
+    float max = setting.max<float>();
+    std::vector<glm::vec2> updatedValue(value);
+    bool modified = false;
+    for (size_t i = 0; i < size; ++i)
+    {
+        glm::vec2 ivalue = value[i];
+        if (ImGui::DragFloat2(("##"s + setting.name().c_str() + "i"s + std::to_string(i)).c_str(), (float *)&ivalue, sliderSpeed(min, max), min, max, "%.3f", sliderFlags(setting)))
+        {
+            updatedValue[i] = ivalue;
+            modified = true;
+        }
+    }
+    if (modified)
+    {
+        opSettingChanged.emit(node, setting.name(), updatedValue);
+    }
+}
+
 void Properties::drawIntSetting(Node *node, const Setting &setting)
 {
     int value = setting.value<int>();
@@ -232,8 +269,6 @@ void Properties::drawIntSetting(Node *node, const Setting &setting)
         bool green = bool(mask & ChannelMask_Green);
         bool blue = bool(mask & ChannelMask_Blue);
         bool alpha = bool(mask & ChannelMask_Alpha);
-
-        using namespace std::string_literals;
 
         bool modified = ImGui::Checkbox(("r##"s + setting.name()).c_str(), &red);
         ImGui::SameLine();
