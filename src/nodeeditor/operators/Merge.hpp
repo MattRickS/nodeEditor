@@ -51,7 +51,7 @@ namespace Op
             return new Merge();
         }
 
-        Merge() : ComputeShaderOperator("src/mapgen/operators/Merge.glsl") {}
+        Merge() : ComputeShaderOperator("src/nodeeditor/operators/Merge.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{"A"}, {"B"}, {"Mask", false}};

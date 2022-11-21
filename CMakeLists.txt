@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 
 include(FetchContent)
 
-project(MapGenerator LANGUAGES CXX)
+project(NodeEditor LANGUAGES CXX)
 
 set(BUILD_SHARED_LIBS OFF)
 set(CMAKE_CXX_STANDARD 11)
@@ -80,7 +80,7 @@ target_include_directories(imgui
 )
 target_link_libraries(imgui GL)
 
-# mapgen
+# nodeeditor
 add_subdirectory(src)
 include_directories(src)
 

@@ -16,7 +16,7 @@ namespace Op
             return new Invert();
         }
 
-        Invert() : ComputeShaderOperator("src/mapgen/operators/Invert.glsl") {}
+        Invert() : ComputeShaderOperator("src/nodeeditor/operators/Invert.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{}};

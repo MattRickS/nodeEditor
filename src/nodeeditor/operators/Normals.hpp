@@ -17,7 +17,7 @@ namespace Op
             return new Normals();
         }
 
-        Normals() : ComputeShaderOperator("src/mapgen/operators/Normals.glsl") {}
+        Normals() : ComputeShaderOperator("src/nodeeditor/operators/Normals.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{}};

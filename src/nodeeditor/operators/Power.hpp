@@ -16,7 +16,7 @@ namespace Op
             return new Power();
         }
 
-        Power() : ComputeShaderOperator("src/mapgen/operators/Power.glsl") {}
+        Power() : ComputeShaderOperator("src/nodeeditor/operators/Power.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{}};

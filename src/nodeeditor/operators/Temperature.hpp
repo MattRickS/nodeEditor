@@ -16,7 +16,7 @@ namespace Op
             return new Temperature();
         }
 
-        Temperature() : ComputeShaderOperator("src/mapgen/operators/Temperature.glsl") {}
+        Temperature() : ComputeShaderOperator("src/nodeeditor/operators/Temperature.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{}, {"WaterDistance", false}};

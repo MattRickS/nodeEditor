@@ -1,6 +1,8 @@
 # Node Editor
 
-2D image processing similar to the Foundry's Nuke. Intended for personal use to produce maps (might still contains references to "mapgen" as the original repo name).
+2D image processing similar to the Foundry's Nuke. Intended for personal use to produce maps (might still contains references to "nodeeditor" as the original repo name).
+
+![Demo UI](docs/NodeEditor.png)
 
 # Building
 

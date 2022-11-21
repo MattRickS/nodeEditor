@@ -16,7 +16,7 @@ namespace Op
             return new Clamp();
         }
 
-        Clamp() : ComputeShaderOperator("src/mapgen/operators/Clamp.glsl") {}
+        Clamp() : ComputeShaderOperator("src/nodeeditor/operators/Clamp.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{}};

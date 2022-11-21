@@ -11,7 +11,7 @@
 
 namespace Op
 {
-    ConvolveOperator::ConvolveOperator() : ComputeShaderOperator("src/mapgen/operators/Convolve.glsl")
+    ConvolveOperator::ConvolveOperator() : ComputeShaderOperator("src/nodeeditor/operators/Convolve.glsl")
     {
         glGenBuffers(1, &m_ssbo);
     }

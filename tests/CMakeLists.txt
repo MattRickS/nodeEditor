@@ -1,5 +1,5 @@
-file(GLOB_RECURSE TESTS_HEADERS "../src/mapgen/*.hpp")
-file(GLOB_RECURSE TESTS_SOURCES "../src/mapgen/*.cpp")
+file(GLOB_RECURSE TESTS_HEADERS "../src/nodeeditor/*.hpp")
+file(GLOB_RECURSE TESTS_SOURCES "../src/nodeeditor/*.cpp")
 list(APPEND TESTS_SOURCES "test_nodegraph.cpp")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

@@ -16,7 +16,7 @@ namespace Op
             return new Constant();
         }
 
-        Constant() : ContentCreatorComputeShaderOperator("src/mapgen/operators/Constant.glsl") {}
+        Constant() : ContentCreatorComputeShaderOperator("src/nodeeditor/operators/Constant.glsl") {}
         void registerSettings(Settings *const settings) const override
         {
             ContentCreatorComputeShaderOperator::registerSettings(settings);

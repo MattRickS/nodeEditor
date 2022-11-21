@@ -20,7 +20,7 @@ namespace Op
             return new Pixel();
         }
 
-        Pixel() : ComputeShaderOperator("src/mapgen/operators/Pixel.glsl") {}
+        Pixel() : ComputeShaderOperator("src/nodeeditor/operators/Pixel.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{}};

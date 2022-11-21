@@ -15,7 +15,7 @@ namespace Op
             return new VoronoiNoise();
         }
 
-        VoronoiNoise() : ContentCreatorComputeShaderOperator("src/mapgen/operators/Voronoi.glsl") {}
+        VoronoiNoise() : ContentCreatorComputeShaderOperator("src/nodeeditor/operators/Voronoi.glsl") {}
         void registerSettings(Settings *const settings) const override
         {
             ContentCreatorComputeShaderOperator::registerSettings(settings);

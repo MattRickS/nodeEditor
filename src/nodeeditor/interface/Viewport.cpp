@@ -13,7 +13,7 @@
 
 #include "Viewport.h"
 
-Viewport::Viewport(Window *window, Bounds bounds) : Panel(window, bounds), m_viewShader("src/mapgen/shaders/posUV.vs", "src/mapgen/shaders/texture.fs") {}
+Viewport::Viewport(Window *window, Bounds bounds) : Panel(window, bounds), m_viewShader("src/nodeeditor/shaders/posUV.vs", "src/nodeeditor/shaders/texture.fs") {}
 
 Camera &Viewport::camera() { return m_camera; }
 void Viewport::setChannel(Channel channel) { m_isolateChannel = channel; }

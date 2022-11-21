@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "../src/mapgen/nodegraph/iterators.h"
-#include "../src/mapgen/nodegraph/node.h"
+#include "../src/nodeeditor/nodegraph/iterators.h"
+#include "../src/nodeeditor/nodegraph/node.h"
 
 int main()
 {

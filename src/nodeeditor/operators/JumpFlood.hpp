@@ -18,7 +18,7 @@ namespace Op
             return new JumpFlood();
         }
 
-        JumpFlood() : PingPongOperator("src/mapgen/operators/JumpFlood.glsl") {}
+        JumpFlood() : PingPongOperator("src/nodeeditor/operators/JumpFlood.glsl") {}
         bool process(const std::vector<RenderSetOperator const *> &inputs, Settings const *settings, Settings const *sceneSettings) override
         {
             glm::ivec2 size = imageSize(inputs);

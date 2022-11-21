@@ -8,24 +8,25 @@
 
 namespace Op
 {
-    class Offset : public ComputeShaderOperator
+    class Add : public ComputeShaderOperator
     {
     public:
-        static Offset *create()
+        static Add *create()
         {
-            return new Offset();
+            return new Add();
         }
 
-        Offset() : ComputeShaderOperator("src/mapgen/operators/Offset.glsl") {}
+        Add() : ComputeShaderOperator("src/nodeeditor/operators/Add.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{}};
         }
         void registerSettings(Settings *const settings) const override
         {
-            settings->registerInt2("offset", glm::ivec2(0));
+            settings->registerInt("channelMask", ChannelMask_RGB, ChannelMask_None, ChannelMask_Alpha, SettingHint_ChannelMask);
+            settings->registerFloat("add", 0.0f);
         }
     };
 
-    REGISTER_OPERATOR(Offset, Offset::create);
+    REGISTER_OPERATOR(Add, Add::create);
 }

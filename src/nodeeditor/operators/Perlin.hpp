@@ -17,7 +17,7 @@ namespace Op
             return new PerlinNoise();
         }
 
-        PerlinNoise() : ContentCreatorComputeShaderOperator("src/mapgen/operators/Perlin.glsl") {}
+        PerlinNoise() : ContentCreatorComputeShaderOperator("src/nodeeditor/operators/Perlin.glsl") {}
 
         void registerSettings(Settings *const settings) const override
         {

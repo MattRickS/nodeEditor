@@ -22,7 +22,7 @@ namespace Op
             return new Gradient();
         }
 
-        Gradient() : ContentCreatorComputeShaderOperator("src/mapgen/operators/Gradient.glsl") {}
+        Gradient() : ContentCreatorComputeShaderOperator("src/nodeeditor/operators/Gradient.glsl") {}
         void registerSettings(Settings *const settings) const override
         {
             ContentCreatorComputeShaderOperator::registerSettings(settings);

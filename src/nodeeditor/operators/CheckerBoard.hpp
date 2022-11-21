@@ -16,7 +16,7 @@ namespace Op
             return new CheckerBoard();
         }
 
-        CheckerBoard() : ContentCreatorComputeShaderOperator("src/mapgen/operators/CheckerBoard.glsl") {}
+        CheckerBoard() : ContentCreatorComputeShaderOperator("src/nodeeditor/operators/CheckerBoard.glsl") {}
         void registerSettings(Settings *const settings) const override
         {
             ContentCreatorComputeShaderOperator::registerSettings(settings);

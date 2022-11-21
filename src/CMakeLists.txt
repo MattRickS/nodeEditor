@@ -1,5 +1,5 @@
-file(GLOB_RECURSE MAPGEN_HEADERS "*.hpp")
-file(GLOB_RECURSE MAPGEN_SOURCES "*.cpp")
+file(GLOB_RECURSE NODEEDITOR_HEADERS "*.hpp")
+file(GLOB_RECURSE NODEEDITOR_SOURCES "*.cpp")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -13,7 +13,7 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx -mavx2 -mfma")
 
-add_executable(mapgen ${MAPGEN_HEADERS} ${MAPGEN_SOURCES})
-add_dependencies(mapgen glm)
-target_link_libraries(mapgen PRIVATE glfw GLEW GL imgui)
-target_compile_features(mapgen PRIVATE cxx_std_17)
+add_executable(nodeeditor ${NODEEDITOR_HEADERS} ${NODEEDITOR_SOURCES})
+add_dependencies(nodeeditor glm)
+target_link_libraries(nodeeditor PRIVATE glfw GLEW GL imgui)
+target_compile_features(nodeeditor PRIVATE cxx_std_17)

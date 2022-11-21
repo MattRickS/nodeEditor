@@ -28,7 +28,7 @@ public:
 
 protected:
     RenderScene *m_scene = nullptr;
-    std::string m_saveLoadPath = "/home/mshaw/git/mapGen/.scratch/scenes/scene.scene";
+    std::string m_saveLoadPath = "/home/mshaw/git/nodeeditor/.scratch/scenes/scene.scene";
 
     void drawGlobalProperties();
 

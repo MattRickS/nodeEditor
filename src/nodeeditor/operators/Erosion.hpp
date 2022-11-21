@@ -18,7 +18,7 @@
 //             return new Erosion();
 //         }
 
-//         Erosion() : erosionShader("src/mapgen/operators/Erosion.glsl") //, reductionShader("src/mapgen/shaders/compute/Erosion.glsl")
+//         Erosion() : erosionShader("src/nodeeditor/operators/Erosion.glsl") //, reductionShader("src/nodeeditor/shaders/compute/Erosion.glsl")
 //         {
 //         }
 //         std::string name() const override { return "Erosion"; }

@@ -16,7 +16,7 @@ namespace Op
             return new Shuffle();
         }
 
-        Shuffle() : ComputeShaderOperator("src/mapgen/operators/Shuffle.glsl") {}
+        Shuffle() : ComputeShaderOperator("src/nodeeditor/operators/Shuffle.glsl") {}
         std::vector<Input> inputs() const override
         {
             return {{}};
