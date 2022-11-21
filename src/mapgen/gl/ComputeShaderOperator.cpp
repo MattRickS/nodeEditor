@@ -39,6 +39,7 @@ namespace Op
                 LOG_DEBUG("Setting %s to (%.3f, %.3f, %.3f, %.3f)", it->name().c_str(), it->value<glm::vec4>().x, it->value<glm::vec4>().y, it->value<glm::vec4>().z, it->value<glm::vec4>().w);
                 break;
             case SettingType_Float2Array:
+            case SettingType_Float4Array:
                 bindSSBO(binding++, *it);
                 break;
             case SettingType_Int:
@@ -122,7 +123,7 @@ namespace Op
         // index in the vector and it's binding point are the same
         if (m_ssbos[index].load(setting, index))
         {
-            LOG_DEBUG("Setting %s bound to index %lu", setting.name().c_str(), index);
+            LOG_DEBUG("Setting %s bound to SSBO index %lu", setting.name().c_str(), index);
         }
         else
         {

@@ -23,6 +23,12 @@ bool SSBO::load(const Setting &setting, int binding, GLenum usage)
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * value.size() * 2, value.data(), usage);
         return true;
     }
+    else if (setting.type() == SettingType_Float4Array)
+    {
+        std::vector<glm::vec4> value = setting.value<std::vector<glm::vec4>>();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * value.size() * 4, value.data(), usage);
+        return true;
+    }
     // TODO: Other array types. Note, float3 may need to bind as vec4...
     return false;
 }

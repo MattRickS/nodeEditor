@@ -152,6 +152,9 @@ void Properties::drawNodeSettings(Node *node)
         case SettingType_Float2Array:
             drawFloat2ArraySetting(node, *it);
             break;
+        case SettingType_Float4Array:
+            drawFloat4ArraySetting(node, *it);
+            break;
         case SettingType_Int:
             drawIntSetting(node, *it);
             break;
@@ -224,7 +227,6 @@ void Properties::drawFloat4Setting(Node *node, const Setting &setting)
 }
 void Properties::drawFloat2ArraySetting(Node *node, const Setting &setting)
 {
-    // Needs a reference
     std::vector<glm::vec2> value = setting.value<std::vector<glm::vec2>>();
     size_t size = value.size();
     if (ImGui::InputScalar((setting.name() + "##size").c_str(), ImGuiDataType_U32, &size))
@@ -246,6 +248,46 @@ void Properties::drawFloat2ArraySetting(Node *node, const Setting &setting)
         {
             updatedValue[i] = ivalue;
             modified = true;
+        }
+    }
+    if (modified)
+    {
+        opSettingChanged.emit(node, setting.name(), updatedValue);
+    }
+}
+void Properties::drawFloat4ArraySetting(Node *node, const Setting &setting)
+{
+    std::vector<glm::vec4> value = setting.value<std::vector<glm::vec4>>();
+    size_t size = value.size();
+    if (ImGui::InputScalar((setting.name() + "##size").c_str(), ImGuiDataType_U32, &size))
+    {
+        value.resize(size);
+        opSettingChanged.emit(node, setting.name(), value);
+    }
+
+    float min = setting.min<float>();
+    float max = setting.max<float>();
+    std::vector<glm::vec4> updatedValue(value);
+    bool modified = false;
+    for (size_t i = 0; i < size; ++i)
+    {
+        glm::vec4 ivalue = value[i];
+        const char *name = ("##"s + setting.name().c_str() + "i"s + std::to_string(i)).c_str();
+        if (setting.hints() & SettingHint_Color)
+        {
+            if (ImGui::ColorEdit4(name, (float *)&ivalue))
+            {
+                updatedValue[i] = ivalue;
+                modified = true;
+            }
+        }
+        else
+        {
+            if (ImGui::DragFloat4(name, (float *)&ivalue, sliderSpeed(min, max), min, max, "%.3f", sliderFlags(setting)))
+            {
+                updatedValue[i] = ivalue;
+                modified = true;
+            }
         }
     }
     if (modified)

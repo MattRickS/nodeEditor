@@ -127,6 +127,11 @@ void Settings::registerFloat2Array(const std::string &name, std::vector<glm::vec
     validateUniqueSetting(name);
     m_settings.emplace_back(name, SettingType_Float2Array, value, min, max, hints);
 }
+void Settings::registerFloat4Array(const std::string &name, std::vector<glm::vec4> value, float min, float max, SettingHint hints)
+{
+    validateUniqueSetting(name);
+    m_settings.emplace_back(name, SettingType_Float4Array, value, min, max, hints);
+}
 void Settings::registerInt2(const std::string &name, glm::ivec2 value, SettingHint hints)
 {
     validateUniqueSetting(name);

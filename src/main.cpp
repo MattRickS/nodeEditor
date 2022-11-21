@@ -5,6 +5,7 @@
 
 // Not used, directly, but must be included to be added to registry
 #include "mapgen/operators/Add.hpp"
+#include "mapgen/operators/Bands.hpp"
 #include "mapgen/operators/CheckerBoard.hpp"
 #include "mapgen/operators/Clamp.hpp"
 #include "mapgen/operators/Constant.hpp"
@@ -26,7 +27,6 @@
 #include "mapgen/operators/Save.hpp"
 #include "mapgen/operators/Shuffle.hpp"
 #include "mapgen/operators/Temperature.hpp"
-#include "mapgen/operators/VectorBand.hpp"
 #include "mapgen/operators/Voronoi.hpp"
 
 #include "mapgen/Application.h"

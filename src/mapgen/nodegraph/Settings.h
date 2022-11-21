@@ -8,7 +8,7 @@
 
 #include "Serializer.h"
 
-typedef std::variant<bool, unsigned int, int, float, glm::vec2, glm::vec3, glm::vec4, glm::ivec2, std::string, std::vector<glm::vec2>> SettingValue;
+typedef std::variant<bool, unsigned int, int, float, glm::vec2, glm::vec3, glm::vec4, glm::ivec2, std::string, std::vector<glm::vec2>, std::vector<glm::vec4>> SettingValue;
 typedef std::map<std::string, SettingValue> SettingChoices;
 const float DEFAULT_FLOAT_MIN = -1.0f;
 const float DEFAULT_FLOAT_MAX = 1.0f;
@@ -23,6 +23,7 @@ enum SettingType
     SettingType_Float3,
     SettingType_Float4,
     SettingType_Float2Array,
+    SettingType_Float4Array,
     SettingType_Int,
     SettingType_Int2,
     SettingType_UInt,
@@ -112,6 +113,7 @@ public:
     void registerFloat4(const std::string &name, glm::vec4 value, float min = DEFAULT_FLOAT_MIN, float max = DEFAULT_FLOAT_MAX, SettingHint hints = SettingHint_None);
     void registerFloat4(const std::string &name, glm::vec4 value, SettingChoices choices);
     void registerFloat2Array(const std::string &name, std::vector<glm::vec2> value, float min = DEFAULT_FLOAT_MIN, float max = DEFAULT_FLOAT_MAX, SettingHint hints = SettingHint_None);
+    void registerFloat4Array(const std::string &name, std::vector<glm::vec4> value, float min = DEFAULT_FLOAT_MIN, float max = DEFAULT_FLOAT_MAX, SettingHint hints = SettingHint_None);
     void registerInt2(const std::string &name, glm::ivec2 value, SettingHint hints = SettingHint_None);
     void registerInt2(const std::string &name, glm::ivec2 value, SettingChoices choices);
     void registerString(const std::string &name, std::string value, SettingHint hints = SettingHint_None);
